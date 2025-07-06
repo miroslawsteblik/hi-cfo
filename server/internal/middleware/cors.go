@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -14,11 +15,11 @@ import (
 
 // Claims represents the JWT claims
 type Claims struct {
-	UserID   uint   `json:"user_id"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
-	TokenType string `json:"token_type"`
-	jwt.RegisteredClaims
+    UserID    string `json:"user_id"`  // Change from uint to string
+    Email     string `json:"email"`
+    Role      string `json:"role,omitempty"`
+    TokenType string `json:"token_type"`
+    jwt.RegisteredClaims
 }
 
 // AuthMiddleware validates JWT tokens and sets user context
@@ -209,8 +210,12 @@ func GetCurrentUser(c *gin.Context) *models.User {
 	userEmail, _ := c.Get("user_email")
 	// userRole, _ := c.Get("user_role")
 
+	uuid, ok := userID.(uuid.UUID) // or uuid.UUID if that's your type
+	if !ok {
+		return nil
+	}
 	return &models.User{
-		ID:    userID.(uint),
+		ID:    uuid,
 		Email: userEmail.(string),
 		// Role:  userRole.(string),
 	}

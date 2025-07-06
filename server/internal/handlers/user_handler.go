@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"hi-cfo/server/internal/models"
 	"hi-cfo/server/internal/services"
 
-	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
+    "github.com/gin-gonic/gin"
+    "github.com/go-playground/validator/v10"
+    "github.com/google/uuid"
 )
 
 type UserHandler struct {
@@ -24,45 +24,50 @@ func NewUserHandler(userService services.UserService) *UserHandler {
     }
 }
 // Register handles user registration
-func (h *UserHandler) Register(router *gin.Context) {
+func (h *UserHandler) Register(c *gin.Context) {
     var req models.UserRequest
-    if err := router.ShouldBindJSON(&req); err != nil {
-        router.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
         return
     }
-    if err := h.validator.Struct(req); err != nil {
-        router.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
+    
+    if err := h.validator.Struct(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
         return
     }
-    user, err := h.userService.RegisterUser(&req)
+    
+    // Use the service method directly
+    createdUser, err := h.userService.RegisterUser(&req)
     if err != nil {
-        router.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
+        if err.Error() == "user already exists" {
+            c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
+            return
+        }
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    router.JSON(http.StatusCreated, gin.H{
-        "message": "User registered successfully",
-        "user": user,
-    })
+    
+    c.JSON(http.StatusCreated, gin.H{"user": createdUser})
 }
 func (h *UserHandler) Login(c *gin.Context) {
-	var req models.LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    var req models.LoginRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	if err := h.validator.Struct(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    if err := h.validator.Struct(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	response, err := h.userService.LoginUser(&req)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-		return
-	}
+    response, err := h.userService.LoginUser(&req)
+    if err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        return
+    }
 
-	c.JSON(http.StatusOK, response)
+    c.JSON(http.StatusOK, response)
 }
 // GetAllUsers handles GET /api/users
 func (h *UserHandler) GetAllUsers(c *gin.Context) {
@@ -81,7 +86,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
         return
     }
 
-    if err := h.validator.Struct(req); err != nil {
+    if err := h.validator.Struct(&req); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
         return
     }
@@ -93,30 +98,30 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
     }
     c.JSON(http.StatusCreated, user)
 }
-// GetUser handles GET /api/users/:id
 func (h *UserHandler) GetUser(c *gin.Context) {
     idStr := c.Param("id")
-    id, err := strconv.ParseUint(idStr, 10, 32)
+    uuidID, err := uuid.Parse(idStr)
     if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
         return
     }
 
-    user, err := h.userService.GetUser(uint(id))
+    user, err := h.userService.GetUser(uuidID)
     if err != nil {
+        if err.Error() == "user not found" {
+            c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+            return
+        }
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
-        return
-    }
-    if user == nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
         return
     }
     c.JSON(http.StatusOK, user)
 }
+
 // UpdateUser handles PUT /api/users/:id
 func (h *UserHandler) UpdateUser(c *gin.Context) {
     idStr := c.Param("id")
-    id, err := strconv.ParseUint(idStr, 10, 32)
+    uuidID, err := uuid.Parse(idStr)
     if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
         return
@@ -128,13 +133,17 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
         return
     }
 
-    if err := h.validator.Struct(req); err != nil {
+    if err := h.validator.Struct(&req); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
         return
     }
 
-    user, err := h.userService.UpdateUser(uint(id), &req)
+    user, err := h.userService.UpdateUser(uuidID, &req)
     if err != nil {
+        if err.Error() == "user not found" {
+            c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+            return
+        }
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
         return
     }
@@ -143,13 +152,17 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // DeleteUser handles DELETE /api/users/:id
 func (h *UserHandler) DeleteUser(c *gin.Context) {
     idStr := c.Param("id")
-    id, err := strconv.ParseUint(idStr, 10, 32)
+    uuidID, err := uuid.Parse(idStr)
     if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
         return
     }
 
-    if err := h.userService.DeleteUser(uint(id)); err != nil {
+    if err := h.userService.DeleteUser(uuidID); err != nil {
+        if err.Error() == "user not found" {
+            c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+            return
+        }
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
         return
     }

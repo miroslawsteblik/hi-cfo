@@ -1,47 +1,98 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  // Production optimizations
   output: 'standalone',
-
-  // API proxy configuration
-  async rewrites() {
-    const apiUrl = process.env.NODE_ENV === 'production'
-      ? 'https://backend:8080'  // docker-compose service URL
-      : 'http://localhost:8080' // local development URL
-    
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${apiUrl}/api/:path*`,
-      },
-      // Additional routes if needed
-      {
-        source: '/auth/:path*',
-        destination: `${apiUrl}/auth/:path*`,
-      },
-    ]
-  },
-
-  // CORS headers for development
+  poweredByHeader: false,
+  compress: true,
+  
+  // Security
   async headers() {
     return [
       {
-        source: '/api/:path*',
+        source: '/(.*)',
         headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization' },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
         ],
       },
     ]
   },
 
-  // Enable TypeScript strict mode
+  // API proxy configuration (for internal Docker communication)
+  async rewrites() {
+    // Only proxy when running in Docker container
+    if (process.env.NODE_ENV === 'production') {
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'http://backend:8080/api/:path*',
+        },
+      ]
+    }
+    
+    // Development - proxy to localhost
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:8080/api/:path*',
+      },
+    ]
+  },
+
+  // Image optimization
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: false,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+
+  // Experimental features
+  experimental: {
+    // Enable if using App Router
+    // serverComponentsExternalPackages: ['@prisma/client'],
+  },
+
+  // Environment variables validation
+  env: {
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost',
+  },
+
+  // TypeScript configuration
   typescript: {
     ignoreBuildErrors: false,
   },
 
+  // ESLint configuration
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
 
+  // Webpack configuration
+  webpack: (config, { isServer }) => {
+    // Optimize bundle size
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      }
+    }
+    
+    return config
+  },
 }
 
 export default nextConfig

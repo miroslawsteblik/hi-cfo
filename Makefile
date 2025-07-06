@@ -8,15 +8,23 @@
 dev:
 	docker compose -f docker-compose.dev.yml up -d --build
 
-dev-logs:
+logs:
 	docker compose -f docker-compose.dev.yml logs -f
 
-dev-rebuild:
+rebuild:
+	docker compose -f docker-compose.dev.yml down
 	docker compose -f docker-compose.dev.yml up -d --build --force-recreate
 
-dev-down:
+down:
 	docker compose -f docker-compose.dev.yml down
 
+clean:
+	docker compose -f docker-compose.dev.yml down -v
+	docker system prune -f
+	docker volume prune -f
+
+db-shell:
+	docker compose -f docker-compose.dev.yml exec postgres psql -U postgres -d myapp  
 
 # Production commands
 prod:
@@ -30,16 +38,16 @@ prod-down:
 build:
 	docker compose build --no-cache
 
-up:
+up-prod:
 	docker compose up -d
 
-down:
+down-prod:
 	docker compose down
 
 restart:
 	docker compose restart
 
-logs:
+logs-prod:
 	docker compose logs -f
 
 logs-backend:
@@ -48,18 +56,13 @@ logs-backend:
 shell:
 	docker compose exec backend /bin/sh
 
-clean:
-	docker compose down -v
-	docker system prune -f
-	docker volume prune -f
 
 test:
 	docker compose exec backend go test ./...
 
 
 # Database commands (Adjust the database name <myapp> as needed)
-db-shell:
-	docker compose exec postgres psql -U postgres -d myapp  
+
 
 db-migrate:
 	docker compose exec backend go run main.go migrate

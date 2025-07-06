@@ -2,6 +2,8 @@ package auth
 
 import (
 	"time"
+	"fmt"
+	"github.com/google/uuid"
 
 	"github.com/golang-jwt/jwt/v5"
 	"hi-cfo/server/internal/config"
@@ -44,7 +46,7 @@ func GenerateAccessToken(user *models.User) (string, error) {
 	expirationTime := time.Now().Add(config.GetJWTExpiry())
 	
 	claims := &middleware.Claims{
-		UserID:    user.ID,
+		UserID:    user.ID.String(),  // Always use string format
 		Email:     user.Email,
 		// Role:      user.Role,
 		TokenType: "access",
@@ -53,7 +55,7 @@ func GenerateAccessToken(user *models.User) (string, error) {
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    config.GetAppName(),
-			Subject:   string(rune(user.ID)),
+			Subject:   user.ID.String(),
 		},
 	}
 
@@ -66,16 +68,16 @@ func GenerateRefreshToken(user *models.User) (string, error) {
 	expirationTime := time.Now().Add(config.GetJWTRefreshExpiry())
 	
 	claims := &middleware.Claims{
-		UserID:    user.ID,
+		UserID:    user.ID.String(),
 		Email:     user.Email,
-		// Role:      user.Role,
+		Role:      user.Role,
 		TokenType: "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    config.GetAppName(),
-			Subject:   string(rune(user.ID)),
+			Subject:   user.ID.String(),
 		},
 	}
 
@@ -116,18 +118,24 @@ func ValidateRefreshToken(tokenString string) (*middleware.Claims, error) {
 
 // RefreshAccessToken generates a new access token using refresh token
 func RefreshAccessToken(refreshToken string) (*TokenPair, error) {
-	claims, err := ValidateRefreshToken(refreshToken)
-	if err != nil {
-		return nil, err
-	}
+    claims, err := ValidateRefreshToken(refreshToken)
+    if err != nil {
+        return nil, err
+    }
 
-	// Create user object from claims
-	user := &models.User{
-		ID:    claims.UserID,
-		Email: claims.Email,
-		// Role:  claims.Role,
-	}
+    // Parse the UUID from string
+    userID, err := uuid.Parse(claims.UserID)
+    if err != nil {
+        return nil, fmt.Errorf("invalid user ID in token: %w", err)
+    }
 
-	// Generate new token pair
-	return GenerateTokenPair(user)
+    // Create user object from claims
+    user := &models.User{
+        ID:    userID, // Now correctly using uuid.UUID type
+        Email: claims.Email,
+        // Role:  claims.Role,
+    }
+
+    // Generate new token pair
+    return GenerateTokenPair(user)
 }

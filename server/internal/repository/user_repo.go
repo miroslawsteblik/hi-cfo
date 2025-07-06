@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"hi-cfo/server/internal/models"
+    "github.com/google/uuid"
 
 	"gorm.io/gorm"
 )
@@ -11,11 +12,11 @@ import (
 // UserRepository provides methods to interact with the user database
 type UserRepository interface {
     Create(user models.User) (*models.User, error)
-    GetByID(id uint) (*models.User, error)
+    GetByID(id uuid.UUID) (*models.User, error)
     GetByEmail(email string) (*models.User, error)
     GetAll() ([]models.User, error)
     Update(user models.User) (*models.User, error)
-    Delete(id uint) error
+    Delete(id uuid.UUID) error
 }
 
 // userRepository implements UserRepository interface
@@ -29,15 +30,20 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 // Create inserts a new user into the database
 func (r *userRepository) Create(user models.User) (*models.User, error) {
+    // Generate a new UUID if not already set
+    if user.ID == uuid.Nil {
+        user.ID = uuid.New()
+    }
+    
     if err := r.db.Create(&user).Error; err != nil {
         return nil, err
     }
     return &user, nil
-}    
+}
 // GetByID retrieves a user by their ID
-func (r *userRepository) GetByID(id uint) (*models.User, error) {
+func (r *userRepository) GetByID(id uuid.UUID) (*models.User, error) {
     var user models.User
-    if err := r.db.First(&user, id).Error; err != nil {
+    if err := r.db.First(&user, "id = ?", id).Error; err != nil {
         if errors.Is(err, gorm.ErrRecordNotFound) {
             return nil, nil // User not found
         }
@@ -72,8 +78,8 @@ func (r *userRepository) Update(user models.User) (*models.User, error) {
     return &user, nil
 }
 // Delete removes a user from the database by their ID
-func (r *userRepository) Delete(id uint) error {
-    if err := r.db.Delete(&models.User{}, id).Error; err != nil {
+func (r *userRepository) Delete(id uuid.UUID) error {
+    if err := r.db.Delete(&models.User{}, "id = ?", id).Error; err != nil {
         return err // Error deleting user
     }
     return nil
