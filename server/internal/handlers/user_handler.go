@@ -1,13 +1,14 @@
 package handlers
 
 import (
-    "net/http"
-    "strconv"
-    
-    "hi-cfo/server/internal/models"
-    "hi-cfo/server/internal/services"
-    "github.com/gin-gonic/gin"
-    "github.com/go-playground/validator/v10"
+	"net/http"
+	"strconv"
+
+	"hi-cfo/server/internal/models"
+	"hi-cfo/server/internal/services"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type UserHandler struct {
@@ -33,7 +34,7 @@ func (h *UserHandler) Register(router *gin.Context) {
         router.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
         return
     }
-    user, err := h.userService.Register(&req)
+    user, err := h.userService.RegisterUser(&req)
     if err != nil {
         router.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
         return
@@ -55,7 +56,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	response, err := h.userService.Login(&req)
+	response, err := h.userService.LoginUser(&req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return

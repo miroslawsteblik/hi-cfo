@@ -1,17 +1,18 @@
 package services
 
 import (
-    "hi-cfo/server/internal/models"
-    "hi-cfo/server/internal/repository"
-    "github.com/golang-jwt/jwt/v5"
-    "time"
-    "errors"
-    "strconv"
+	"errors"
+	"hi-cfo/server/internal/models"
+	"hi-cfo/server/internal/repository"
+	"strconv"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserService interface {
-	Register(req *models.UserRequest) (*models.UserResponse, error)
-	Login(req *models.LoginRequest) (*models.LoginResponse, error)
+	RegisterUser(req *models.UserRequest) (*models.UserResponse, error)
+	LoginUser(req *models.LoginRequest) (*models.LoginResponse, error)
 	GetAllUsers() ([]models.UserResponse, error)
 	CreateUser(req *models.UserRequest) (*models.UserResponse, error)
 	GetUser(id uint) (*models.UserResponse, error)
@@ -28,7 +29,7 @@ func NewUserService(userRepo repository.UserRepository, jwtSecret string) UserSe
         jwtSecret: jwtSecret,
     }
 }
-func (s *userService) Register(req *models.UserRequest) (*models.UserResponse, error) {
+func (s *userService) RegisterUser(req *models.UserRequest) (*models.UserResponse, error) {
     existingUser, _ := s.userRepo.GetByEmail(req.Email)
     if existingUser != nil {
         return nil, errors.New("user already exists")
@@ -39,6 +40,7 @@ func (s *userService) Register(req *models.UserRequest) (*models.UserResponse, e
         Password:  req.Password,
         FirstName: req.FirstName,
         LastName:  req.LastName,
+        Role: "user", // Default role
     }
 
     if err := user.HashPassword(); err != nil {
@@ -52,7 +54,7 @@ func (s *userService) Register(req *models.UserRequest) (*models.UserResponse, e
     resp := user.ToResponse()
     return &resp, nil
 }
-func (s *userService) Login(req *models.LoginRequest) (*models.LoginResponse, error) {
+func (s *userService) LoginUser(req *models.LoginRequest) (*models.LoginResponse, error) {
     user, err := s.userRepo.GetByEmail(req.Email)
     if err != nil || user == nil {
         return nil, errors.New("invalid email or password")
@@ -101,7 +103,7 @@ func (s *userService) GetAllUsers() ([]models.UserResponse, error) {
     return userResponses, nil
 }
 func (s *userService) CreateUser(req *models.UserRequest) (*models.UserResponse, error) {
-    return s.Register(req)
+    return s.RegisterUser(req)
 }
 func (s *userService) GetUser(id uint) (*models.UserResponse, error) {
     user, err := s.userRepo.GetByID(id)

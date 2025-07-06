@@ -14,6 +14,7 @@ type User struct {
 	LastName  string    `json:"last_name" gorm:"not null"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Role      string    `json:"role" gorm:"default:'user';not null"` // Default role is 'user'
 }
 
 type UserRequest struct {

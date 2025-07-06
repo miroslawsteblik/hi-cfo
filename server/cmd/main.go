@@ -4,45 +4,37 @@ import (
 	"log"
 	"os"
 
-
-	"github.com/gin-gonic/gin"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-
-	"hi-cfo/server/internal/models"
 	"hi-cfo/server/internal/routes"
 
 	"hi-cfo/server/internal/handlers"
 	"hi-cfo/server/internal/repository"
 	"hi-cfo/server/internal/services"
-    "hi-cfo/server/internal/middleware"
+	"hi-cfo/server/internal/config"
+
 )
 
 func main() {
 	// Database connection
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "host=localhost user=postgres password=password dbname=userdb port=5432 sslmode=disable"
+		log.Fatal("DATABASE_URL environment variable is required")
 	}
-	
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+	db, err := config.ConnectPostgreSQL(dsn)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
-    
-	// Auto migrate
-	err = db.AutoMigrate(&models.User{})
-	if err != nil {
-		log.Fatal("Failed to migrate database:", err)
+
+	// Run auto-migration
+	if err := config.AutoMigrate(db); err != nil {
+		log.Fatal("Failed to run database migrations:", err)
 	}
 
 	// JWT Secret
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "your-secret-key-change-this-in-production"
+		log.Fatal("JWT_SECRET environment variable is required")
 	}
-
-
 
 
 	// Initialize repository, service, and handler
@@ -50,27 +42,25 @@ func main() {
 	userService := services.NewUserService(userRepo, jwtSecret)
 	userHandler := handlers.NewUserHandler(userService)
 
-	// Setup router
-	router := gin.Default()
+	// Setup router - USE the router returned by SetupRoutes
+	router := routes.SetupRoutes(userHandler)
+
+	// Setup nginx reverse proxy
+	router.SetTrustedProxies([]string{"nginx", "nginx_proxy"})
+
+	// Get port from environment
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	
-	// setup nginx reverse proxy
-	router.SetTrustedProxies([]string{"nginx"})
-    
-    // Middleware for CORS
-    corsMiddleware := middleware.SetupCORS()
-    router.Use(corsMiddleware)
-
-    // Setup routes
-    routes.SetupUserRoutes(router, userHandler)
-
-    // Start server
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8080"
-    }
-    log.Println("Starting server on port", port)
-    if err := router.Run(":" + port); err != nil {
-        log.Fatal("Failed to start server:", err)
-    }
-    log.Println("Server started successfully")
+	log.Println("Starting server on port", port)
+	log.Println("Health check available at: http://localhost:" + port + "/health")
+	log.Println("Ping available at: http://localhost:" + port + "/ping")
+	log.Println("Ready check available at: http://localhost:" + port + "/ready")
+	
+	// Start server - bind to all interfaces
+	if err := router.Run("0.0.0.0:" + port); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }
