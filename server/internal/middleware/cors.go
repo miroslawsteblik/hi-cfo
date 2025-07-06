@@ -8,14 +8,17 @@ import (
 
 func SetupCORS() gin.HandlerFunc {
     return cors.New(cors.Config{
-        AllowOrigins:     []string{"http://localhost:3000"},
-        AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-        AllowHeaders:     []string{"Content-Type", "Authorization"},
+        AllowOrigins: []string{
+            "http://localhost:3000",  // Direct frontend access (development)
+            "http://localhost",       // nginx proxy (production)
+            "https://localhost",      // nginx with SSL
+        },
+        AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+        AllowHeaders: []string{"Content-Type", "Authorization"},
         AllowCredentials: true,
-        MaxAge:           12 * time.Hour,
+        MaxAge: 12 * time.Hour,
     })
 }
-
 // Or custom CORS middleware - if you need more control or specific headers
 func CustomCORS() gin.HandlerFunc {
     return func(c *gin.Context) {

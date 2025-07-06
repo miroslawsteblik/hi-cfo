@@ -1,94 +1,80 @@
 package repository
 
 import (
-    "database/sql"
-    "hi-cfo/server/internal/models"
+	"errors"
+
+	"hi-cfo/server/internal/models"
+
+	"gorm.io/gorm"
 )
 
-type UserRepository struct {
-    db *sql.DB
+// UserRepository provides methods to interact with the user database
+type UserRepository interface {
+    Create(user models.User) (*models.User, error)
+    GetByID(id uint) (*models.User, error)
+    GetByEmail(email string) (*models.User, error)
+    GetAll() ([]models.User, error)
+    Update(user models.User) (*models.User, error)
+    Delete(id uint) error
 }
 
-func NewUserRepository(db *sql.DB) *UserRepository {
-    return &UserRepository{db: db}
+// userRepository implements UserRepository interface
+type userRepository struct {
+    db *gorm.DB
 }
 
-func (r *UserRepository) Create(user models.CreateUserRequest) (*models.User, error) {
-    query := `
-        INSERT INTO users (name, email) 
-        VALUES ($1, $2) 
-        RETURNING id, name, email, created_at`
-    
-    var newUser models.User
-    err := r.db.QueryRow(query, user.Name, user.Email).Scan(
-        &newUser.ID, &newUser.Name, &newUser.Email, &newUser.CreatedAt,
-    )
-    
-    if err != nil {
+// NewUserRepository creates a new UserRepository
+func NewUserRepository(db *gorm.DB) UserRepository {
+    return &userRepository{db: db}
+}
+// Create inserts a new user into the database
+func (r *userRepository) Create(user models.User) (*models.User, error) {
+    if err := r.db.Create(&user).Error; err != nil {
         return nil, err
     }
-    
-    return &newUser, nil
-}
-
-func (r *UserRepository) GetByID(id int) (*models.User, error) {
-    query := `SELECT id, name, email, created_at FROM users WHERE id = $1`
-    
+    return &user, nil
+}    
+// GetByID retrieves a user by their ID
+func (r *userRepository) GetByID(id uint) (*models.User, error) {
     var user models.User
-    err := r.db.QueryRow(query, id).Scan(
-        &user.ID, &user.Name, &user.Email, &user.CreatedAt,
-    )
-    
-    if err != nil {
-        return nil, err
+    if err := r.db.First(&user, id).Error; err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, nil // User not found
+        }
+        return nil, err // Other error
     }
-    
     return &user, nil
 }
-
-func (r *UserRepository) GetAll() ([]models.User, error) {
-    query := `SELECT id, name, email, created_at FROM users ORDER BY created_at DESC`
-    
-    rows, err := r.db.Query(query)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
-    
-    var users []models.User
-    for rows.Next() {
-        var user models.User
-        err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt)
-        if err != nil {
-            return nil, err
+// GetByEmail retrieves a user by their email
+func (r *userRepository) GetByEmail(email string) (*models.User, error) {
+    var user models.User
+    if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, nil // User not found
         }
-        users = append(users, user)
+        return nil, err // Other error
     }
-    
+    return &user, nil
+}
+// GetAll retrieves all users from the database
+func (r *userRepository) GetAll() ([]models.User, error) {
+    var users []models.User
+    if err := r.db.Find(&users).Error; err != nil {
+        return nil, err // Error retrieving users
+    }
     return users, nil
 }
-
-func (r *UserRepository) Update(id int, user models.UpdateUserRequest) (*models.User, error) {
-    query := `
-        UPDATE users 
-        SET name = $1, email = $2 
-        WHERE id = $3 
-        RETURNING id, name, email, created_at`
-    
-    var updatedUser models.User
-    err := r.db.QueryRow(query, user.Name, user.Email, id).Scan(
-        &updatedUser.ID, &updatedUser.Name, &updatedUser.Email, &updatedUser.CreatedAt,
-    )
-    
-    if err != nil {
-        return nil, err
+// Update modifies an existing user in the database
+func (r *userRepository) Update(user models.User) (*models.User, error) {
+    if err := r.db.Save(&user).Error; err != nil {
+        return nil, err // Error updating user
     }
-    
-    return &updatedUser, nil
+    return &user, nil
 }
-
-func (r *UserRepository) Delete(id int) error {
-    query := `DELETE FROM users WHERE id = $1`
-    _, err := r.db.Exec(query, id)
-    return err
+// Delete removes a user from the database by their ID
+func (r *userRepository) Delete(id uint) error {
+    if err := r.db.Delete(&models.User{}, id).Error; err != nil {
+        return err // Error deleting user
+    }
+    return nil
 }

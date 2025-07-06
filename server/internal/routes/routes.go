@@ -2,12 +2,7 @@ package routes
 
 import (
     "hi-cfo/server/internal/handlers"
-    "hi-cfo/server/internal/middleware"
 
-		"hi-cfo/server/internal/repository"
-		"hi-cfo/server/internal/services"
-
-		"database/sql"
     "github.com/gin-gonic/gin"
 )
 
@@ -16,36 +11,29 @@ import (
 		
 		
 		
-func SetupRoutes(db *sql.DB) *gin.Engine {
-		// Initialize layers
-		userRepo := repository.NewUserRepository(db)
-		userService := services.NewUserService(userRepo)
-		userHandler := handlers.NewUserHandler(userService)
+func SetupUserRoutes(router *gin.Engine, userHandler *handlers.UserHandler) {
+	// Auth routes
+	auth := router.Group("/api/auth")
+	{
+		auth.POST("/register", userHandler.Register)
+		auth.POST("/login", userHandler.Login)
+	}
 
-    r := gin.Default()
-    
-    // Apply CORS middleware
-    r.Use(middleware.SetupCORS())
+	// User routes
+	users := router.Group("/api/users")
+	{
+		users.GET("", userHandler.GetAllUsers)
+		users.POST("", userHandler.CreateUser)
+		users.GET("/:id", userHandler.GetUser)
+		users.PUT("/:id", userHandler.UpdateUser)
+		users.DELETE("/:id", userHandler.DeleteUser)
+	}
+  // Health check endpoint
+  router.GET("/health", func(c *gin.Context) {
+    c.JSON(200, gin.H{"status": "ok"})
 
-		// Health check
-    r.GET("/health", func(c *gin.Context) {
-        c.JSON(200, gin.H{"status": "healthy"})
-    })
-    
-    // API routes
-    api := r.Group("/api")
-    {
-			  api.GET("/hello", func(c *gin.Context) {
-            c.JSON(200, gin.H{"message": "Hello from Go!"})
-        })
-
-				// Public routes
-        api.GET("/users", userHandler.GetAllUsers)
-        api.POST("/users", userHandler.CreateUser)
-        api.GET("/users/:id", userHandler.GetUser)
-        // api.PUT("/users/:id", userHandler.UpdateUser)
-        // api.DELETE("/users/:id", userHandler.DeleteUser)
-    }
-    
-    return r
+  })
+  router.GET("/ping", func(c *gin.Context) {
+    c.JSON(200, gin.H{"message": "pong"})
+  })
 }
