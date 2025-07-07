@@ -48,10 +48,10 @@ services:
   frontend:
     build: 
       context: ./client
-      dockerfile: Dockerfile.dev # DEV mode
+      dockerfile: Dockerfile.prod
     container_name: nextjs_frontend
     environment:
-      - NODE_ENV=development  # DEV mode
+      - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
     depends_on:
       backend:
@@ -65,9 +65,7 @@ services:
     networks:
       - frontend-network
     restart: unless-stopped
-    volumes:
-      - ./client:/app  # Mount source code into container
-      - /app/node_modules  # Prevent overwriting node_modules
+
 
   nginx:
     image: nginx:alpine

@@ -64,9 +64,9 @@ tmp/
 # Ignore all IDE specific files
 .idea/
 
-DEVNOTES-docker.md
-DEVNOTES.md
-DEVNOTES-connections.md
+
 BLOG.md
 # Ignore all editor specific files
 .vscode/
+# all that start with DEVNOTES
+DEVNOTES-*
