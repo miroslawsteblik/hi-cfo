@@ -313,3 +313,6 @@ docker-compose exec nginx ping redis
 Success Criteria
 
 ✅ All containers are running (docker-compose ps) ✅ Health checks pass (/health returns 200) ✅ Frontend loads at http://localhost ✅ API endpoints respond at http://localhost/api/* ✅ Static files load with proper caching headers ✅ Rate limiting works (returns 429 when exceeded) ✅ CORS headers are present ✅ Security headers are set ✅ Redis is accessible and authenticated ✅ WebSocket connections work ✅ No errors in container logs
+
+
+curl -i http://localhost:8088/health

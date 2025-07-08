@@ -14,6 +14,9 @@ down:
 logs-dev:
 	docker compose -f docker-compose.dev.yml logs -f
 
+config-dev:
+	docker compose -f docker-compose.dev.yml config
+
 logs-prod:
 	docker compose -f docker-compose.prod.yml logs -f
 

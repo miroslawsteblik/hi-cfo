@@ -15,12 +15,7 @@ import (
 
 func main() {
 	// Database connection
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		log.Fatal("DATABASE_URL environment variable is required")
-	}
-
-	db, err := config.ConnectPostgreSQL(dsn)
+	db, err := config.ConnectPostgreSQL()
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}

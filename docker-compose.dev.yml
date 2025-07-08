@@ -1,40 +1,27 @@
 
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: postgres_db
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5433:5432" # Expose PostgreSQL local on port 5433 to docker host 5432
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database:/docker-entrypoint-initdb.d  # Mount the schema.sql file to initialize the database
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend-network
-    restart: unless-stopped
-
   backend:
     build: 
       context: ./server
       dockerfile: Dockerfile
     container_name: go_backend
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      # - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:5432/${DB_NAME}?sslmode=disable
+      - DB_HOST=${DB_HOST}  # Use host.docker.internal for Docker Desktop
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=5432
       - JWT_SECRET=${JWT_SECRET}
       - API_PORT=8080
       - GIN_MODE=release
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - JWT_SECRET=${JWT_SECRET}
+      - API_PORT=8080
+      - GIN_MODE=release
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -57,7 +44,7 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      test:  ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -110,12 +97,11 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
   redis_data:
 
 networks:
   backend-network:
     driver: bridge
-    internal: true  # Database network is internal only
+    internal: false
   frontend-network:
     driver: bridge  # Frontend network allows external access via nginx

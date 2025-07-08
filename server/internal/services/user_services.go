@@ -15,11 +15,12 @@ type UserService interface {
     RegisterUser(req *models.UserRequest) (*models.UserResponse, error)
     LoginUser(req *models.LoginRequest) (*models.LoginResponse, error)
     GetAllUsers() ([]models.UserResponse, error)
-    CreateUser(req *models.UserRequest) (*models.UserResponse, error)
     GetUser(id uuid.UUID) (*models.UserResponse, error)
     UpdateUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error)
     DeleteUser(id uuid.UUID) error
-    GetUserByEmail(email string) (*models.User, error) // Added missing method
+    GetUserByEmail(email string) (*models.User, error) 
+    UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error)
+	ChangePassword(id uuid.UUID, currentPassword, newPassword string) error
 }
 type userService struct {
     userRepo repository.UserRepository
@@ -113,9 +114,9 @@ func (s *userService) GetAllUsers() ([]models.UserResponse, error) {
 
     return userResponses, nil
 }
-func (s *userService) CreateUser(req *models.UserRequest) (*models.UserResponse, error) {
-    return s.RegisterUser(req)
-}
+// func (s *userService) CreateUser(req *models.UserRequest) (*models.UserResponse, error) {
+//     return s.RegisterUser(req)
+// }
 func (s *userService) GetUser(id uuid.UUID) (*models.UserResponse, error) {
     user, err := s.userRepo.GetByID(id)
     if err != nil {
@@ -171,4 +172,65 @@ func (s *userService) DeleteUser(id uuid.UUID) error {
 
 func (s *userService) GetUserByEmail(email string) (*models.User, error) {
     return s.userRepo.GetByEmail(email)
+}
+
+func (s *userService) UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error) {
+	user, err := s.userRepo.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	// Check if email is being changed and if it already exists
+	if req.Email != user.Email {
+		existingUser, _ := s.userRepo.GetByEmail(req.Email)
+		if existingUser != nil {
+			return nil, errors.New("email already exists")
+		}
+	}
+
+	// Update user fields (excluding password)
+	user.Email = req.Email
+	user.FirstName = req.FirstName
+	user.LastName = req.LastName
+
+	// Don't update password in profile update - use ChangePassword for that
+
+	updatedUser, err := s.userRepo.Update(*user)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := updatedUser.ToResponse()
+	return &resp, nil
+}
+
+func (s *userService) ChangePassword(id uuid.UUID, currentPassword, newPassword string) error {
+	user, err := s.userRepo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return errors.New("user not found")
+	}
+
+	// Verify current password
+	if !user.CheckPassword(currentPassword) {
+		return errors.New("invalid current password")
+	}
+
+	// Set new password
+	if err := user.SetPassword(newPassword); err != nil {
+		return err
+	}
+
+	// Update user in database
+	_, err = s.userRepo.Update(*user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

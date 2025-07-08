@@ -8,16 +8,7 @@ TO Register new ap.
 5. Set Up JWT Generation
 6. test api
 
-```
-# Register a new user
-curl -X POST http://localhost/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "first_name":"Test User",
-    "last_name":"Test User Surname", 
-    "email":"test@example.com",
-    "password":"password123"
-    }'
+
 
 # Login with the user
 curl -X POST http://localhost/api/v1/auth/login \
@@ -26,14 +17,27 @@ curl -X POST http://localhost/api/v1/auth/login \
     "email":"test2@example.com",
     "password":"password1234"
     }'
-```
+
 
 # Register a new user
-curl -X POST http://localhost/api/v1/auth/register \
+curl -X POST http://localhost:8088/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "first_name":"TestUser2",
-    "last_name":"TestUserSurname2", 
-    "email":"test2@example.com",
+    "first_name":"TestUser8",
+    "last_name":"TestUserSurname8",
+    "email":"test8@example.com",
     "password":"password1234"
     }'
+
+
+# Test from your host machine
+curl -X POST http://localhost:8088/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -H "Origin: http://localhost:3000" \
+  -d '{
+    "first_name":"TestUser7",
+    "last_name":"TestUserSurname7",
+    "email":"test7@example.com",
+    "password":"password1234"
+    }' \
+  -v

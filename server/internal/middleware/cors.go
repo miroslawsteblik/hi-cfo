@@ -27,174 +27,128 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authorization header required",
-			})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
 			c.Abort()
 			return
 		}
 
-		// Extract token from "Bearer <token>"
-		tokenParts := strings.Split(authHeader, " ")
-		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid authorization header format",
-			})
+		// Check if header starts with "Bearer "
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
 			c.Abort()
 			return
 		}
 
-		tokenString := tokenParts[1]
-		
+		// Extract token
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
+			c.Abort()
+			return
+		}
+
 		// Parse and validate token
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+			// Make sure the signing method is what we expect
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				return nil, jwt.ErrSignatureInvalid
 			}
 			return []byte(config.GetJWTSecret()), nil
 		})
 
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token",
-			})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
+			return
+		}
+
+		// Extract claims
+		claims, ok := token.Claims.(*Claims)
+		if !ok || !token.Valid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			c.Abort()
+			return
+		}
+
+		// Set user information in context
+		c.Set("userID", claims.UserID)
+		c.Set("email", claims.Email)
+		c.Set("role", claims.Role)
+
+		c.Next()
+	}
+}
+
+
+
+// RequireRoles middleware checks if user has one of the required roles
+func RequireRole(requiredRole string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role, exists := c.Get("role")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			c.Abort()
+			return
+		}
+
+		if role.(string) != requiredRole {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Insufficient permissions"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// OptionalAuth middleware for endpoints that can work with or without auth
+func OptionalAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			// No auth header, continue without setting user info
+			c.Next()
+			return
+		}
+
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			// Invalid format, continue without setting user info
+			c.Next()
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == "" {
+			// No token, continue without setting user info
+			c.Next()
+			return
+		}
+
+		// Try to parse token
+		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, jwt.ErrSignatureInvalid
+			}
+			return []byte(config.GetJWTSecret()), nil
+		})
+
+		if err != nil {
+			// Invalid token, continue without setting user info
+			c.Next()
 			return
 		}
 
 		claims, ok := token.Claims.(*Claims)
 		if !ok || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token claims",
-			})
-			c.Abort()
-			return
-		}
-
-		// Check if token is expired
-		if claims.ExpiresAt.Time.Before(time.Now()) {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Token expired",
-			})
-			c.Abort()
-			return
-		}
-
-		// Check token type (should be "access" not "refresh")
-		if claims.TokenType != "access" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token type",
-			})
-			c.Abort()
-			return
-		}
-
-		// Set user context
-		c.Set("user_id", claims.UserID)
-		c.Set("user_email", claims.Email)
-		c.Set("user_role", claims.Role)
-		c.Set("claims", claims)
-
-		c.Next()
-	}
-}
-
-// RequireRole middleware checks if user has required role
-func RequireRole(requiredRole string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userRole, exists := c.Get("user_role")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authentication required",
-			})
-			c.Abort()
-			return
-		}
-
-		if userRole != requiredRole {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": fmt.Sprintf("Role '%s' required", requiredRole),
-			})
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
-// RequireRoles middleware checks if user has one of the required roles
-func RequireRoles(roles ...string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userRole, exists := c.Get("user_role")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authentication required",
-			})
-			c.Abort()
-			return
-		}
-
-		hasValidRole := false
-		for _, role := range roles {
-			if userRole == role {
-				hasValidRole = true
-				break
-			}
-		}
-
-		if !hasValidRole {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": fmt.Sprintf("One of these roles required: %v", roles),
-			})
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
-// OptionalAuth middleware that doesn't require authentication but sets user context if token is provided
-func OptionalAuth() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+			// Invalid claims, continue without setting user info
 			c.Next()
 			return
 		}
 
-		tokenParts := strings.Split(authHeader, " ")
-		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-			c.Next()
-			return
-		}
-
-		tokenString := tokenParts[1]
-		
-		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(config.GetJWTSecret()), nil
-		})
-
-		if err != nil {
-			c.Next()
-			return
-		}
-
-		claims, ok := token.Claims.(*Claims)
-		if !ok || !token.Valid || claims.ExpiresAt.Time.Before(time.Now()) {
-			c.Next()
-			return
-		}
-
-		// Set user context if token is valid
-		c.Set("user_id", claims.UserID)
-		c.Set("user_email", claims.Email)
-		c.Set("user_role", claims.Role)
-		c.Set("claims", claims)
+		// Set user information in context
+		c.Set("userID", claims.UserID)
+		c.Set("email", claims.Email)
+		c.Set("role", claims.Role)
 
 		c.Next()
 	}

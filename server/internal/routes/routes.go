@@ -38,12 +38,39 @@ func SetupRoutes(userHandler *handlers.UserHandler) *gin.Engine {
 
 	// CORS configuration
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost", "https://localhost"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		AllowOrigins:     []string{
+			"http://localhost:3000",
+			"http://localhost:8088",  // Docker nginx port
+			"http://localhost:80",
+			"http://localhost",
+			"https://localhost:3000",
+			"https://localhost:8088", // Docker nginx port
+			"https://localhost:80", 
+			"https://localhost",
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:8088",  // your Docker nginx port
+			"http://127.0.0.1:80",
+			"http://127.0.0.1",
+			},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"},
+		AllowHeaders:     []string{
+			"Origin",
+			"Content-Type", 
+			"Accept",
+			"Authorization",
+			"X-Requested-With",
+			"X-Request-ID",
+			"X-Real-IP",
+			"X-Forwarded-For",
+			"X-Forwarded-Proto",
+			"X-Forwarded-Host",
+			"X-Forwarded-Port",
+			"Cache-Control",
+			"Pragma",
+		},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
-		ExposeHeaders:  []string{"X-Request-ID","Content-Length"},
+		ExposeHeaders:  []string{"X-Request-ID","Content-Length", "Authorization"},
 	}))
 
 	// Health check endpoint
@@ -86,13 +113,13 @@ func SetupRoutes(userHandler *handlers.UserHandler) *gin.Engine {
 			}
 
 			//current user routes
-			// currentUser := protected.Group("/me")
-			// {
-			// 	currentUser.GET("", userHandler.GetCurrentUser) // Get current user
-			// 	currentUser.PUT("", userHandler.UpdateCurrentUser) // Update current user
-			// 	currentUser.DELETE("", userHandler.DeleteCurrentUser) // Delete current user
-			// 	currentUser.POST("/change-password", userHandler.ChangePassword) // Change current user's password
-			// }
+			currentUser := protected.Group("/me")
+			{
+				currentUser.GET("", userHandler.GetCurrentUser) // Get current user
+				currentUser.PUT("", userHandler.UpdateCurrentUser) // Update current user
+				currentUser.DELETE("", userHandler.DeleteCurrentUser) // Delete current user
+				currentUser.POST("/change-password", userHandler.ChangePassword) // Change current user's password
+			}
 
 			//admin routes
 			admin := protected.Group("/admin")
@@ -117,6 +144,13 @@ func SetupRoutes(userHandler *handlers.UserHandler) *gin.Engine {
 
 	return router
 }
+
+
+
+
+
+
+
 
 // Health check handler
 func healthCheck(c *gin.Context) {

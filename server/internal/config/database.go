@@ -6,26 +6,44 @@ import (
 	"hi-cfo/server/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"os"
 )
 
-func ConnectPostgreSQL(dsn string) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
+func ConnectPostgreSQL() (*gorm.DB, error) {
+    // Build DSN from environment variables
+    host := os.Getenv("DB_HOST")
+    user := os.Getenv("DB_USER")
+    password := os.Getenv("DB_PASSWORD")
+    dbname := os.Getenv("DB_NAME")
+    port := os.Getenv("DB_PORT")
+    
+    if host == "" {
+        host = "localhost"
+    }
+    if port == "" {
+        port = "5432"
+    }
+    
+    dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+        host, user, password, dbname, port)
+    
+    db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    if err != nil {
+        return nil, fmt.Errorf("failed to connect to database: %w", err)
+    }
 
-	// Test the connection
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get database instance: %w", err)
-	}
+    // Test the connection
+    sqlDB, err := db.DB()
+    if err != nil {
+        return nil, fmt.Errorf("failed to get database instance: %w", err)
+    }
 
-	if err := sqlDB.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
-	}
+    if err := sqlDB.Ping(); err != nil {
+        return nil, fmt.Errorf("failed to ping database: %w", err)
+    }
+		log.Println("Connected to PostgreSQL database successfully")
 
-	log.Println("Successfully connected to PostgreSQL database")
-	return db, nil
+    return db, nil
 }
 
 // AutoMigrate runs database migrations
@@ -47,16 +65,3 @@ func AutoMigrate(db *gorm.DB) error {
 	return nil
 }
 
-// Alternative: You can also create a combined function
-func ConnectAndMigrate(dsn string) (*gorm.DB, error) {
-	db, err := ConnectPostgreSQL(dsn)
-	if err != nil {
-		return nil, err
-	}
-	
-	if err := AutoMigrate(db); err != nil {
-		return nil, err
-	}
-	
-	return db, nil
-}

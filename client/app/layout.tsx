@@ -1,12 +1,12 @@
+import './globals.css'
 import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
-import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'My App',
-  description: 'A Next.js application with authentication',
+  title: 'Hi-CFO',
+  description: 'CFO Management Application',
 }
 
 export default function RootLayout({
