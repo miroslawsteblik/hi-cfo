@@ -6,17 +6,13 @@ import (
 	"time"
 )
 
-// GetJWTSecret returns the JWT secret from environment
+
 func GetJWTSecret() string {
 	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		// In development, use a default secret (NOT for production)
-		return "your-development-secret-key-change-this-in-production"
-	}
 	return secret
 }
 
-// GetJWTExpiry returns the JWT expiry duration
+
 func GetJWTExpiry() time.Duration {
 	expiryStr := os.Getenv("JWT_EXPIRY")
 	if expiryStr == "" {
@@ -31,7 +27,6 @@ func GetJWTExpiry() time.Duration {
 	return expiry
 }
 
-// GetJWTRefreshExpiry returns the refresh token expiry duration
 func GetJWTRefreshExpiry() time.Duration {
 	expiryStr := os.Getenv("JWT_REFRESH_EXPIRY")
 	if expiryStr == "" {
@@ -46,32 +41,21 @@ func GetJWTRefreshExpiry() time.Duration {
 	return expiry
 }
 
-// GetAppName returns the application name
 func GetAppName() string {
 	name := os.Getenv("APP_NAME")
 
 	return name
 }
 
-// GetPort returns the server port
 func GetPort() string {
 	port := os.Getenv("API_PORT")
-	if port == "" {
-		return "8080"
-	}
 	return port
 }
 
-
-
-// IsDevelopment checks if running in development mode
 func IsDevelopment() bool {
 	return os.Getenv("APP_ENV") == "development"
 }
 
-
-
-// GetBcryptRounds returns the bcrypt rounds for password hashing
 func GetBcryptRounds() int {
 	rounds := os.Getenv("BCRYPT_ROUNDS")
 	if rounds == "" {
@@ -86,7 +70,6 @@ func GetBcryptRounds() int {
 	return r
 }
 
-// GetMaxFileSize returns the maximum file upload size
 func GetMaxFileSize() int64 {
 	sizeStr := os.Getenv("MAX_FILE_SIZE")
 	if sizeStr == "" {

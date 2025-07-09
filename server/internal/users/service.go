@@ -1,9 +1,8 @@
-package services
+package users
 
 import (
 	"errors"
-	"hi-cfo/server/internal/models"
-	"hi-cfo/server/internal/repository"
+	// "hi-cfo/server/internal/users"
 
     "github.com/google/uuid"
 	"time"
@@ -12,35 +11,35 @@ import (
 )
 
 type UserService interface {
-    RegisterUser(req *models.UserRequest) (*models.UserResponse, error)
-    LoginUser(req *models.LoginRequest) (*models.LoginResponse, error)
-    GetAllUsers() ([]models.UserResponse, error)
-    GetUser(id uuid.UUID) (*models.UserResponse, error)
-    UpdateUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error)
+    RegisterUser(req *UserRequest) (*UserResponse, error)
+    LoginUser(req *LoginRequest) (*LoginResponse, error)
+    GetAllUsers() ([]UserResponse, error)
+    GetUser(id uuid.UUID) (*UserResponse, error)
+    UpdateUser(id uuid.UUID, req *UserRequest) (*UserResponse, error)
     DeleteUser(id uuid.UUID) error
-    GetUserByEmail(email string) (*models.User, error) 
-    UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error)
+    GetUserByEmail(email string) (*User, error) 
+    UpdateCurrentUser(id uuid.UUID, req *UserRequest) (*UserResponse, error)
 	ChangePassword(id uuid.UUID, currentPassword, newPassword string) error
 }
 type userService struct {
-    userRepo repository.UserRepository
+    userRepo UserRepository
     jwtSecret string
 }
 
-func NewUserService(userRepo repository.UserRepository, jwtSecret string) UserService {
+func NewUserService(userRepo UserRepository, jwtSecret string) UserService {
     return &userService{
         userRepo: userRepo,
         jwtSecret: jwtSecret,
     }
 }
-func (s *userService) RegisterUser(req *models.UserRequest) (*models.UserResponse, error) {
-    existingUser, _ := s.userRepo.GetByEmail(req.Email)
+func (s *userService) RegisterUser(req *UserRequest) (*UserResponse, error) {
+    existingUser, _ := s.userRepo.GetUserByEmail(req.Email)
     if existingUser != nil {
         return nil, errors.New("user already exists")
     }
     
     // Create a new user with UUID generated in repository
-    user := models.User{
+    user := User{
         Email:     req.Email,
         FirstName: req.FirstName,
         LastName:  req.LastName,
@@ -52,7 +51,7 @@ func (s *userService) RegisterUser(req *models.UserRequest) (*models.UserRespons
         return nil, err
     }
 
-    createdUser, err := s.userRepo.Create(user)
+    createdUser, err := s.userRepo.CreateUser(user)
     if err != nil {
         return nil, err
     }
@@ -60,8 +59,8 @@ func (s *userService) RegisterUser(req *models.UserRequest) (*models.UserRespons
     resp := createdUser.ToResponse()
     return &resp, nil
 }
-func (s *userService) LoginUser(req *models.LoginRequest) (*models.LoginResponse, error) {
-    user, err := s.userRepo.GetByEmail(req.Email)
+func (s *userService) LoginUser(req *LoginRequest) (*LoginResponse, error) {
+    user, err := s.userRepo.GetUserByEmail(req.Email)
     if err != nil || user == nil {
         return nil, errors.New("invalid email or password")
     }
@@ -73,7 +72,7 @@ func (s *userService) LoginUser(req *models.LoginRequest) (*models.LoginResponse
     // Update last login time
     now := time.Now()
     user.LastLogin = &now
-    s.userRepo.Update(*user) // Update last login (ignore error for now)
+    s.userRepo.UpdateUser(*user) // Update last login (ignore error for now)
 
     // Generate JWT token
     token, err := s.generateToken(user.ID)
@@ -81,7 +80,7 @@ func (s *userService) LoginUser(req *models.LoginRequest) (*models.LoginResponse
         return nil, err
     }
 
-    return &models.LoginResponse{
+    return &LoginResponse{
         Token: token,
         User:  user.ToResponse(),
     }, nil
@@ -101,24 +100,22 @@ func (s *userService) generateToken(userID uuid.UUID) (string, error) {
     return signedToken, nil
 }
 
-func (s *userService) GetAllUsers() ([]models.UserResponse, error) {
-    users, err := s.userRepo.GetAll()
+func (s *userService) GetAllUsers() ([]UserResponse, error) {
+    users, err := s.userRepo.GetAllUsers()
     if err != nil {
         return nil, err
     }
 
-    var userResponses []models.UserResponse
+    var userResponses []UserResponse
     for _, user := range users {
         userResponses = append(userResponses, user.ToResponse())
     }
 
     return userResponses, nil
 }
-// func (s *userService) CreateUser(req *models.UserRequest) (*models.UserResponse, error) {
-//     return s.RegisterUser(req)
-// }
-func (s *userService) GetUser(id uuid.UUID) (*models.UserResponse, error) {
-    user, err := s.userRepo.GetByID(id)
+
+func (s *userService) GetUser(id uuid.UUID) (*UserResponse, error) {
+    user, err := s.userRepo.GetUserByID(id)
     if err != nil {
         return nil, err
     }
@@ -128,8 +125,8 @@ func (s *userService) GetUser(id uuid.UUID) (*models.UserResponse, error) {
     resp := user.ToResponse()
     return &resp, nil
 }
-func (s *userService) UpdateUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error) {
-    user, err := s.userRepo.GetByID(id)
+func (s *userService) UpdateUser(id uuid.UUID, req *UserRequest) (*UserResponse, error) {
+    user, err := s.userRepo.GetUserByID(id)
     if err != nil {
         return nil, err
     }
@@ -148,7 +145,7 @@ func (s *userService) UpdateUser(id uuid.UUID, req *models.UserRequest) (*models
         }
     }
 
-    updatedUser, err := s.userRepo.Update(*user)
+    updatedUser, err := s.userRepo.UpdateUser(*user)
     if err != nil {
         return nil, err
     }
@@ -159,7 +156,7 @@ func (s *userService) UpdateUser(id uuid.UUID, req *models.UserRequest) (*models
 
 
 func (s *userService) DeleteUser(id uuid.UUID) error {
-    user, err := s.userRepo.GetByID(id)
+    user, err := s.userRepo.GetUserByID(id)
     if err != nil {
         return err
     }
@@ -167,15 +164,15 @@ func (s *userService) DeleteUser(id uuid.UUID) error {
         return errors.New("user not found")
     }
 
-    return s.userRepo.Delete(id)
+    return s.userRepo.DeleteUser(id)
 }
 
-func (s *userService) GetUserByEmail(email string) (*models.User, error) {
-    return s.userRepo.GetByEmail(email)
+func (s *userService) GetUserByEmail(email string) (*User, error) {
+    return s.userRepo.GetUserByEmail(email)
 }
 
-func (s *userService) UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error) {
-	user, err := s.userRepo.GetByID(id)
+func (s *userService) UpdateCurrentUser(id uuid.UUID, req *UserRequest) (*UserResponse, error) {
+	user, err := s.userRepo.GetUserByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +182,7 @@ func (s *userService) UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (
 
 	// Check if email is being changed and if it already exists
 	if req.Email != user.Email {
-		existingUser, _ := s.userRepo.GetByEmail(req.Email)
+		existingUser, _ := s.userRepo.GetUserByEmail(req.Email)
 		if existingUser != nil {
 			return nil, errors.New("email already exists")
 		}
@@ -198,7 +195,7 @@ func (s *userService) UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (
 
 	// Don't update password in profile update - use ChangePassword for that
 
-	updatedUser, err := s.userRepo.Update(*user)
+	updatedUser, err := s.userRepo.UpdateUser(*user)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +205,7 @@ func (s *userService) UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (
 }
 
 func (s *userService) ChangePassword(id uuid.UUID, currentPassword, newPassword string) error {
-	user, err := s.userRepo.GetByID(id)
+	user, err := s.userRepo.GetUserByID(id)
 	if err != nil {
 		return err
 	}
@@ -227,7 +224,7 @@ func (s *userService) ChangePassword(id uuid.UUID, currentPassword, newPassword 
 	}
 
 	// Update user in database
-	_, err = s.userRepo.Update(*user)
+	_, err = s.userRepo.UpdateUser(*user)
 	if err != nil {
 		return err
 	}

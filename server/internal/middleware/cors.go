@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"hi-cfo/server/internal/config"
-	"hi-cfo/server/internal/models"
+	"hi-cfo/server/internal/users"
 )
 
 // Claims represents the JWT claims
@@ -155,7 +155,7 @@ func OptionalAuth() gin.HandlerFunc {
 }
 
 // GetCurrentUser helper function to get current user from context
-func GetCurrentUser(c *gin.Context) *models.User {
+func GetCurrentUser(c *gin.Context) *users.User {
 	userID, exists := c.Get("user_id")
 	if !exists {
 		return nil
@@ -168,7 +168,7 @@ func GetCurrentUser(c *gin.Context) *models.User {
 	if !ok {
 		return nil
 	}
-	return &models.User{
+	return &users.User{
 		ID:    uuid,
 		Email: userEmail.(string),
 		// Role:  userRole.(string),

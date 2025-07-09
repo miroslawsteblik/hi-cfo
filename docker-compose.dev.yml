@@ -12,13 +12,11 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
-      - DB_PORT=5432
+      - DB_PORT=${DB_PORT}
       - JWT_SECRET=${JWT_SECRET}
-      - API_PORT=8080
+      - API_PORT=${API_PORT}
       - GIN_MODE=release
-      - JWT_SECRET=${JWT_SECRET}
-      - API_PORT=8080
-      - GIN_MODE=release
+
     extra_hosts:
       - "host.docker.internal:host-gateway"  
 
