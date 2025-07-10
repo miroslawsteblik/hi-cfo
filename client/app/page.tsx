@@ -1,3 +1,5 @@
+// Home Page Component
+
 'use client';
 
 import { useEffect, useState } from 'react';

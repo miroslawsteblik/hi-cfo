@@ -156,3 +156,50 @@ export default function LoginForm() {
     </form>
   );
 }
+
+
+// src/components/auth/LoginForm.tsx
+// 'use client';
+
+// import { useState } from 'react';
+// import { useAuth } from '@/hooks/useAuth';
+// import { useRouter } from 'next/navigation';
+
+// export function LoginForm() {
+//   const [email, setEmail] = useState('');
+//   const [password, setPassword] = useState('');
+//   const [error, setError] = useState('');
+//   const { login } = useAuth();
+//   const router = useRouter();
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     try {
+//       await login(email, password);
+//       router.push('/dashboard');
+//     } catch (error) {
+//       setError('Login failed');
+//     }
+//   };
+
+//   return (
+//     <form onSubmit={handleSubmit}>
+//       <input
+//         type="email"
+//         value={email}
+//         onChange={(e) => setEmail(e.target.value)}
+//         placeholder="Email"
+//         required
+//       />
+//       <input
+//         type="password"
+//         value={password}
+//         onChange={(e) => setPassword(e.target.value)}
+//         placeholder="Password"
+//         required
+//       />
+//       {error && <p style={{ color: 'red' }}>{error}</p>}
+//       <button type="submit">Login</button>
+//     </form>
+//   );
+// }
