@@ -6,6 +6,8 @@ services:
       context: ./server
       dockerfile: Dockerfile
     container_name: go_backend
+    env_file:
+      - .env
     environment:
       # - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:5432/${DB_NAME}?sslmode=disable
       - DB_HOST=${DB_HOST}  # Use host.docker.internal for Docker Desktop
@@ -46,9 +48,14 @@ services:
       context: ./client
       dockerfile: Dockerfile.dev # DEV mode
     container_name: nextjs_frontend
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development  # DEV mode
       - NEXT_TELEMETRY_DISABLED=1
+      - CHOKIDAR_USEPOLLING=true # DEV mode
+      - WATCHPACK_POLLING=true # DEV mode
+      - TAILWIND_DISABLE_TOUCH=false # DEV mode
     depends_on:
       backend:
         condition: service_healthy
@@ -64,10 +71,13 @@ services:
     volumes:
       - ./client:/app  # Mount source code into container
       - /app/node_modules  # Prevent overwriting node_modules
+      - /app/.next  # Prevent overwriting .next build artifacts
 
   nginx:
     image: nginx:alpine
     container_name: nginx_proxy
+    env_file:
+      - .env
     ports:
       - "8088:80"
       - "8443:443"
@@ -90,6 +100,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis_cache
+    env_file:
+      - .env
     command: redis-server --requirepass ${REDIS_PASSWORD} 
     volumes:
       - redis_data:/data

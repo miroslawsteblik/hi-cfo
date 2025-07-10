@@ -98,6 +98,7 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, deps *Dependencies) {
 		setupUserManagementRoutes(protected, deps)
 		setupCurrentUserRoutes(protected, deps)
 		setupAdminRoutes(protected, deps)
+		setupDashboardRoutes(protected, deps)
 	}
 }
 
@@ -131,6 +132,16 @@ func setupAdminRoutes(protected *gin.RouterGroup, deps *Dependencies) {
 		// admin.GET("/analytics", getAnalytics)
 		// admin.POST("/bulk-operations", bulkOperations)
 		// admin.GET("/system-logs", getSystemLogs)
+	}
+}
+
+func setupDashboardRoutes(protected *gin.RouterGroup, deps *Dependencies) {
+	// dashboard := protected.Group("/dashboard")
+	{
+		// Dashboard routes can be added here
+		// dashboard.GET("/overview", getDashboardOverview)
+		// dashboard.GET("/stats", getDashboardStats)
+		// dashboard.GET("/reports", getDashboardReports)
 	}
 }
 

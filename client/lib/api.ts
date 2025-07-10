@@ -1,3 +1,4 @@
+// client/lib/api.ts
 interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -8,7 +9,7 @@ interface ApiResponse<T = any> {
 class ApiClient {
   private baseURL: string;
 
-  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api') {
+  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL!) {
     this.baseURL = baseURL;
   }
 

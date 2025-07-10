@@ -70,3 +70,5 @@ BLOG.md
 .vscode/
 # all that start with DEVNOTES
 DEVNOTES-*
+
+.docs/

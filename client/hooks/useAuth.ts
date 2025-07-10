@@ -1,8 +1,6 @@
-// client/hooks/useAuth.ts
-
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, createElement } from 'react';
 import { AuthService } from '@/lib/auth';
 import { User, LoginCredentials, RegisterCredentials } from '@/types';
 
@@ -107,11 +105,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const contextValue: AuthContextType = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    refreshUser
+  };
+
+  return createElement(AuthContext.Provider, { value: contextValue }, children);
 }
 
 export const useAuth = () => {

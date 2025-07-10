@@ -114,9 +114,14 @@ export class AuthService {
   static getUser(): User | null {
     if (typeof window !== 'undefined') {
       const user = localStorage.getItem(this.USER_KEY);
+      // Check for null, empty string, or the string "undefined"
+      if (!user || user === 'undefined' || user === 'null') {
+        return null;
+      }
       try {
-        return user ? JSON.parse(user) : null;
-      } catch {
+        return JSON.parse(user);
+      } catch (error) {
+        console.error('Error parsing user from localStorage:', error);
         this.clearAuth();
         return null;
       }

@@ -29,26 +29,7 @@ const nextConfig: NextConfig = {
     ]
   },
 
-  // // API proxy configuration (for internal Docker communication)
-  // async rewrites() {
-  //   // Only proxy when running in Docker container
-  //   if (process.env.NODE_ENV === 'production') {
-  //     return [
-  //       {
-  //         source: '/api/:path*',
-  //         destination: 'http://backend:8080/api/:path*',
-  //       },
-  //     ]
-  //   }
-    
-  //   // Development - proxy to localhost
-  //   return [
-  //     {
-  //       source: '/api/:path*',
-  //       destination: 'http://localhost:8080/api/:path*',
-  //     },
-  //   ]
-  // },
+
 
   // Image optimization
   images: {
@@ -66,9 +47,8 @@ const nextConfig: NextConfig = {
 
   // Environment variables validation
     env: {
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost',
-    // Add API URL for frontend usage
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api/v1',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
 
   // TypeScript configuration
@@ -81,20 +61,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: false,
   },
 
-  // Webpack configuration
-  webpack: (config, { isServer }) => {
-    // Optimize bundle size
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      }
-    }
-    
-    return config
-  },
+
 }
 
 export default nextConfig
