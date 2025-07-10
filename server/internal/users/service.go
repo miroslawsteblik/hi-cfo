@@ -2,44 +2,46 @@ package users
 
 import (
 	"errors"
-	// "hi-cfo/server/internal/users"
+	"hi-cfo/server/internal/models"
+    "hi-cfo/server/internal/auth"
 
-    "github.com/google/uuid"
-	"time"
+    "fmt"
+    "golang.org/x/crypto/bcrypt"
+	"github.com/google/uuid"
 
-	"github.com/golang-jwt/jwt/v5"
+
 )
 
 type UserService interface {
-    RegisterUser(req *UserRequest) (*UserResponse, error)
-    LoginUser(req *LoginRequest) (*LoginResponse, error)
-    GetAllUsers() ([]UserResponse, error)
-    GetUser(id uuid.UUID) (*UserResponse, error)
-    UpdateUser(id uuid.UUID, req *UserRequest) (*UserResponse, error)
+    RegisterUser(req *models.UserRequest) (*models.UserResponse, error)
+    LoginUser(req *models.LoginRequest) (*auth.TokenPair, error)
+    GetAllUsers() ([]models.UserResponse, error)
+    GetUser(id uuid.UUID) (*models.UserResponse, error)
+    UpdateUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error)
     DeleteUser(id uuid.UUID) error
-    GetUserByEmail(email string) (*User, error) 
-    UpdateCurrentUser(id uuid.UUID, req *UserRequest) (*UserResponse, error)
+    GetUserByEmail(email string) (*models.User, error) 
+    UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error)
 	ChangePassword(id uuid.UUID, currentPassword, newPassword string) error
 }
 type userService struct {
     userRepo UserRepository
-    jwtSecret string
+    authService *auth.Service
 }
 
-func NewUserService(userRepo UserRepository, jwtSecret string) UserService {
+func NewUserService(userRepo UserRepository, authService *auth.Service) UserService {
     return &userService{
         userRepo: userRepo,
-        jwtSecret: jwtSecret,
+        authService: authService,
     }
 }
-func (s *userService) RegisterUser(req *UserRequest) (*UserResponse, error) {
+func (s *userService) RegisterUser(req *models.UserRequest) (*models.UserResponse, error) {
     existingUser, _ := s.userRepo.GetUserByEmail(req.Email)
     if existingUser != nil {
         return nil, errors.New("user already exists")
     }
     
     // Create a new user with UUID generated in repository
-    user := User{
+    user := models.User{
         Email:     req.Email,
         FirstName: req.FirstName,
         LastName:  req.LastName,
@@ -59,54 +61,29 @@ func (s *userService) RegisterUser(req *UserRequest) (*UserResponse, error) {
     resp := createdUser.ToResponse()
     return &resp, nil
 }
-func (s *userService) LoginUser(req *LoginRequest) (*LoginResponse, error) {
+
+func (s *userService) LoginUser(req *models.LoginRequest) (*auth.TokenPair, error) {
     user, err := s.userRepo.GetUserByEmail(req.Email)
     if err != nil || user == nil {
         return nil, errors.New("invalid email or password")
     }
 
-    if !user.CheckPassword(req.Password) {
-        return nil, errors.New("invalid email or password")
-    }
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		return nil, fmt.Errorf("invalid credentials")
+	}
 
-    // Update last login time
-    now := time.Now()
-    user.LastLogin = &now
-    s.userRepo.UpdateUser(*user) // Update last login (ignore error for now)
-
-    // Generate JWT token
-    token, err := s.generateToken(user.ID)
-    if err != nil {
-        return nil, err
-    }
-
-    return &LoginResponse{
-        Token: token,
-        User:  user.ToResponse(),
-    }, nil
-}
-func (s *userService) generateToken(userID uuid.UUID) (string, error) {
-    claims := &jwt.RegisteredClaims{
-        Subject:   userID.String(),
-        ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-    }
-
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    signedToken, err := token.SignedString([]byte(s.jwtSecret))
-    if err != nil {
-        return "", err
-    }
-
-    return signedToken, nil
+    return s.authService.Login(user)
 }
 
-func (s *userService) GetAllUsers() ([]UserResponse, error) {
+
+
+func (s *userService) GetAllUsers() ([]models.UserResponse, error) {
     users, err := s.userRepo.GetAllUsers()
     if err != nil {
         return nil, err
     }
 
-    var userResponses []UserResponse
+    var userResponses []models.UserResponse
     for _, user := range users {
         userResponses = append(userResponses, user.ToResponse())
     }
@@ -114,7 +91,7 @@ func (s *userService) GetAllUsers() ([]UserResponse, error) {
     return userResponses, nil
 }
 
-func (s *userService) GetUser(id uuid.UUID) (*UserResponse, error) {
+func (s *userService) GetUser(id uuid.UUID) (*models.UserResponse, error) {
     user, err := s.userRepo.GetUserByID(id)
     if err != nil {
         return nil, err
@@ -125,7 +102,7 @@ func (s *userService) GetUser(id uuid.UUID) (*UserResponse, error) {
     resp := user.ToResponse()
     return &resp, nil
 }
-func (s *userService) UpdateUser(id uuid.UUID, req *UserRequest) (*UserResponse, error) {
+func (s *userService) UpdateUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error) {
     user, err := s.userRepo.GetUserByID(id)
     if err != nil {
         return nil, err
@@ -167,11 +144,11 @@ func (s *userService) DeleteUser(id uuid.UUID) error {
     return s.userRepo.DeleteUser(id)
 }
 
-func (s *userService) GetUserByEmail(email string) (*User, error) {
+func (s *userService) GetUserByEmail(email string) (*models.User, error) {
     return s.userRepo.GetUserByEmail(email)
 }
 
-func (s *userService) UpdateCurrentUser(id uuid.UUID, req *UserRequest) (*UserResponse, error) {
+func (s *userService) UpdateCurrentUser(id uuid.UUID, req *models.UserRequest) (*models.UserResponse, error) {
 	user, err := s.userRepo.GetUserByID(id)
 	if err != nil {
 		return nil, err

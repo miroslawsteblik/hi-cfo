@@ -4,9 +4,29 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"fmt"
 )
 
 
+// LoadConfig validates and loads the required environment variables for the application.
+func LoadConfig() error {
+	// Validate required environment variables
+	required := []string{
+		"DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME",
+		"JWT_SECRET", "API_PORT",
+	}
+
+	for _, env := range required {
+		if os.Getenv(env) == "" {
+			return fmt.Errorf("required environment variable %s is not set", env)
+		}
+	}
+
+	return nil
+}
+
+
+// JWT configuration
 func GetJWTSecret() string {
 	secret := os.Getenv("JWT_SECRET")
 	return secret
@@ -41,9 +61,13 @@ func GetJWTRefreshExpiry() time.Duration {
 	return expiry
 }
 
+
+// APP configuration
 func GetAppName() string {
 	name := os.Getenv("APP_NAME")
-
+	if name == "" {
+		return "HiCFO"
+	}
 	return name
 }
 
@@ -56,6 +80,41 @@ func IsDevelopment() bool {
 	return os.Getenv("APP_ENV") == "development"
 }
 
+
+// Redis configuration
+func GetRedisAddr() string {
+	host := os.Getenv("REDIS_HOST")
+	port := os.Getenv("REDIS_PORT")
+	
+	if host == "" {
+		host = "localhost"
+	}
+	if port == "" {
+		port = "6379"
+	}
+	
+	return host + ":" + port
+}
+
+func GetRedisPassword() string {
+	return os.Getenv("REDIS_PASSWORD")
+}
+
+func GetRedisDB() int {
+	dbStr := os.Getenv("REDIS_DB")
+	if dbStr == "" {
+		return 0
+	}
+	
+	if db, err := strconv.Atoi(dbStr); err == nil {
+		return db
+	}
+	
+	return 0
+}
+
+
+// Bcrypt configuration
 func GetBcryptRounds() int {
 	rounds := os.Getenv("BCRYPT_ROUNDS")
 	if rounds == "" {
@@ -70,6 +129,8 @@ func GetBcryptRounds() int {
 	return r
 }
 
+
+// File upload configuration
 func GetMaxFileSize() int64 {
 	sizeStr := os.Getenv("MAX_FILE_SIZE")
 	if sizeStr == "" {
@@ -112,4 +173,18 @@ func parseSize(sizeStr string) (int64, error) {
 	default:
 		return value, nil
 	}
+}
+
+
+
+// Database configuration
+func GetDatabaseURL() string {
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	port := os.Getenv("DB_PORT")
+
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		user, password, host, port, dbname)
 }

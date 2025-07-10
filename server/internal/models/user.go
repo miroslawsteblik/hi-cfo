@@ -1,4 +1,4 @@
-package users
+package models
 
 import (
 	"github.com/google/uuid"
@@ -18,36 +18,48 @@ type User struct {
 	Role         string     `json:"role" gorm:"default:'user';not null"` // Default role is 'user'
 }
 
+// TableName specifies the table name for GORM
+func (User) TableName() string {
+	return "users"
+}
+
+// BeforeCreate is a GORM hook that runs before creating a user
+// func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
+// 	if u.ID == uuid.Nil {
+// 		u.ID = uuid.New()
+// 	}
+// 	return
+// }
+
+// UserRequest for creating/updating users
 type UserRequest struct {
-	Email     string `json:"email" validate:"required,email"`
-	Password  string `json:"password" validate:"required,min=6"`
 	FirstName string `json:"first_name" validate:"required"`
 	LastName  string `json:"last_name" validate:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required,min=6"`
+	Role      string `json:"role" validate:"omitempty"`
 }
 
+// UserResponse for API responses
 type UserResponse struct {
-	ID        uuid.UUID  `json:"id"`
-	Email     string     `json:"email"`
-	FirstName string     `json:"first_name"`
-	LastName  string     `json:"last_name"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	LastLogin *time.Time `json:"last_login"`
-	Role      string     `json:"role"`
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// LoginRequest for authentication
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
 
-type LoginResponse struct {
-	Token string       `json:"token"`
-	User  UserResponse `json:"user"`
-}
-
-func (u *User) SetPassword(plainPassword string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
+// SetPassword hashes and sets the user's password
+func (u *User) SetPassword(password string) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
@@ -55,20 +67,21 @@ func (u *User) SetPassword(plainPassword string) error {
 	return nil
 }
 
+// CheckPassword verifies the provided password against the stored hash
 func (u *User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password))
 	return err == nil
 }
 
+// ToResponse converts User to UserResponse
 func (u *User) ToResponse() UserResponse {
 	return UserResponse{
 		ID:        u.ID,
 		Email:     u.Email,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Role:      u.Role,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
-		LastLogin: u.LastLogin,
-		Role:      u.Role,
 	}
 }
