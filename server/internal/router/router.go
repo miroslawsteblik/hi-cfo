@@ -239,15 +239,15 @@ func checkDatabase() error {
 }
 
 func checkRedis() error {
+	if redisClient == nil {
+		return errors.New("redis client not initialized")
+	}
 	// Circuit breaker pattern for Redis
 	if redisFailures > 3 && time.Since(redisLastCheck) < 30*time.Second {
 		return errors.New("circuit open: too many recent failures")
 	}
 
 	redisLastCheck = time.Now()
-	if redisClient == nil {
-		return errors.New("redis client not initialized")
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()

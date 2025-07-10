@@ -31,6 +31,9 @@ func main() {
 	redisClient, err := infra.InitializeRedis()
 	if err != nil {
 		log.Fatal("Failed to connect to Redis:", err)
+		redisClient = nil // Set to nil if Redis is not available
+	}	else {
+		log.Println("Connected to Redis successfully")
 	}
 
 	router.SetDB(db)

@@ -2,6 +2,7 @@ package infra
 
 import (
 	"fmt"
+	"time"
 
 	"hi-cfo/server/internal/models"
 	"log"
@@ -27,28 +28,30 @@ func InitializeDatabase() (*DB, error) {
 
 		
 	gormConfig := &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info), // Adjust log level as needed
+		Logger: logger.Default.LogMode(logger.Warn), // Adjust log level as needed
 	}	
 	db, err := gorm.Open(postgres.Open(dsn), gormConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Test the connection
+
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database instance: %w", err)
 	}
 
+
+	// Set connection pool settings
+	sqlDB.SetMaxIdleConns(25)
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute) // No limit on connection lifetime
+	
+	// test the connection
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 	log.Println("Connected to PostgreSQL database successfully")
-
-	// Set connection pool settings
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(0) // No limit on connection lifetime
 
  // autoMigrate the models
   if err := db.AutoMigrate(

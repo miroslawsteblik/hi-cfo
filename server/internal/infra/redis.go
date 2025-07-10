@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/go-redis/redis/v8"
 	"hi-cfo/server/internal/config"
+	"fmt"
+	"time"
 )
 
 // InitializeRedis creates and configures the Redis connection
@@ -14,11 +16,15 @@ func InitializeRedis() (*redis.Client, error) {
 		DB:       config.GetRedisDB(),
 	})
 
-	// Test the connection
-	ctx := context.Background()
+
+	// Test the connection with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to Redis at %s: %w", config.GetRedisAddr(), err)
 	}
 
 	return client, nil
 }
+
