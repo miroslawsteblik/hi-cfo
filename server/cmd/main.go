@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"time"
+
 	"github.com/go-redis/redis/v8"
 
 	"hi-cfo/server/internal/auth"
@@ -16,7 +17,7 @@ import (
 
 func main() {
 	os.Setenv("APP_START_TIME", time.Now().UTC().Format(time.RFC3339))
-	
+
 	// // Load configuration
 	if err := config.LoadConfig(); err != nil {
 		log.Fatal("Failed to load configuration:", err)
@@ -32,7 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect to Redis:", err)
 		redisClient = nil // Set to nil if Redis is not available
-	}	else {
+	} else {
 		log.Println("Connected to Redis successfully")
 	}
 
@@ -40,14 +41,13 @@ func main() {
 	router.SetRedisClient(redisClient)
 
 	deps := setupDependencies(db, redisClient)
-	
+
 	r := router.SetupRoutes(deps)
 
 	// Setup trusted proxies for nginx
 	if err := r.SetTrustedProxies([]string{"nginx", "nginx_proxy"}); err != nil {
 		log.Printf("Warning: Failed to set trusted proxies: %v", err)
 	}
-
 
 	// Start server
 	port := config.GetPort()
