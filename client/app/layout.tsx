@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css'
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ErrorBoundary } from '@/components/providers/ErrorBoundary';
+import CookieConsentBanner from '@/components/ui/CookieConsentBanner';
 
 export const metadata: Metadata = {
   title: 'Hi-CFO - Financial Dashboard',
@@ -20,6 +21,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ThemeProvider>
             {children}
+            <CookieConsentBanner />
           </ThemeProvider>
         </ErrorBoundary>
       </body>
