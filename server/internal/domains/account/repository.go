@@ -72,7 +72,7 @@ func (r *AccountRepository) GetAccounts(ctx context.Context, userID uuid.UUID, f
 	if err := query.
 		Offset(offset).
 		Limit(filter.Limit).
-		Order("transaction_date DESC, created_at DESC").
+		Order("created_at DESC").
 		Find(&accounts).Error; err != nil {
 		appErr := customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to fetch accounts").
 			WithDomain("account").

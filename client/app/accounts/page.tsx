@@ -1,4 +1,4 @@
-// app/accounts/page.tsx
+
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth";
 import { getAccounts, getAccountSummary } from "@/app/actions/accounts";

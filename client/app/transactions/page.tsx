@@ -1,4 +1,4 @@
-// app/transactions/page.tsx
+
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getServerUser } from "@/lib/auth";

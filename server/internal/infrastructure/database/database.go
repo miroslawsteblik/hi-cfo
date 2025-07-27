@@ -30,7 +30,6 @@ func (MigrationRecord) TableName() string {
 }
 
 func InitializeDatabase() (*DB, error) {
-	log.Println("🚀 Initializing database connection...")
 
 	// Build DSN from environment variables
 	host := os.Getenv("DB_HOST")
@@ -69,7 +68,6 @@ func InitializeDatabase() (*DB, error) {
 		return nil, fmt.Errorf("failed to run database migrations: %w", err)
 	}
 
-	log.Println("🎉 Database initialization completed successfully!")
 	return db, nil
 }
 
@@ -89,7 +87,7 @@ func runMigration(db *DB) error {
 
 // runTableMigrations creates/updates all table structures
 func runTableMigrations(db *DB) error {
-	log.Println("📊 Running table migrations...")
+	log.Println("Running table migrations...")
 
 	models := []interface{}{
 		&user.User{},
@@ -102,6 +100,6 @@ func runTableMigrations(db *DB) error {
 		return err
 	}
 
-	log.Println("✅ Table migrations completed")
+	log.Println("Table migrations completed")
 	return nil
 }

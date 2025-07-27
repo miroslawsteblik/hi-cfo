@@ -1,4 +1,4 @@
-// app/categories/page.tsx
+
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth";
 import { getCategories } from "@/app/actions/categories";

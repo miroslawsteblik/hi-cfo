@@ -1,4 +1,4 @@
-// app/register/page.tsx
+
 "use client";
 
 import { useState, useTransition } from "react";

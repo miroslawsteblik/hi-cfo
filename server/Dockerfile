@@ -22,10 +22,6 @@ RUN CGO_ENABLED=0 GOOS=linux  go build \
 
 FROM golang:1.24.4-alpine AS development
 
-# Install air for hot reloading and delve for debugging
-RUN go install github.com/air-verse/air@latest && \
-    go install github.com/go-delve/delve/cmd/dlv@latest
-
 
 RUN apk add --no-cache git ca-certificates curl
 

@@ -1,26 +1,23 @@
-// app/actions/transactions.ts
 "use server";
 
-import { authenticatedFetch } from "@/lib/api-client";
+import { apiClient } from "@/lib/api-client-enhanced";
 import {
   TransactionData,
   TransactionStats,
   TransactionFilters,
+  TransactionsData,
   CategorizationPreview,
   CategorizationAnalysis,
   CategorizationSettings,
 } from "@/lib/types/transactions";
-import { Account, AccountCreateData } from "@/lib/types/accounts";
-import { Category } from "@/lib/types/categories";
+import { Account, AccountCreateData, AccountsResponse } from "@/lib/types/accounts";
+import { Category, CategoriesResponse } from "@/lib/types/categories";
 
 export async function createTransaction(data: TransactionData) {
   try {
     console.log("📝 Creating transaction:", data);
 
-    const transaction = await authenticatedFetch("/api/v1/transactions", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    const transaction = await apiClient.post("/api/v1/transactions", data);
 
     console.log("✅ Transaction created:", transaction);
     return { success: true, transaction };
@@ -35,15 +32,15 @@ export async function createTransaction(data: TransactionData) {
 
 export async function getUserAccounts(): Promise<Account[]> {
   try {
-    const accountsResponse = await authenticatedFetch("/api/v1/accounts");
+    const accountsResponse = await apiClient.get<AccountsResponse>("/api/v1/accounts");
 
     // Handle paginated response format from backend
-    if (accountsResponse.data && Array.isArray(accountsResponse.data)) {
-      return accountsResponse.data;
+    if (accountsResponse.accounts && Array.isArray(accountsResponse.accounts)) {
+      return accountsResponse.accounts;
     }
-    
+
     // Fallback for other possible formats
-    return accountsResponse.accounts || accountsResponse || [];
+    return [];
   } catch (error) {
     console.error("❌ Failed to fetch accounts:", error);
     return [];
@@ -53,22 +50,25 @@ export async function getUserAccounts(): Promise<Account[]> {
 // Get categories (system + user categories)
 export async function getCategories(): Promise<Category[]> {
   try {
-    const categoriesResponse = await authenticatedFetch("/api/v1/categories");
+    const categoriesResponse = await apiClient.get<any>("/api/v1/categories");
 
-    // Handle different possible response structures
-    let categories: Category[] = [];
-    if (Array.isArray(categoriesResponse)) {
-      categories = categoriesResponse;
-    } else if (categoriesResponse && categoriesResponse.categories) {
-      categories = categoriesResponse.categories;
-    } else if (categoriesResponse && categoriesResponse.data) {
-      categories = categoriesResponse.data;
-    } else {
-      console.warn("Unexpected categories response structure:", categoriesResponse);
-      categories = [];
+    // Handle Go backend response structure: { data: [...], total, page, limit, pages }
+    if (categoriesResponse && categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
+      return categoriesResponse.data;
     }
 
-    return categories;
+    // Handle CategoriesResponse structure with categories field (alternative API structure)
+    if (categoriesResponse && categoriesResponse.categories && Array.isArray(categoriesResponse.categories)) {
+      return categoriesResponse.categories;
+    }
+
+    // Fallback for direct array response
+    if (Array.isArray(categoriesResponse)) {
+      return categoriesResponse;
+    }
+
+    console.warn("Unexpected categories response structure:", categoriesResponse);
+    return [];
   } catch (error) {
     console.error("❌ Failed to fetch categories:", error);
     return [];
@@ -96,7 +96,7 @@ export async function getTransactions(params?: TransactionFilters) {
     if (params?.transaction_type) queryParams.append("transaction_type", params.transaction_type);
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const result = await authenticatedFetch(`/api/v1/transactions${query}`);
+    const result = await apiClient.get<TransactionsData>(`/api/v1/transactions${query}`);
 
     return result;
   } catch (error) {
@@ -108,10 +108,7 @@ export async function getTransactions(params?: TransactionFilters) {
 // Update a transaction
 export async function updateTransaction(id: string, data: Partial<TransactionData>) {
   try {
-    const transaction = await authenticatedFetch(`/api/v1/transactions/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
+    const transaction = await apiClient.put(`/api/v1/transactions/${id}`, data);
 
     console.log("✅ Transaction updated:", transaction);
     return { success: true, transaction };
@@ -127,9 +124,7 @@ export async function updateTransaction(id: string, data: Partial<TransactionDat
 // Delete a transaction
 export async function deleteTransaction(id: string) {
   try {
-    await authenticatedFetch(`/api/v1/transactions/${id}`, {
-      method: "DELETE",
-    });
+    await apiClient.delete(`/api/v1/transactions/${id}`);
 
     return { success: true };
   } catch (error) {
@@ -151,10 +146,7 @@ export async function previewBulkCategorization(transactions: TransactionData[])
   try {
     console.log("🔍 Previewing bulk categorization for", transactions.length, "transactions");
 
-    const result = await authenticatedFetch("/api/v1/transactions/categorization/preview", {
-      method: "POST",
-      body: JSON.stringify({ transactions }),
-    });
+    const result = await apiClient.post<CategorizationPreview>("/api/v1/transactions/categorization/preview", { transactions });
 
     return { success: true, data: result };
   } catch (error) {
@@ -172,10 +164,7 @@ export async function analyzeTransactionCategorization(descriptions: string[]): 
   error?: string;
 }> {
   try {
-    const result = await authenticatedFetch("/api/v1/transactions/categorization/analyze", {
-      method: "POST",
-      body: JSON.stringify({ descriptions }),
-    });
+    const result = await apiClient.post<CategorizationAnalysis>("/api/v1/transactions/categorization/analyze", { descriptions });
 
     return { success: true, data: result };
   } catch (error) {
@@ -196,12 +185,9 @@ export async function testTransactionCategorization(
   error?: string;
 }> {
   try {
-    const result = await authenticatedFetch("/api/v1/transactions/categorization/test", {
-      method: "POST",
-      body: JSON.stringify({
-        merchant_name: merchantName,
-        get_stats: getStats,
-      }),
+    const result = await apiClient.post("/api/v1/transactions/categorization/test", {
+      merchant_name: merchantName,
+      get_stats: getStats,
     });
 
     return { success: true, data: result };
@@ -220,7 +206,7 @@ export async function getCategorizationSettings(): Promise<{
   error?: string;
 }> {
   try {
-    const result = await authenticatedFetch("/api/v1/transactions/categorization/settings");
+    const result = await apiClient.get<CategorizationSettings>("/api/v1/transactions/categorization/settings");
 
     return { success: true, data: result };
   } catch (error) {
@@ -238,10 +224,7 @@ export async function updateCategorizationSettings(settings: Partial<Categorizat
   error?: string;
 }> {
   try {
-    const result = await authenticatedFetch("/api/v1/transactions/categorization/settings", {
-      method: "PUT",
-      body: JSON.stringify(settings),
-    });
+    const result = await apiClient.put("/api/v1/transactions/categorization/settings", settings);
 
     return { success: true, data: result };
   } catch (error) {
@@ -304,10 +287,7 @@ export async function bulkCreateTransactionsWithCategorization(
     }
 
     try {
-      const result = await authenticatedFetch("/api/v1/transactions/bulk", {
-        method: "POST",
-        body: JSON.stringify({ transactions }),
-      });
+      const result = await apiClient.post<any>("/api/v1/transactions/bulk", { transactions });
 
       // Handle different success scenarios
       // 206 status typically indicates partial success (some created, some duplicates)
@@ -315,10 +295,10 @@ export async function bulkCreateTransactionsWithCategorization(
         // If we have structured data with created/duplicates info
         const created = result.data.created || 0;
         const skipped = result.data.skipped || 0;
-        
+
         return {
           success: created > 0 || (created === 0 && skipped > 0), // Success if any created OR all duplicates
-          data: result.data
+          data: result.data,
         };
       }
 
@@ -367,10 +347,7 @@ export async function createAccount(data: AccountCreateData) {
   try {
     console.log("🏦 Creating account:", data);
 
-    const account = await authenticatedFetch("/api/v1/accounts", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    const account = await apiClient.post("/api/v1/accounts", data);
 
     console.log("✅ Account created:", account);
     return { success: true, account };
@@ -398,7 +375,7 @@ export async function getTransactionStats(params?: {
     if (params?.groupBy) queryParams.append("group_by", params.groupBy);
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const stats = await authenticatedFetch(`/api/v1/transactions/stats${query}`);
+    const stats = await apiClient.get<TransactionStats>(`/api/v1/transactions/stats${query}`);
 
     console.log("✅ Transaction stats fetched");
     return stats;

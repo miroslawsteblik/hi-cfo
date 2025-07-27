@@ -1,17 +1,14 @@
-// client/app/actions/categories.ts
+
 "use server";
 
-import { authenticatedFetch } from "@/lib/api-client";
-import { CategoryData, Category, CategoriesResponse,  } from "@/lib/types/categories";
-import {  CategoryMatchResult } from "@/lib/types/transactions"
+import { apiClient } from "@/lib/api-client-enhanced";
+import { CategoryData, Category, CategoriesResponse } from "@/lib/types/categories";
+import { CategoryMatchResult } from "@/lib/types/transactions";
 export async function createCategory(data: CategoryData) {
   try {
     console.log("📂 Creating category:", data);
 
-    const category = await authenticatedFetch("/api/v1/categories", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    const category = await apiClient.post("/api/v1/categories", data);
 
     console.log("✅ Category created:", category);
     return { success: true, category };
@@ -47,7 +44,7 @@ export async function getCategories(params?: {
     if (params?.search) queryParams.append("search", params.search);
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const result = await authenticatedFetch(`/api/v1/categories${query}`);
+    const result = await apiClient.get<CategoriesResponse>(`/api/v1/categories${query}`);
 
     console.log("✅ Categories fetched:", result.categories?.length || 0);
     return result;
@@ -67,7 +64,7 @@ export async function getCategoriesSimple(categoryType?: string): Promise<Catego
     queryParams.append("is_active", "true");
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const categories = await authenticatedFetch(`/api/v1/categories/simple${query}`);
+    const categories = await apiClient.get<Category[]>(`/api/v1/categories/simple${query}`);
 
     console.log("✅ Simple categories fetched:", categories?.length || 0);
     return categories || [];
@@ -82,7 +79,7 @@ export async function getCategory(id: string) {
   try {
     console.log("📂 Fetching category:", id);
 
-    const category = await authenticatedFetch(`/api/v1/categories/${id}`);
+    const category = await apiClient.get(`/api/v1/categories/${id}`);
 
     console.log("✅ Category fetched:", category);
     return { success: true, category };
@@ -100,10 +97,7 @@ export async function updateCategory(id: string, data: Partial<CategoryData>) {
   try {
     console.log("✏️ Updating category:", id, data);
 
-    const category = await authenticatedFetch(`/api/v1/categories/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
+    const category = await apiClient.put(`/api/v1/categories/${id}`, data);
 
     console.log("✅ Category updated:", category);
     return { success: true, category };
@@ -121,9 +115,7 @@ export async function deleteCategory(id: string) {
   try {
     console.log("🗑️ Deleting category:", id);
 
-    await authenticatedFetch(`/api/v1/categories/${id}`, {
-      method: "DELETE",
-    });
+    await apiClient.delete(`/api/v1/categories/${id}`);
 
     console.log("✅ Category deleted successfully");
     return { success: true };
@@ -143,13 +135,10 @@ export async function autoCategorizeTransaction(
   try {
     console.log("🤖 Auto-categorizing merchant:", merchantName);
 
-    const result = await authenticatedFetch("/api/v1/categories/auto-categorize", {
-      method: "POST",
-      body: JSON.stringify({ merchant_name: merchantName }),
-    });
+    const result = await apiClient.post<CategoryMatchResult>("/api/v1/categories/auto-categorize", { merchant_name: merchantName });
 
     console.log("✅ Auto-categorization result:", result);
-    return result.match || null;
+    return result || null;
   } catch (error) {
     console.error("❌ Failed to auto-categorize:", error);
     return null;

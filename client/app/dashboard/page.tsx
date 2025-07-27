@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx
+
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth";
 import AppLayout from "@/components/layout/AppLayout";

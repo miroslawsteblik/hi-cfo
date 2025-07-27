@@ -145,25 +145,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Log aggregation
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 512M
-    networks:
-      - monitoring-network  # Isolated monitoring network
-    restart: unless-stopped
+
 
     # Monitoring
   prometheus:
@@ -174,20 +156,7 @@ services:
     #   - "9090:9090"
     expose:
       - "9090"  # Internal access only
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=30d'
-      - '--web.enable-lifecycle'
-    networks:
-      - monitoring-network
-      - backend-network  # Access to application metrics
-    restart: unless-stopped
+
 
   grafana:
     image: grafana/grafana:10.2.0
@@ -208,10 +177,6 @@ services:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    networks:
-      - monitoring-network
-      - frontend-network  # Access through nginx
-    restart: unless-stopped
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.8.0

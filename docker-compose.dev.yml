@@ -46,8 +46,6 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
 
-      - DELVE_ENABLED=true
-    command: ["dlv", "debug", "./cmd", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient"]
 
     depends_on:
       redis:

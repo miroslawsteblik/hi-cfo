@@ -1,15 +1,12 @@
-// lib/accounts/actions.ts
+
 "use server";
 
-import { authenticatedFetch } from "@/lib/api-client";
+import { apiClient } from "@/lib/api-client-enhanced";
 import { AccountData, Account, AccountsResponse, AccountSummary } from "@/lib/types/accounts";
 
 export async function createAccount(data: AccountData) {
   try {
-    const account = await authenticatedFetch("/api/v1/accounts", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    const account = await apiClient.post<Account>("/api/v1/accounts", data);
 
     console.log("✅ Account created:", account);
     return { success: true, account };
@@ -41,13 +38,13 @@ export async function getAccounts(params?: {
     if (params?.search) queryParams.append("search", params.search);
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const result = await authenticatedFetch(`/api/v1/accounts${query}`);
+    const result = await apiClient.get<AccountsResponse>(`/api/v1/accounts${query}`);
 
-    // Backend returns: { success, data: [...], total, page, limit, pages }
-    if (result && Array.isArray(result.data)) {
-      console.log("✅ Accounts fetched:", result.data.length);
+    // The enhanced API client returns the data directly
+    if (result && Array.isArray(result.accounts)) {
+      console.log("✅ Accounts fetched:", result.accounts.length);
       return {
-        accounts: result.data,
+        accounts: result.accounts,
         total: result.total ?? 0,
         page: result.page ?? 1,
         limit: result.limit ?? 20,
@@ -72,11 +69,11 @@ export async function getAccountSummary(): Promise<AccountSummary> {
   try {
     console.log("📊 Fetching account summary...");
 
-    const result = await authenticatedFetch("/api/v1/accounts/summary");
+    const result = await apiClient.get<AccountSummary>("/api/v1/accounts/summary");
 
     console.log("✅ Account summary fetched");
     return (
-      result?.data ?? {
+      result ?? {
         total_accounts: 0,
         total_balance: 0,
         active_accounts: 0,
@@ -100,7 +97,7 @@ export async function getAccount(id: string) {
   try {
     console.log("🏦 Fetching account:", id);
 
-    const account = await authenticatedFetch(`/api/v1/accounts/${id}`);
+    const account = await apiClient.get<Account>(`/api/v1/accounts/${id}`);
 
     console.log("✅ Account fetched:", account);
     return { success: true, account };
@@ -117,10 +114,7 @@ export async function updateAccount(id: string, data: Partial<AccountData>) {
   try {
     console.log("✏️ Updating account:", id, data);
 
-    const account = await authenticatedFetch(`/api/v1/accounts/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    });
+    const account = await apiClient.put<Account>(`/api/v1/accounts/${id}`, data);
 
     console.log("✅ Account updated:", account);
     return { success: true, account };
@@ -137,9 +131,7 @@ export async function deleteAccount(id: string) {
   try {
     console.log("🗑️ Deleting account:", id);
 
-    await authenticatedFetch(`/api/v1/accounts/${id}`, {
-      method: "DELETE",
-    });
+    await apiClient.delete(`/api/v1/accounts/${id}`);
 
     console.log("✅ Account deleted");
     return { success: true };

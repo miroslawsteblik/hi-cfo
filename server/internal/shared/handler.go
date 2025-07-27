@@ -162,7 +162,7 @@ func (h *BaseHandler) RespondWithSuccess(c *gin.Context, status int, data any, m
 	}
 
 	log.Printf("Status code: %d", status)
-	log.Printf("Response data: %v", response.Data)
+	// log.Printf("Response data: %v", response.Data)
 
 	if response.Data == nil {
 		response.Data = gin.H{} // Ensure Data is never nil

@@ -25,6 +25,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 
+	// Prometheus metrics
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	// Swagger imports
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -88,8 +91,12 @@ func SetupRoutes(deps *Dependencies) *gin.Engine {
 	router.Use(middleware.RequestSizeLimit(10 * 1024 * 1024)) // 10MB limit
 	router.Use(middleware.GlobalRateLimit(100, 200))          // 100 req/sec, burst 200
 	router.Use(middleware.CORSMiddleware())
+	
+	// Metrics middleware
+	router.Use(middleware.PrometheusMiddleware())
 
 	setupHealthRoutes(router)
+	setupMetricsRoutes(router)
 	setupSwaggerRoutes(router)
 	setupAPIRoutes(router, deps)
 
@@ -113,6 +120,11 @@ func setupHealthRoutes(router *gin.Engine) {
 	router.GET("/ready", readinessCheck)
 	router.HEAD("/ready", readinessCheck)
 	// router.GET("/health/detailed", middleware.OptionalAuth(), detailedHealthCheck)
+}
+
+func setupMetricsRoutes(router *gin.Engine) {
+	// Prometheus metrics endpoint
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 }
 
 func setupSwaggerRoutes(router *gin.Engine) {
