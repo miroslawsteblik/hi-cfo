@@ -1,12 +1,11 @@
+// app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
+import './globals.css'
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 export const metadata: Metadata = {
-  title: 'HiCFO',
-  description: 'Your AI-powered CFO for financial insights and decision-making',
+  title: 'Hi-CFO - Financial Dashboard',
+  description: 'Transform your financial data into actionable insights',
 };
 
 export default function RootLayout({
@@ -16,10 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <div className="min-h-screen bg-grey-50">
-        {children}
-        </div>
+      <body className="antialiased">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

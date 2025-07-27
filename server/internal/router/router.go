@@ -1,32 +1,67 @@
 package router
 
 import (
-	"hi-cfo/server/internal/auth"
-	"hi-cfo/server/internal/middleware"
-	"hi-cfo/server/internal/users"
-
-	"github.com/gin-contrib/gzip"
-	"github.com/gin-contrib/requestid"
-	"github.com/gin-gonic/gin"
-
 	"context"
 	"errors"
 	"net/http"
 	"os"
 	"time"
 
+	"hi-cfo/server/internal/config"
+	"hi-cfo/server/internal/shared/auth"
+	"hi-cfo/server/internal/shared/middleware"
+
+	"hi-cfo/server/internal/domains/account"
+	"hi-cfo/server/internal/domains/category"
+	"hi-cfo/server/internal/domains/dashboard"
+	"hi-cfo/server/internal/domains/transaction"
+	"hi-cfo/server/internal/domains/user"
+	customerrors "hi-cfo/server/internal/shared/errors"
+
+	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/requestid"
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+
+	// Swagger imports
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Dependencies struct {
-	UserHandler users.UserHandler
-	AuthService *auth.Service
-	DB          *gorm.DB
-	RedisClient *redis.Client
+	UserHandler        *user.UserHandler
+	DashboardHandler   *dashboard.DashboardHandler
+	TransactionHandler *transaction.TransactionHandler
+	AccountHandler     *account.AccountHandler
+	CategoryHandler    *category.CategoryHandler
+	AuthService        *auth.Service
+	DB                 *gorm.DB
+	RedisClient        *redis.Client
+	Logger             *logrus.Logger
 }
 
+func LoggerMiddleware(logger *logrus.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
 
+		c.Next()
+
+		duration := time.Since(start)
+
+		logger.WithFields(logrus.Fields{
+			"method":      c.Request.Method,
+			"path":        path,
+			"status_code": c.Writer.Status(),
+			"duration_ms": duration.Milliseconds(),
+			"ip":          c.ClientIP(),
+			"user_agent":  c.Request.UserAgent(),
+			"request_id":  c.GetString("request_id"),
+		}).Info("HTTP request completed")
+	}
+}
 
 func SetupRoutes(deps *Dependencies) *gin.Engine {
 	// set based on environemnt
@@ -38,30 +73,37 @@ func SetupRoutes(deps *Dependencies) *gin.Engine {
 
 	router := gin.New()
 
-	
+	config.SetupTrustedProxies(router)
 
 	// Global middleware
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
 	router.Use(requestid.New())
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
+	router.Use(LoggerMiddleware(deps.Logger))
+	router.Use(customerrors.ErrorHandler(deps.Logger))
+
+	// Security middleware
+	router.Use(middleware.SecurityHeaders())
+	router.Use(middleware.RequestSizeLimit(10 * 1024 * 1024)) // 10MB limit
+	router.Use(middleware.GlobalRateLimit(100, 200))          // 100 req/sec, burst 200
 	router.Use(middleware.CORSMiddleware())
 
 	setupHealthRoutes(router)
+	setupSwaggerRoutes(router)
 	setupAPIRoutes(router, deps)
 
-		// Fallback for undefined routes
+	// Fallback for undefined routes
 	router.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error":   "Not Found",
-			"message": "The requested resource was not found",
+			"message": "The requested route was not found",
 			"path":    c.Request.URL.Path,
 		})
 	})
 
 	return router
 }
-
 
 func setupHealthRoutes(router *gin.Engine) {
 	router.GET("/health", healthCheck)
@@ -73,6 +115,21 @@ func setupHealthRoutes(router *gin.Engine) {
 	// router.GET("/health/detailed", middleware.OptionalAuth(), detailedHealthCheck)
 }
 
+func setupSwaggerRoutes(router *gin.Engine) {
+	// Swagger documentation route
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Redirect /docs to /swagger for convenience
+	router.GET("/docs", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
+
+	// Also serve at /api-docs for alternative access
+	router.GET("/api-docs", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
+}
+
 func setupAPIRoutes(router *gin.Engine, deps *Dependencies) {
 	v1 := router.Group("/api/v1")
 
@@ -82,6 +139,8 @@ func setupAPIRoutes(router *gin.Engine, deps *Dependencies) {
 
 func setupAuthRoutes(v1 *gin.RouterGroup, deps *Dependencies) {
 	auth := v1.Group("/auth")
+	// Apply stricter rate limiting to auth endpoints
+	auth.Use(middleware.AuthRateLimit())
 	{
 		auth.POST("/register", deps.UserHandler.RegisterUser)
 		auth.POST("/login", deps.UserHandler.LoginUser)
@@ -99,6 +158,9 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, deps *Dependencies) {
 		setupCurrentUserRoutes(protected, deps)
 		setupAdminRoutes(protected, deps)
 		setupDashboardRoutes(protected, deps)
+		setupTransactionRoutes(protected, deps)
+		setupAccountRoutes(protected, deps)
+		setupCategoryRoutes(protected, deps)
 	}
 }
 
@@ -136,16 +198,59 @@ func setupAdminRoutes(protected *gin.RouterGroup, deps *Dependencies) {
 }
 
 func setupDashboardRoutes(protected *gin.RouterGroup, deps *Dependencies) {
-	// dashboard := protected.Group("/dashboard")
+	dashboard := protected.Group("/dashboard")
 	{
-		// Dashboard routes can be added here
-		// dashboard.GET("/overview", getDashboardOverview)
-		// dashboard.GET("/stats", getDashboardStats)
-		// dashboard.GET("/reports", getDashboardReports)
+		dashboard.GET("/overview", deps.DashboardHandler.GetOverview)
+		dashboard.GET("/stats", deps.DashboardHandler.GetStats)
+		dashboard.GET("/reports", deps.DashboardHandler.GetReports)
 	}
 }
 
+func setupTransactionRoutes(protected *gin.RouterGroup, deps *Dependencies) {
+	transactionRoutes := protected.Group("/transactions")
+	{
+		transactionRoutes.GET("", deps.TransactionHandler.GetTransactions)               // Get all transactions
+		transactionRoutes.POST("", deps.TransactionHandler.CreateTransaction)            // Create a new transaction
+		transactionRoutes.GET("/stats", deps.TransactionHandler.GetTransactionStats)     // Get transaction stats
+		transactionRoutes.GET("/:id", deps.TransactionHandler.GetTransactionByID)        // Get transaction by ID
+		transactionRoutes.PUT("/:id", deps.TransactionHandler.UpdateTransaction)         // Update transaction by ID
+		transactionRoutes.DELETE("/:id", deps.TransactionHandler.DeleteTransaction)      // Delete transaction by ID
+		transactionRoutes.POST("/bulk", deps.TransactionHandler.CreateBatchTransactions) // Bulk upload transactions
 
+		transactionRoutes.POST("/categorization/preview", deps.TransactionHandler.PreviewCategorization)
+		transactionRoutes.POST("/categorization/analyze", deps.TransactionHandler.AnalyzeTransactionCategorization)
+
+		transactionRoutes.GET("/categorization/settings", deps.TransactionHandler.GetCategorizationSettings)
+		transactionRoutes.PUT("/categorization/settings", deps.TransactionHandler.UpdateCategorizationSettings)
+
+	}
+}
+
+func setupAccountRoutes(protected *gin.RouterGroup, deps *Dependencies) {
+	accounts := protected.Group("/accounts")
+	{
+		accounts.GET("", deps.AccountHandler.GetAccounts)               // Get all accounts
+		accounts.POST("", deps.AccountHandler.CreateAccount)            // Create a new account
+		accounts.GET("/summary", deps.AccountHandler.GetAccountSummary) // Get account summary
+		accounts.GET("/:id", deps.AccountHandler.GetAccountByID)        // Get account by ID
+		accounts.PUT("/:id", deps.AccountHandler.UpdateAccount)         // Update account by ID
+		accounts.DELETE("/:id", deps.AccountHandler.DeleteAccount)      // Delete account by ID
+	}
+}
+
+func setupCategoryRoutes(protected *gin.RouterGroup, deps *Dependencies) {
+	categories := protected.Group("/categories")
+	{
+		categories.GET("", deps.CategoryHandler.GetCategories)              // Get all categories
+		categories.POST("", deps.CategoryHandler.CreateCategory)            // Create a new category
+		categories.GET("/simple", deps.CategoryHandler.GetCategoriesSimple) // Get simple categories
+		categories.GET("/:id", deps.CategoryHandler.GetCategoryByID)        // Get category by ID
+		categories.PUT("/:id", deps.CategoryHandler.UpdateCategory)         // Update category by ID
+		categories.DELETE("/:id", deps.CategoryHandler.DeleteCategory)      // Delete category by ID
+		categories.POST("/auto-categorize", deps.CategoryHandler.AutoCategorize)
+
+	}
+}
 
 // Health check handlers
 func healthCheck(c *gin.Context) {
@@ -272,10 +377,3 @@ func checkRedis() error {
 
 	return err
 }
-
-
-
-
-
-
-

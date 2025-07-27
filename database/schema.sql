@@ -51,6 +51,7 @@ CREATE TABLE accounts (
     UNIQUE(user_id, account_name)
 );
 
+
 -- Transaction categories - both system-defined and user-defined
 CREATE TABLE categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -73,7 +74,6 @@ CREATE TABLE categories (
     
     -- Auto-categorization rules
     keywords TEXT[], -- Keywords for automatic categorization
-    merchant_patterns TEXT[], -- Regex patterns for merchant matching
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -119,6 +119,7 @@ CREATE TABLE transactions (
     account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     file_upload_id UUID REFERENCES file_uploads(id) ON DELETE SET NULL,
+    fit_id VARCHAR(100), -- Unique identifier from bank statement (e.g. OFX, QIF)
     
     -- Transaction identification
     transaction_date DATE NOT NULL,
@@ -131,7 +132,7 @@ CREATE TABLE transactions (
     transaction_type VARCHAR(20) DEFAULT 'expense' CHECK (transaction_type IN (
         'income', 'expense', 'transfer', 'fee', 'interest', 'dividend', 'refund'
     )),
-    currency VARCHAR(3) DEFAULT 'USD',
+    currency VARCHAR(3), -- Currency code 
     
     -- Additional transaction details
     reference_number VARCHAR(100), -- Check number, confirmation number, etc.
@@ -312,6 +313,9 @@ CREATE INDEX idx_transactions_type ON transactions(transaction_type);
 CREATE INDEX idx_categories_user_id ON categories(user_id);
 CREATE INDEX idx_categories_parent ON categories(parent_category_id);
 CREATE INDEX idx_categories_system ON categories(is_system_category);
+--CREATE INDEX IF NOT EXISTS idx_categories_merchant_patterns ON categories USING GIN (merchant_patterns);
+CREATE INDEX IF NOT EXISTS idx_categories_user_active ON categories (user_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_categories_system_active ON categories (is_system_category, is_active);
 
 -- Budget and goal queries
 CREATE INDEX idx_budgets_user_id ON budgets(user_id);
@@ -339,6 +343,9 @@ CREATE INDEX idx_recurring_active ON recurring_transactions(is_active);
 CREATE INDEX idx_categories_keywords ON categories USING GIN(keywords);
 CREATE INDEX idx_transactions_tags ON transactions USING GIN(tags);
 CREATE INDEX idx_insights_data ON financial_insights USING GIN(insight_data);
+
+CREATE UNIQUE INDEX idx_transactions_user_fit_id_active ON transactions (user_id, fit_id) 
+WHERE deleted_at IS NULL;
 
 -- Update triggers to maintain updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -372,14 +379,91 @@ CREATE TRIGGER update_recurring_transactions_updated_at BEFORE UPDATE ON recurri
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Create default system categories
-INSERT INTO categories (name, color, keywords, merchant_patterns, user_id) VALUES
-('Housing', '#4A90E2', ARRAY['rent', 'mortgage', 'apartment', 'house', 'property'], ARRAY['real estate', 'apartments'], NULL),
-('Groceries', '#7ED321', ARRAY['grocery', 'supermarket', 'food'], ARRAY['walmart', 'kroger', 'safeway', 'aldi', 'trader joe'], NULL),
-('Dining Out', '#F5A623', ARRAY['restaurant', 'cafe', 'dining', 'takeout'], ARRAY['mcdonald''s', 'starbucks', 'chipotle'], NULL),
-('Transportation', '#D0021B', ARRAY['gas', 'fuel', 'uber', 'lyft', 'taxi'], ARRAY['exxon', 'shell', 'bp', 'chevron'], NULL),
-('Utilities', '#9013FE', ARRAY['electric', 'water', 'gas', 'internet', 'cable', 'phone'], ARRAY['at&t', 'verizon', 'comcast', 'xfinity'], NULL),
-('Entertainment', '#F8E71C', ARRAY['movie', 'netflix', 'spotify', 'amazon prime', 'theater'], ARRAY['netflix', 'hulu', 'spotify', 'apple'], NULL),
-('Shopping', '#50E3C2', ARRAY['amazon', 'clothing', 'electronics', 'target'], ARRAY['amazon', 'ebay', 'target', 'walmart', 'best buy'], NULL),
-('Health', '#BD10E0', ARRAY['doctor', 'pharmacy', 'healthcare', 'fitness'], ARRAY['cvs', 'walgreens', 'hospital', 'clinic'], NULL),
-('Income', '#4A90E2', ARRAY['salary', 'deposit', 'payment received', 'dividend'], NULL, NULL),
-('Miscellaneous', '#9B9B9B', NULL, NULL, NULL);
+
+DELETE FROM categories; -- Clear existing categories
+-- UK Grocery Stores
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Groceries', 'Grocery stores and supermarkets', 'expense', true, true, 
+ ARRAY['grocery', 'groceries', 'supermarket', 'food', 'shop', 'store','asda', 'asda superstore', 'asda stores', 'tesco', 'tesco stores', 'lidl', 'lidl gb', 'sainsbury', 'morrisons', 'waitrose', 'aldi', 'iceland', 'co-op', 'marks spencer', 'londis', 'convenience'], 
+ NOW(), NOW());
+
+-- Utilities (for Thames Water, etc.)
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords, created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Utilities', 'Water, gas, electricity bills', 'expense', true, true, 
+ ARRAY['utility', 'utilities', 'water', 'gas', 'electric', 'electricity', 'power','thames water','tv licence', 'british gas', 'edf', 'eon', 'scottish power', 'npower', 'bulb', 'octopus', 'octopus energy'], 
+ NOW(), NOW());
+
+-- Internet & Media (for Virgin Media, etc.)
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Internet & TV', 'Internet, TV, and media services', 'expense', true, true, 
+ ARRAY['internet', 'broadband', 'tv', 'media', 'cable', 'wifi','virgin media', 'bt', 'sky', 'talk talk', 'plusnet', 'ee', 'tv licence', 'bbc'], 
+ NOW(), NOW());
+
+-- Transportation (for Zipcar, etc.)
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords, created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Transportation', 'Car sharing, transport, travel', 'expense', true, true, 
+ ARRAY['transport', 'car', 'travel', 'sharing', 'rental', 'zipcar','zipcar', 'enterprise', 'hertz', 'avis', 'uber', 'lyft', 'tfl', 'oyster'], 
+ NOW(), NOW());
+
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+ (gen_random_uuid(), NULL, 'Gas & Fuel', 'Gasoline and fuel expenses', 'expense', true, true, 
+ ARRAY['gas', 'fuel', 'gasoline', 'station', 'petrol','shell', 'exxon', 'chevron', 'bp', 'mobil', 'texaco', 'sunoco', 'marathon', 'arco', 'citgo', 'valero', 'speedway', 'wawa', 'sheetz'], 
+ NOW(), NOW());
+
+-- Childcare & Family
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Childcare', 'Childcare and family expenses', 'expense', true, true, 
+ ARRAY['childcare', 'child', 'family', 'kids', 'nursery', 'school','childcare.tax.serv', 'childcare tax', 'nursery', 'school'], 
+ NOW(), NOW());
+
+-- Financial Services
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Financial Services', 'Banking, insurance, loans', 'expense', true, true, 
+ ARRAY['bank', 'insurance', 'loan', 'credit', 'financial', 'mbna', 'prudential','mbna', 'prudential', 'aj bell', 'barclays', 'lloyds', 'halifax', 'natwest', 'hsbc'], 
+ NOW(), NOW());
+
+-- Housing & Rent
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Housing', 'Rent, mortgage, housing costs', 'expense', true, true, 
+ ARRAY['rent', 'housing', 'mortgage', 'property', 'home', 'rent', 'housing', 'mortgage', 'property'], 
+ NOW(), NOW());
+
+-- Council Tax & Government
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords, created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Government & Council', 'Council tax, government services', 'expense', true, true, 
+ ARRAY['council', 'tax', 'government', 'local', 'authority','council', 'hmrc', 'dvla', 'passport'], 
+ NOW(), NOW());
+
+-- Charity & Donations
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Charity', 'Charitable donations and giving', 'expense', true, true, 
+ ARRAY['charity', 'donation', 'giving', 'foundation', 'fundraising', 'virgin foundation', 'justgiving', 'unicef', 'guide dogs', 'oxfam', 'cancer research', 'british heart'], 
+ NOW(), NOW());
+
+-- Cash & ATM
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Cash & ATM', 'ATM withdrawals and cash transactions', 'expense', true, true, 
+ ARRAY['cash', 'atm', 'withdrawal', 'notemachine', 'cardtronics','notemachine', 'cardtronics', 'atm', 'cash machine', 'link'], 
+ NOW(), NOW());
+
+
+
+-- Entertainment category
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Entertainment', 'Streaming, movies, entertainment', 'expense', true, true, 
+ ARRAY['entertainment', 'streaming', 'movie', 'music', 'netflix', 'prime'], 
+ NOW(), NOW());
+
+
+-- Add interest charges category
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Interest & Fees', 'Bank interest charges and fees', 'expense', true, true, 
+ARRAY['interest', 'fee', 'charge', 'penalty','interest charged', 'interest charg', 'bank fee', 'overdraft'], 
+NOW(), NOW());
+
+
+-- Add Travel category
+INSERT INTO categories (id, user_id, name, description, category_type, is_system_category, is_active, keywords,  created_at, updated_at) VALUES
+(gen_random_uuid(), NULL, 'Travel', 'Travel and vacation expenses', 'expense', true, true, 
+ARRAY['travel', 'vacation', 'holiday', 'trip', 'kreta', 'cosco','kreta', 'cosco', 'travel', 'vacation'], 
+NOW(), NOW());

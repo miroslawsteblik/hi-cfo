@@ -2,114 +2,294 @@
 
 services:
   postgres:
-    image: postgres:15-alpine
-    container_name: postgres_db
+    # No exposed ports in production
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5433:5432" # Expose PostgreSQL local on port 5433 to docker host 5432
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    secrets:
+      - postgres_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database:/docker-entrypoint-initdb.d  # Mount the schema.sql file to initialize the database
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend-network
-    restart: unless-stopped
+      - ./backup:/backup  # For database backups
+    # Production PostgreSQL optimizations
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.7
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
-    build: 
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: go_backend
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - API_PORT=8080
+      - ENV=production
       - GIN_MODE=release
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - backend-network
-      - frontend-network
-    restart: unless-stopped
+      - LOG_LEVEL=info
+      - JWT_SECRET_FILE=/run/secrets/jwt_secret
+    secrets:
+      - jwt_secret
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+      replicas: 2  # Run multiple instances for HA
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
 
   frontend:
-    build: 
-      context: ./client
-      dockerfile: Dockerfile.prod
-    container_name: nextjs_frontend
     environment:
       - NODE_ENV=production
-      - NEXT_TELEMETRY_DISABLED=1
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - frontend-network
-    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+      replicas: 2
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
 
 
   nginx:
-    image: nginx:alpine
-    container_name: nginx_proxy
     ports:
-      - "8088:80"
-      - "8443:443"
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro   # to prevent default configs from loading
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./nginx/logs:/var/log/nginx
-    depends_on:
-      backend:
-        condition: service_healthy
-      frontend:
-        condition: service_healthy
-    networks:
-      - frontend-network
-      - backend-network
-    restart: unless-stopped
+      - nginx_logs:/var/log/nginx
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+
+  # SSL certificate management
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # Redis (for caching/sessions)
   redis:
-    image: redis:7-alpine
-    container_name: redis_cache
-    command: redis-server /usr/local/etc/redis/redis.conf
-    volumes:
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-      - redis_data:/data
+    # No exposed ports in production
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
+    secrets:
+      - redis_password
+    # Production Redis configuration
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --appendonly yes
+      --appendfsync everysec
+      --auto-aof-rewrite-percentage 100
+      --auto-aof-rewrite-min-size 64mb
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Log aggregation
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
     networks:
-      - backend-network
+      - monitoring-network  # Isolated monitoring network
     restart: unless-stopped
 
+    # Monitoring
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: prometheus
+    # Remove external port exposure for security
+    # ports:
+    #   - "9090:9090"
+    expose:
+      - "9090"  # Internal access only
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring-network
+      - backend-network  # Access to application metrics
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    # Access through nginx proxy instead of direct port exposure
+    # ports:
+    #   - "3001:3000"
+    expose:
+      - "3000"  # Internal access only
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_password
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_SERVER_ROOT_URL=https://yourdomain.com/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    secrets:
+      - grafana_password
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - monitoring-network
+      - frontend-network  # Access through nginx
+    restart: unless-stopped
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.8.0
+    container_name: logstash
+    volumes:
+      - ./logging/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logging/logstash/config:/usr/share/logstash/config:ro
+    depends_on:
+      - elasticsearch
+    networks:
+      - monitoring-network
+      - backend-network  # Access to application logs
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: kibana
+    # Access through nginx proxy instead of direct port exposure
+    # ports:
+    #   - "5601:5601"
+    expose:
+      - "5601"  # Internal access only
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      SERVER_BASEPATH: "/kibana"
+      SERVER_REWRITEBASEPATH: "true"
+    depends_on:
+      - elasticsearch
+    networks:
+      - monitoring-network
+      - frontend-network  # Access through nginx
+    restart: unless-stopped
+
+    # Backup service
+  backup:
+    image: postgres:15-alpine
+    container_name: backup_service
+    volumes:
+      - ./backup:/backup
+      - ./scripts/backup.sh:/backup.sh:ro
+    environment:
+      - PGPASSWORD=${DB_PASSWORD}
+      - DB_HOST=postgres_db
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      - postgres
+    networks:
+      - backend-network
+
+  # Run backup immediately, then every 24h
+  entrypoint: |
+    sh -c '
+      /backup.sh
+      while true; do
+        sleep 86400  # 24 hours in seconds
+        /backup.sh
+      done
+    '
+
+  # Production secrets
+  secrets:
+    postgres_password:
+      file: ./secrets/postgres_password.txt
+    redis_password:
+      file: ./secrets/redis_password.txt
+    jwt_secret:
+      file: ./secrets/jwt_secret.txt
+    grafana_password:
+      file: ./secrets/grafana_password.txt
+
 volumes:
-  postgres_data:
-  redis_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
+  nginx_logs:
+
+
 
 networks:
   backend-network:
@@ -117,3 +297,6 @@ networks:
     internal: true  # Database network is internal only
   frontend-network:
     driver: bridge  # Frontend network allows external access via nginx
+  monitoring-network:
+    driver: bridge
+    internal: true  # Monitoring services isolated from external access

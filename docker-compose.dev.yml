@@ -1,127 +1,136 @@
-
-
 services:
-  backend:
-    build: 
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: go_backend
-    env_file:
-      - .env
+  postgres:
+    ports:
+      - "5433:5432" # Expose PostgreSQL local on port 5433 to docker host 5432
     environment:
-      # - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:5432/${DB_NAME}?sslmode=disable
-      - DB_HOST=${DB_HOST}  # Use host.docker.internal for Docker Desktop
+      POSTGRES_DB: ${DB_NAME}  # Will be hicfo_dev
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+  redis:
+    ports:
+      - "6379:6379"  # Expose for development tools
+
+
+  backend:
+    build:
+      target: development
+    ports:
+      - "8080:8080" # API port
+      - "2345:2345" # Delve debugger port
+    volumes:
+      - ./server:/app
+      - ./server/trusted_proxies.json:/app/trusted_proxies.json:ro # Mount trusted proxies config
+    environment:
+      - ENV=development
+      - GIN_MODE=debug
+      - LOG_LEVEL=debug
+      - HOT_RELOAD=true
+      - ENABLE_SWAGGER=true
+
+      - DB_HOST=postgres_db
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
-      - DB_PORT=${DB_PORT}
+      - DB_PORT=5432
+
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRY=${JWT_EXPIRY}
       - JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}
+
       - API_PORT=${API_PORT}
       - APP_NAME=${APP_NAME}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - GIN_MODE=release
+      - TRUSTED_PROXIES_CONFIG=/app/trusted_proxies.json # Path to trusted proxies config
 
-    extra_hosts:
-      - "host.docker.internal:host-gateway"  
+      - REDIS_HOST=redis_cache
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+
+      - DELVE_ENABLED=true
+    command: ["dlv", "debug", "./cmd", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient"]
 
     depends_on:
       redis:
         condition: service_healthy
-
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     networks:
       - backend-network
       - frontend-network
     restart: unless-stopped
 
+
   frontend:
-    build: 
-      context: ./client
-      dockerfile: Dockerfile.dev # DEV mode
-    container_name: nextjs_frontend
-    env_file:
-      - .env
+    build:
+      target: development
+    ports:
+        - "3000:3000" # Next.js dev server
+    volumes:
+      - ./client:/app # Mount source code into container
+      - /app/node_modules # Prevent overwriting node_modules
+      - /app/.next # Prevent overwriting .next build artifacts
     environment:
-      - NODE_ENV=development  # DEV mode
+      - NODE_ENV=development # DEV mode
       - NEXT_TELEMETRY_DISABLED=1
       - CHOKIDAR_USEPOLLING=true # DEV mode
       - WATCHPACK_POLLING=true # DEV mode
       - TAILWIND_DISABLE_TOUCH=false # DEV mode
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test:  ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - NEXT_PUBLIC_DEBUG=true # Enable debug mode
     networks:
       - frontend-network
     restart: unless-stopped
-    volumes:
-      - ./client:/app  # Mount source code into container
-      - /app/node_modules  # Prevent overwriting node_modules
-      - /app/.next  # Prevent overwriting .next build artifacts
 
   nginx:
-    image: nginx:alpine
-    container_name: nginx_proxy
-    env_file:
-      - .env
     ports:
       - "8088:80"
       - "8443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro   # to prevent default configs from loading
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro # to prevent default configs from loading
+      # - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/logs:/var/log/nginx
-    depends_on:
-      backend:
-        condition: service_healthy
-      frontend:
-        condition: service_healthy
-    networks:
-      - frontend-network
-      - backend-network
     restart: unless-stopped
+
+  # Development tools
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_dev
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: "30"  # WARNING level (10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR)
+      PGADMIN_CONFIG_FILE_LOG_LEVEL: "30"     # WARNING level for file logs
+      GUNICORN_ACCESS_LOGFILE: "/dev/null"    # Disable access logs
+      PYTHONWARNINGS: "ignore"                # Ignore Python warnings
+    depends_on:
+      - postgres
+    networks:
+      - backend-network
 
   # Redis (for caching/sessions)
-  redis:
-    image: redis:7-alpine
-    container_name: redis_cache
-    env_file:
-      - .env
-    command: redis-server --requirepass ${REDIS_PASSWORD} 
-    volumes:
-      - redis_data:/data
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    ports:
+      - "8081:8081"
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - REDIS_HOSTS=redis:redis:6379:0:${REDIS_PASSWORD}
+ 
+    depends_on:
+      - redis
     networks:
       - backend-network
-    restart: unless-stopped
+
 
 volumes:
-  redis_data:
+  pgadmin_data:
 
 networks:
   backend-network:
     driver: bridge
     internal: false
   frontend-network:
-    driver: bridge  # Frontend network allows external access via nginx
+    driver: bridge # Frontend network allows external access via nginx

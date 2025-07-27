@@ -40,9 +40,17 @@ const nextConfig: NextConfig = {
   },
 
   // Experimental features
-  experimental: {
-    // Enable if using App Router
-    // serverComponentsExternalPackages: ['@prisma/client'],
+   experimental: {
+    // Fix for server actions behind nginx proxy
+    serverActions: {
+      allowedOrigins: [
+        'localhost:8088',      // Your nginx proxy
+        'localhost:3000',      // Direct Next.js (for development)
+        '127.0.0.1:8088',      // Alternative localhost format
+        '127.0.0.1:3000',      // Alternative localhost format
+        'nextjs_frontend:3000', // Docker container name
+      ],
+    },
   },
 
   // Environment variables validation

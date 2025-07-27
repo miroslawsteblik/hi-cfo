@@ -1,0 +1,160 @@
+basePath: /api/v1
+definitions:
+  hi-cfo_server_internal_shared.ErrorResponse:
+    properties:
+      code:
+        type: string
+      details:
+        type: string
+      error:
+        type: string
+      success:
+        type: boolean
+    type: object
+  hi-cfo_server_internal_shared.Response-internal_domains_user_UserResponse:
+    properties:
+      data:
+        $ref: '#/definitions/internal_domains_user.UserResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  internal_domains_user.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  internal_domains_user.UserRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      password:
+        minLength: 6
+        type: string
+      role:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  internal_domains_user.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Financial management API for tracking transactions, categories, and
+    accounts
+  title: HiCFO API
+  version: 1.0.0
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/internal_domains_user.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/hi-cfo_server_internal_shared.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/hi-cfo_server_internal_shared.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/hi-cfo_server_internal_shared.ErrorResponse'
+      summary: Login user
+      tags:
+      - Authentication
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with email and password
+      parameters:
+      - description: User registration data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/internal_domains_user.UserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            $ref: '#/definitions/hi-cfo_server_internal_shared.Response-internal_domains_user_UserResponse'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/hi-cfo_server_internal_shared.ErrorResponse'
+        "409":
+          description: Email already exists
+          schema:
+            $ref: '#/definitions/hi-cfo_server_internal_shared.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/hi-cfo_server_internal_shared.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Authentication
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Enter 'Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
