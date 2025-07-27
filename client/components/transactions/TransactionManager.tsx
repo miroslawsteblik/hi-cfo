@@ -1,22 +1,35 @@
-// Fixed TransactionManager.tsx
 "use client";
 
 import EnhancedOFXManager from "@/components/transactions/OFX-manager";
 import { updateTransaction, deleteTransaction, analyzeTransactionCategorization, getTransactions } from "@/app/actions/transactions";
 import { useState, useEffect, useCallback } from "react";
-import { TransactionFilters, CategorizationAnalysis, TransactionManagerProps, TransactionListItem, CategorizationSettings } from "@/lib/types/transactions";
+import { TransactionFilters, CategorizationAnalysis, TransactionListItem, CategorizationSettings } from "@/lib/types/transactions";
 
 import TransactionHeader from "./TransactionHeader";
 import TransactionTable from "./TransactionTable";
 import TransactionSettings from "./TransactionSettings";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { useErrorHandler } from '@/lib/errors';
+import { useErrorHandler } from "@/lib/errors";
 
+import { Account } from "@/lib/types/accounts";
+import { Category } from "@/lib/types/categories";
+import { User } from "@/lib/types/user";
+
+interface TransactionManagerProps {
+  initialData: any;
+  accounts: Account[];
+  categories: Category[];
+  user: User;
+}
 
 export default function EnhancedTransactionManager({ initialData, accounts, categories, user }: TransactionManagerProps) {
-  // ==================== 1. STATE DECLARATIONS  ====================
   // Transaction State
-  const [transactions, setTransactions] = useState<TransactionListItem[]>(initialData?.data || initialData?.transactions || []);
+  const [transactions, setTransactions] = useState<TransactionListItem[]>(
+    initialData?.data?.map((transaction: any) => ({
+      ...transaction,
+      currency: "USD",
+    })) || []
+  );
   const [total, setTotal] = useState(initialData?.total || 0);
 
   const [currentPage, setCurrentPage] = useState(initialData?.page || 1);
@@ -39,7 +52,7 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // User preferences (loaded from localStorage)
   const [userPrefs, setUserPrefs] = useState({
     showMerchantNames: true,
@@ -61,14 +74,14 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
   // Load user preferences on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('transaction-preferences');
+      const saved = localStorage.getItem("transaction-preferences");
       if (saved) {
         const prefs = JSON.parse(saved);
-        setUserPrefs(prev => ({ ...prev, ...prefs }));
-        setFilters(prev => ({ ...prev, limit: prefs.defaultPageSize || 20 }));
+        setUserPrefs((prev) => ({ ...prev, ...prefs }));
+        setFilters((prev) => ({ ...prev, limit: prefs.defaultPageSize || 20 }));
       }
     } catch (err) {
-      console.error('Failed to load user preferences:', err);
+      console.error("Failed to load user preferences:", err);
     }
   }, []);
 
@@ -81,63 +94,43 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
     try {
       const result = await getTransactions(filters);
 
-      if (result?.success === false) {
-        throw new Error(result.error || "Failed to load transactions");
+      if (!result) {
+        throw new Error("Failed to load transactions");
       }
 
-      let transactionData = [];
+      let transactionData: TransactionListItem[] = [];
       let totalCount = 0;
       let currentPageNum = 1;
       let totalPagesNum = 1;
 
-      if (result?.data) {
-        // Handle paginated response format
-        if (Array.isArray(result.data)) {
-          // If data is directly an array
-          transactionData = result.data;
-          totalCount = result.total || 0;
-          currentPageNum = result.page || 1;
-          totalPagesNum = result.pages || 1;
-        } else if (result.data.data && Array.isArray(result.data.data)) {
-          // If data contains nested data property (paginated format)
-          transactionData = result.data.data;
-          totalCount = result.data.total || 0;
-          currentPageNum = result.data.page || 1;
-          totalPagesNum = result.data.pages || 1;
-        } else {
-          // Fallback for other data structures
-          transactionData = result.data;
-          totalCount = result.total || 0;
-          currentPageNum = result.page || 1;
-          totalPagesNum = result.pages || 1;
-        }
-      } else if (result?.transactions) {
-        transactionData = result.transactions;
+      if (result && result.data && Array.isArray(result.data)) {
+        transactionData = result.data.map((transaction: any) => ({
+          ...transaction,
+          currency: "USD", // Default currency if not provided
+        }));
         totalCount = result.total || 0;
         currentPageNum = result.page || 1;
         totalPagesNum = result.pages || 1;
-      } else if (Array.isArray(result)) {
-        transactionData = result;
-        totalCount = result.length;
-        currentPageNum = 1;
-        totalPagesNum = 1;
       } else {
         console.error("❌ Unexpected response format:", result);
-        throw new Error("Invalid response format from server");
+        // Use empty fallback data
+        transactionData = [];
+        totalCount = 0;
+        currentPageNum = 1;
+        totalPagesNum = 1;
       }
 
       setTransactions(transactionData);
       setTotal(totalCount);
       setCurrentPage(currentPageNum);
       setTotalPages(totalPagesNum);
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to load transactions";
       setError(errorMessage);
       await handleError(error instanceof Error ? error : new Error(errorMessage), {
-        component: 'TransactionManager',
-        action: 'loadTransactions',
-        filters
+        component: "TransactionManager",
+        action: "loadTransactions",
+        filters,
       });
       setTransactions([]);
       setTotal(0);
@@ -171,7 +164,6 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
   }, [successMessage]);
 
   // ==================== UTILITY FUNCTIONS ====================
-
 
   const getCategoryName = (categoryId?: string) => {
     if (!categoryId) return "Uncategorized";
@@ -215,10 +207,10 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
     } catch (err) {
       setError("Failed to update transaction");
       await handleError(err instanceof Error ? err : new Error("Failed to update transaction"), {
-        component: 'TransactionManager',
-        action: 'updateTransaction',
+        component: "TransactionManager",
+        action: "updateTransaction",
         transactionId,
-        categoryId
+        categoryId,
       });
     }
   };
@@ -442,11 +434,11 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
   }, [bulkSelectMode, selectedTransactions]);
 
   // ==================== 5. COMPUTED VALUES ====================
-const safeTransactions = Array.isArray(transactions) ? transactions : [];
-const uncategorizedCount = safeTransactions.filter((tx) => !tx.category_id).length;
-const totalIncome = safeTransactions.filter((t) => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
-const totalExpenses = safeTransactions.filter((t) => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
-const netAmount = totalIncome - totalExpenses;
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const uncategorizedCount = safeTransactions.filter((tx) => !tx.category_id).length;
+  const totalIncome = safeTransactions.filter((t) => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = safeTransactions.filter((t) => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  const netAmount = totalIncome - totalExpenses;
 
   // ==================== SUB-COMPONENTS  ====================
 
@@ -464,7 +456,11 @@ const netAmount = totalIncome - totalExpenses;
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Net Amount</dt>
-            <dd className={`mt-1 text-3xl font-semibold ${netAmount >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+            <dd
+              className={`mt-1 text-3xl font-semibold ${
+                netAmount >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+              }`}
+            >
               {formatCurrency(Math.abs(netAmount))}
             </dd>
           </div>
@@ -474,7 +470,11 @@ const netAmount = totalIncome - totalExpenses;
   );
 
   const FilterPanel = () => (
-    <div className={`bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 px-4 py-3 transition-all duration-200 ${showFilters ? "block" : "hidden"}`}>
+    <div
+      className={`bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 px-4 py-3 transition-all duration-200 ${
+        showFilters ? "block" : "hidden"
+      }`}
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Search */}
         <div>
@@ -515,11 +515,12 @@ const netAmount = totalIncome - totalExpenses;
           >
             <option value="">All Categories</option>
             <option value="uncategorized">Uncategorized</option>
-            {Array.isArray(categories) && categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
+            {Array.isArray(categories) &&
+              categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
           </select>
         </div>
 
@@ -657,16 +658,27 @@ const netAmount = totalIncome - totalExpenses;
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-green-800 dark:text-green-200">{successMessage}</p>
             </div>
             <div className="ml-auto pl-3">
-              <button onClick={() => setSuccessMessage(null)} className="text-green-400 dark:text-green-300 hover:text-green-600 dark:hover:text-green-100">
+              <button
+                onClick={() => setSuccessMessage(null)}
+                className="text-green-400 dark:text-green-300 hover:text-green-600 dark:hover:text-green-100"
+              >
                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             </div>
@@ -712,7 +724,10 @@ const netAmount = totalIncome - totalExpenses;
           <div className="mb-6">
             <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500 p-4 rounded-md">
               <div className="text-red-800 dark:text-red-200">{error}</div>
-              <button onClick={() => setError(null)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 text-sm mt-1">
+              <button
+                onClick={() => setError(null)}
+                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 text-sm mt-1"
+              >
                 Dismiss
               </button>
             </div>
@@ -725,7 +740,7 @@ const netAmount = totalIncome - totalExpenses;
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  {selectedTransactions.size} transaction{selectedTransactions.size > 1 ? 's' : ''} selected
+                  {selectedTransactions.size} transaction{selectedTransactions.size > 1 ? "s" : ""} selected
                 </div>
 
                 <div className="flex items-center space-x-3">
@@ -741,11 +756,12 @@ const netAmount = totalIncome - totalExpenses;
                     disabled={loading}
                   >
                     <option value="">Assign category...</option>
-                    {Array.isArray(categories) && categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
+                    {Array.isArray(categories) &&
+                      categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
                     <option value="">Remove category</option>
                   </select>
 
@@ -759,7 +775,11 @@ const netAmount = totalIncome - totalExpenses;
                       <>
                         <svg className="animate-spin -ml-1 mr-2 h-3 w-3" fill="none" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
-                          <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <path
+                            fill="currentColor"
+                            className="opacity-75"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         Deleting...
                       </>
@@ -830,10 +850,7 @@ const netAmount = totalIncome - totalExpenses;
       )}
 
       {/* Settings Modal */}
-      <TransactionSettings
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-      />
+      <TransactionSettings isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
 
       {/* Analysis Modal */}
       {showAnalysisModal && analysisData && (
@@ -841,7 +858,10 @@ const netAmount = totalIncome - totalExpenses;
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">Categorization Analysis</h3>
-              <button onClick={() => setShowAnalysisModal(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400">
+              <button
+                onClick={() => setShowAnalysisModal(false)}
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
+              >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -858,7 +878,9 @@ const netAmount = totalIncome - totalExpenses;
                 <div className="text-sm text-gray-600">Successfully Categorized</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{Math.round(analysisData.success_rate * 100)}%</div>
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {Math.round(analysisData.success_rate * 100)}%
+                </div>
                 <div className="text-sm text-gray-600">Success Rate</div>
               </div>
             </div>
@@ -876,7 +898,10 @@ const netAmount = totalIncome - totalExpenses;
             </div>
 
             <div className="flex justify-end mt-6">
-              <button onClick={() => setShowAnalysisModal(false)} className="bg-blue-600 dark:bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-700">
+              <button
+                onClick={() => setShowAnalysisModal(false)}
+                className="bg-blue-600 dark:bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-700"
+              >
                 Close
               </button>
             </div>

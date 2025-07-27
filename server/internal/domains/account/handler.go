@@ -76,8 +76,7 @@ func (h *AccountHandler) GetAccounts(c *gin.Context) {
 		"page":          accounts.Page,
 	}).Info("Successfully retrieved accounts")
 
-	// Use generic paginated response
-	shared.RespondWithPaginated(c, accounts.Data, accounts.Total, accounts.Page, accounts.Limit, accounts.Pages)
+	h.RespondWithSuccess(c, http.StatusOK, accounts)
 }
 
 // CreateAccount handles POST /accounts

@@ -2,7 +2,7 @@
 "use server";
 
 import { apiClient } from "@/lib/api-client-enhanced";
-import { CategoryData, Category, CategoriesResponse } from "@/lib/types/categories";
+import { CategoryData, Category, CategoriesResponse, CategoryFilter } from "@/lib/types/categories";
 import { CategoryMatchResult } from "@/lib/types/transactions";
 import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 export async function createCategory(data: CategoryData) {
@@ -28,14 +28,7 @@ export async function createCategory(data: CategoryData) {
 }
 
 // Get categories with filtering and pagination
-export async function getCategories(params?: {
-  page?: number;
-  limit?: number;
-  category_type?: string;
-  is_system_category?: boolean;
-  is_active?: boolean;
-  search?: string;
-}): Promise<CategoriesResponse> {
+export async function getCategories(params?: CategoryFilter): Promise<CategoriesResponse> {
   try {
     ErrorLogger.getInstance().logInfo("Fetching categories", { context: 'get_categories', params });
 
@@ -52,7 +45,7 @@ export async function getCategories(params?: {
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
     const result = await apiClient.get<CategoriesResponse>(`/api/v1/categories${query}`);
 
-    ErrorLogger.getInstance().logInfo("Categories fetched successfully", { context: 'get_categories', count: result.categories?.length || 0 });
+    ErrorLogger.getInstance().logInfo("Categories fetched successfully", { context: 'get_categories', count: result.data?.length || 0 });
     return result;
   } catch (error) {
     const appError = new FinancialAppError({
@@ -61,7 +54,7 @@ export async function getCategories(params?: {
       details: { originalError: error, context: 'get_categories' }
     });
     await ErrorLogger.getInstance().logError(appError);
-    return { categories: [], total: 0, page: 1, limit: 20, pages: 1 };
+    return { data: [], total: 0, page: 1, limit: 20, pages: 1 };
   }
 }
 

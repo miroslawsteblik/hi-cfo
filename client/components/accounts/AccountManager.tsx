@@ -6,7 +6,14 @@ import { useRouter } from "next/navigation";
 import AccountForm from "@/components/accounts/AccountForm";
 import { createAccount, updateAccount, deleteAccount } from "@/app/actions/accounts";
 
-import { Account, AccountsClientProps } from "@/lib/types/accounts";
+import { Account, PagedAccountData, AccountSummary} from "@/lib/types/accounts";
+import { User } from '@/lib/types/user';
+
+interface AccountsClientProps {
+  initialData: PagedAccountData;
+  summary: AccountSummary;
+  user: User;
+}
 
 export default function AccountsClient({ initialData, summary, user }: AccountsClientProps) {
   const [showForm, setShowForm] = useState(false);
@@ -14,7 +21,7 @@ export default function AccountsClient({ initialData, summary, user }: AccountsC
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  console.log("Initial accounts data:", initialData);
+
   const handleCreateAccount = async (data: any) => {
     setLoading(true);
     try {
@@ -202,7 +209,7 @@ export default function AccountsClient({ initialData, summary, user }: AccountsC
 
       {/* Accounts List */}
       <div className="bg-white shadow-sm border rounded-lg overflow-hidden">
-        {Array.isArray(initialData.accounts) && initialData.accounts.length > 0 ? (
+        {Array.isArray(initialData.data) && initialData.data.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -228,7 +235,7 @@ export default function AccountsClient({ initialData, summary, user }: AccountsC
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {initialData.accounts.map((account) => (
+                {initialData.data.map((account) => (
                   <tr key={account.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">

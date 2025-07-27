@@ -1,11 +1,6 @@
-
-
-import { Account } from '../accounts';
-import { Category } from '../categories';
-import { User } from '../user';
-
-
-
+import { Account } from "../accounts";
+import { Category } from "../categories";
+import { User } from "../user";
 
 export interface CategorizationSettings {
   confidence_threshold: number;
@@ -39,7 +34,6 @@ export interface CategorizationAnalysis {
   categorization_results: CategorizationResult[];
 }
 
-
 export interface CategorizationResult {
   description: string;
   result?: CategoryMatchResult;
@@ -55,15 +49,12 @@ export interface CategoryMatchResult {
   similarity_type: string;
 }
 
-
 export interface CategorizationTestResponse {
   merchant_name: string;
   result?: CategoryMatchResult;
   stats?: MatchingStats;
   analysis_requested: boolean;
 }
-
-
 
 export interface CategorizationAnalysisResponse {
   success: boolean;
@@ -159,8 +150,6 @@ export interface CategorizationAnalytics {
   };
 }
 
-
-
 export interface Transaction {
   id: string;
   account_id: string;
@@ -219,8 +208,10 @@ export interface TransactionStats {
   }>;
 }
 
-export interface TransactionsData {
-  transactions: Transaction[];
+
+
+export interface PagedTransactionData {
+  data: Transaction[];
   total: number;
   page: number;
   pages: number;
@@ -235,7 +226,7 @@ export interface EnhancedTransactionData extends TransactionData {
 }
 
 export interface TransactionsClientProps {
-  initialData: TransactionsData;
+  initialData: PagedTransactionData;
   accounts: Account[];
   categories: Category[];
   user: User;
@@ -246,15 +237,6 @@ export interface TransactionFormProps {
   categories: Category[];
   onSubmit: (data: TransactionData) => Promise<void>;
   onCancel: () => void;
-}
-
-
-
-export interface TransactionManagerProps {
-  initialData: any;
-  accounts: Account[];
-  categories: Category[];
-  user: User;
 }
 
 export interface TransactionListItem {
@@ -271,5 +253,3 @@ export interface TransactionListItem {
   created_at: string;
   updated_at: string;
 }
-
-

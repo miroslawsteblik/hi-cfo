@@ -2,7 +2,7 @@
 "use server";
 
 import { apiClient } from "@/lib/api-client-enhanced";
-import { AccountData, Account, AccountsResponse, AccountSummary } from "@/lib/types/accounts";
+import { AccountData, Account, PagedAccountData, AccountSummary, AccountFilter } from "@/lib/types/accounts";
 import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 
 export async function createAccount(data: AccountData) {
@@ -26,16 +26,8 @@ export async function createAccount(data: AccountData) {
 }
 
 // Get user's accounts with filtering and pagination
-export async function getAccounts(params?: {
-  page?: number;
-  limit?: number;
-  account_type?: string;
-  is_active?: boolean;
-  search?: string;
-}): Promise<AccountsResponse> {
+export async function getAccounts(params?: AccountFilter): Promise<PagedAccountData> {
   try {
-    ErrorLogger.getInstance().logInfo("Fetching accounts", { context: 'get_accounts', params });
-
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.limit) queryParams.append("limit", params.limit.toString());
@@ -44,35 +36,18 @@ export async function getAccounts(params?: {
     if (params?.search) queryParams.append("search", params.search);
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const result = await apiClient.get<AccountsResponse>(`/api/v1/accounts${query}`);
+    const result = await apiClient.get<PagedAccountData>(`/api/v1/accounts${query}`);
 
-    // The enhanced API client returns the data directly
-    if (result && Array.isArray(result.accounts)) {
-      ErrorLogger.getInstance().logInfo("Accounts fetched successfully", { context: 'get_accounts', count: result.accounts.length });
-      return {
-        accounts: result.accounts,
-        total: result.total ?? 0,
-        page: result.page ?? 1,
-        limit: result.limit ?? 20,
-        pages: result.pages ?? 1,
-      };
-    }
-    // Defensive fallback
-    return {
-      accounts: [],
-      total: 0,
-      page: 1,
-      limit: 20,
-      pages: 1,
-    };
+    return result;
   } catch (error) {
-    const appError = new FinancialAppError({
-      code: ErrorCode.API_ERROR,
-      message: 'Failed to fetch accounts',
-      details: { originalError: error, context: 'get_accounts' }
-    });
-    await ErrorLogger.getInstance().logError(appError);
-    return { accounts: [], total: 0, page: 1, limit: 20, pages: 1 };
+    await ErrorLogger.getInstance().logError(
+      new FinancialAppError({
+        code: ErrorCode.API_ERROR,
+        message: "Failed to fetch accounts",
+        details: { originalError: error, context: "get_accounts" },
+      })
+    );
+    return { data: [], total: 0, page: 1, pages: 1 };
   }
 }
 

@@ -192,18 +192,18 @@ func (h *BaseHandler) RespondWithError(c *gin.Context, status int, message, code
 
 // RespondWithPaginated is a helper function for paginated responses
 // Note: This is a function, not a method, because Go methods cannot have type parameters
-func RespondWithPaginated[T any](c *gin.Context, data []T, total int64, page, limit, pages int) {
-	response := PaginatedResponse[T]{
-		Success: true,
-		Data:    data,
-		Total:   total,
-		Page:    page,
-		Limit:   limit,
-		Pages:   pages,
-	}
+// func RespondWithPaginated[T any](c *gin.Context, data []T, total int64, page, limit, pages int) {
+// 	response := PaginatedResponse[T]{
+// 		Success: true,
+// 		Data:    data,
+// 		Total:   total,
+// 		Page:    page,
+// 		Limit:   limit,
+// 		Pages:   pages,
+// 	}
 
-	c.JSON(http.StatusOK, response)
-}
+// 	c.JSON(http.StatusOK, response)
+// }
 
 // Common error response helpers
 func (h *BaseHandler) RespondWithValidationError(c *gin.Context, message string, details ...string) {

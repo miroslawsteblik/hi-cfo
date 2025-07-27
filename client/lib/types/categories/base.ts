@@ -39,13 +39,21 @@ export interface Category {
 }
 
 export interface CategoriesResponse {
-  categories: Category[];
+  data: Category[];
   total: number;
   page: number;
   limit: number;
   pages: number;
 }
 
+export interface CategoryFilter {
+  page?: number;
+  limit?: number;
+  category_type?: string;
+  is_system_category?: boolean;
+  is_active?: boolean;
+  search?: string;
+}
 export interface CategoryAssignmentProps {
   categories: Category[];
   selectedCategoryId?: string;
@@ -108,4 +116,3 @@ export interface CategoryFormData {
   keywords?: string[];
   merchant_patterns?: string[];
 }
-

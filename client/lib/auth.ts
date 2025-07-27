@@ -380,11 +380,20 @@ export async function logoutAction() {
     await invalidateSession();
     
     const cookieStore = await cookies();
-    cookieStore.delete("access_token");
-    cookieStore.delete("refresh_token");
-    cookieStore.delete("auth_token");
-    cookieStore.delete("auth_user");
-    cookieStore.delete("csrf_token");
+    
+    // Clear authentication cookies with proper attributes
+    const cookieOptions = {
+      path: '/',
+      expires: new Date(0), // Set to past date to delete
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const
+    };
+    
+    cookieStore.set("access_token", "", { ...cookieOptions, httpOnly: true });
+    cookieStore.set("refresh_token", "", { ...cookieOptions, httpOnly: true });
+    cookieStore.set("auth_token", "", { ...cookieOptions, httpOnly: true });
+    cookieStore.set("auth_user", "", { ...cookieOptions, httpOnly: true });
+    cookieStore.set("csrf_token", "", { ...cookieOptions, httpOnly: true });
     
     ErrorLogger.getInstance().logInfo("Logout successful", { context: 'logout_action' });
   } catch (error) {

@@ -5,6 +5,8 @@ import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import Link from "next/link";
 import { FinancialDataErrorBoundary } from "@/components/providers/ErrorBoundary";
+import WelcomeSection from "@/components/dashboard/WelcomeSection"
+import RealDashboardStats from "@/components/dashboard/RealDashboardStats";
 
 export default async function DashboardPage() {
   // Get user from server-side cookies
@@ -38,12 +40,7 @@ export default async function DashboardPage() {
     (dashboardStats.categorizedTransactions / dashboardStats.totalTransactions) * 100
   );
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+ 
 
   // user is actually { success: true, data: { ... } }
   const userObj = user || { first_name: '', last_name: '', email: '' };
@@ -59,7 +56,7 @@ export default async function DashboardPage() {
     if (email && email.length > 0) {
       return email[0].toUpperCase();
     }
-    return "U"; // Default to "U" for User instead of "?"
+    return "U"; 
   };
   
   // Helper function to get user display name
@@ -79,7 +76,6 @@ export default async function DashboardPage() {
 
   return (
     <AppLayout>
-      {/* Page Header */}
       <PageHeader 
         title="Dashboard" 
         subtitle="Welcome back! Here's what's happening with your finances."
@@ -89,122 +85,15 @@ export default async function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           
-          {/* Welcome Hero Section */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg text-white p-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold mb-2">
-                  Welcome back, {getUserDisplayName()}! 👋
-                </h1>
-                <p className="text-blue-100 text-lg">
-                  Your financial intelligence dashboard is ready. 
-                  {categorizationRate >= 80 && " Great job on keeping your transactions organized!"}
-                </p>
-              </div>
-              <div className="mt-4 md:mt-0 flex space-x-3">
-                <Link
-                  href="/transactions"
-                  className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors"
-                >
-                  View Transactions
-                </Link>
-                <Link
-                  href="/transactions"
-                  className="bg-blue-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-900 transition-colors"
-                >
-                  Import OFX
-                </Link>
-              </div>
-            </div>
-          </div>
+          <WelcomeSection
+            title="Welcome back"
+            subtitle="Your financial intelligence dashboard is ready."
+            categorizationRate={categorizationRate}
+            userDisplayName={getUserDisplayName()}
+          />
 
-          {/* Key Metrics Grid */}
           <FinancialDataErrorBoundary>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Total Income */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Income</p>
-                  <p className="text-2xl font-bold text-green-600 mt-1">
-                    {formatCurrency(dashboardStats.totalIncome)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl">📈</span>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  +12% from last month
-                </span>
-              </div>
-            </div>
-
-            {/* Total Expenses */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Expenses</p>
-                  <p className="text-2xl font-bold text-red-600 mt-1">
-                    {formatCurrency(dashboardStats.totalExpenses)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl">💸</span>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                  +3% from last month
-                </span>
-              </div>
-            </div>
-
-            {/* Net Income */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Net Income</p>
-                  <p className="text-2xl font-bold text-blue-600 mt-1">
-                    {formatCurrency(dashboardStats.netIncome)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl">💰</span>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                  +18% from last month
-                </span>
-              </div>
-            </div>
-
-            {/* Auto-Categorization Rate */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Categorization Rate</p>
-                  <p className="text-2xl font-bold text-purple-600 mt-1">
-                    {categorizationRate}%
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <span className="text-2xl">🧠</span>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center">
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  categorizationRate >= 80 
-                    ? 'text-green-600 bg-green-100' 
-                    : 'text-yellow-600 bg-yellow-100'
-                }`}>
-                  {dashboardStats.categorizedTransactions} of {dashboardStats.totalTransactions} categorized
-                </span>
-              </div>
-            </div>
-            </div>
+            <RealDashboardStats  />
           </FinancialDataErrorBoundary>
 
           {/* Quick Actions & Recent Activity Grid */}

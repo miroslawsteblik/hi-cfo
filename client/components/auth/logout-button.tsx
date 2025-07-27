@@ -2,14 +2,33 @@
 "use client";
 
 import { useTransition } from "react";
-import { logoutAction } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function LogoutButton() {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleLogout = () => {
     startTransition(async () => {
-      await logoutAction();
+      try {
+        const response = await fetch('/api/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          // Force a hard navigation to clear any cached state
+          window.location.href = '/login';
+        } else {
+          console.error('Logout failed');
+          router.push('/login'); // Fallback
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+        router.push('/login'); // Fallback
+      }
     });
   };
 
