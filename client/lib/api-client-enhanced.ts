@@ -53,7 +53,14 @@ class ApiClient {
 
         return await this.handleResponse<T>(response, endpoint);
       } catch (error) {
-        lastError = error as Error;
+        // Ensure we have a proper Error object
+        if (error instanceof FinancialAppError) {
+          lastError = error;
+        } else if (error instanceof Error) {
+          lastError = error;
+        } else {
+          lastError = new Error(typeof error === 'string' ? error : 'Unknown error occurred');
+        }
         
         // Log each attempt
         await this.logger.logError(lastError, {
@@ -63,24 +70,24 @@ class ApiClient {
         });
 
         // Don't retry on certain errors
-        if (error instanceof FinancialAppError) {
+        if (lastError instanceof FinancialAppError) {
           if ([
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.AUTHORIZATION_DENIED,
             ErrorCode.VALIDATION_ERROR,
-          ].includes(error.code)) {
-            throw error;
+          ].includes(lastError.code)) {
+            throw lastError;
           }
         }
 
         // Don't retry on the last attempt
         if (attempt === retries) {
-          throw error;
+          throw lastError;
         }
 
         // Only retry if the error is retryable
-        if (!shouldRetry(error)) {
-          throw error;
+        if (!shouldRetry(lastError)) {
+          throw lastError;
         }
 
         // Exponential backoff

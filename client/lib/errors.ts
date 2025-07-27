@@ -30,6 +30,8 @@ export enum ErrorCode {
   // General errors
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',
   FEATURE_UNAVAILABLE = 'FEATURE_UNAVAILABLE',
+  SYSTEM_ERROR = 'SYSTEM_ERROR',
+  API_ERROR = 'API_ERROR',
 }
 
 export interface AppError {
@@ -96,6 +98,8 @@ export class FinancialAppError extends Error {
       [ErrorCode.MISSING_REQUIRED_FIELD]: 'Please fill in all required fields.',
       [ErrorCode.UNKNOWN_ERROR]: 'An unexpected error occurred. Please try again.',
       [ErrorCode.FEATURE_UNAVAILABLE]: 'This feature is currently unavailable.',
+      [ErrorCode.SYSTEM_ERROR]: 'A system error occurred. Please try again.',
+      [ErrorCode.API_ERROR]: 'API request failed. Please try again.',
     };
     return messages[code] || 'An error occurred.';
   }
@@ -155,13 +159,48 @@ export class ErrorLogger {
   }
 
   async logError(error: Error | FinancialAppError, context?: Record<string, unknown>): Promise<void> {
-    const errorData = {
-      timestamp: new Date().toISOString(),
-      message: error.message,
-      stack: error.stack,
-      context,
-      ...(error instanceof FinancialAppError ? error.toJSON() : { code: ErrorCode.UNKNOWN_ERROR }),
-    };
+    // Handle cases where error might be null, undefined, or not a proper Error object
+    if (!error) {
+      console.error('🚨 Error logged: Error object is null or undefined', { context });
+      return;
+    }
+
+    let errorData: any;
+    
+    try {
+      if (error instanceof FinancialAppError) {
+        errorData = {
+          ...error.toJSON(),
+          stack: error.stack,
+          context,
+        };
+      } else if (error instanceof Error) {
+        errorData = {
+          code: ErrorCode.UNKNOWN_ERROR,
+          message: error.message || 'Unknown error occurred',
+          timestamp: new Date(),
+          stack: error.stack,
+          context,
+        };
+      } else {
+        // Handle non-Error objects that might have been thrown
+        errorData = {
+          code: ErrorCode.UNKNOWN_ERROR,
+          message: typeof error === 'string' ? error : 'Unknown error occurred',
+          details: { originalError: error },
+          timestamp: new Date(),
+          context,
+        };
+      }
+    } catch (serializationError) {
+      console.error('🚨 Error serializing error object:', serializationError);
+      errorData = {
+        code: ErrorCode.UNKNOWN_ERROR,
+        message: 'Error occurred but could not be serialized',
+        timestamp: new Date(),
+        context,
+      };
+    }
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
@@ -189,6 +228,18 @@ export class ErrorLogger {
 
     if (process.env.NODE_ENV === 'development') {
       console.log('👤 User action:', actionData);
+    }
+  }
+
+  logInfo(message: string, context?: Record<string, unknown>): void {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ℹ️ Info:', { message, context, timestamp: new Date().toISOString() });
+    }
+  }
+
+  logWarning(message: string, context?: Record<string, unknown>): void {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Warning:', { message, context, timestamp: new Date().toISOString() });
     }
   }
 }

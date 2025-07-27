@@ -9,7 +9,7 @@ import {
   getErrorMessage,
   shouldRetry,
 } from '@/lib/errors';
-import { toast } from 'sonner';
+import { toast } from 'react-toastify';
 
 interface UseErrorHandlerOptions {
   showToast?: boolean;
@@ -77,25 +77,11 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
     // Show toast notification
     if (showToast) {
       if (errorCode === ErrorCode.AUTHENTICATION_FAILED) {
-        toast.error('Authentication required', {
-          description: errorMessage,
-          action: {
-            label: 'Login',
-            onClick: () => window.location.href = '/login',
-          },
-        });
+        toast.error(`Authentication required: ${errorMessage}`);
       } else if (errorCode === ErrorCode.NETWORK_ERROR) {
-        toast.error('Connection issue', {
-          description: errorMessage,
-          action: {
-            label: 'Retry',
-            onClick: () => window.location.reload(),
-          },
-        });
+        toast.error(`Connection issue: ${errorMessage}`);
       } else {
-        toast.error('Error', {
-          description: errorMessage,
-        });
+        toast.error(`Error: ${errorMessage}`);
       }
     }
 

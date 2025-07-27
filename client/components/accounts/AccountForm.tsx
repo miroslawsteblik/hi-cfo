@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import {  AccountFormData, AccountFormProps } from '@/lib/types/accounts';
+import { useErrorHandler } from '@/lib/errors';
 
 
 const ACCOUNT_TYPES = [
@@ -35,6 +36,7 @@ export default function AccountForm({ onSubmit, onCancel, initialData, isEdit = 
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { handleError, logUserAction } = useErrorHandler();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +44,11 @@ export default function AccountForm({ onSubmit, onCancel, initialData, isEdit = 
     setError('');
 
     try {
+      logUserAction(isEdit ? 'account_form_update_attempt' : 'account_form_create_attempt', {
+        accountType: formData.account_type,
+        bankName: formData.bank_name
+      });
+      
       // Validate required fields
       if (!formData.account_name || !formData.bank_name || !formData.account_type) {
         throw new Error('Please fill in all required fields');
@@ -68,7 +75,13 @@ export default function AccountForm({ onSubmit, onCancel, initialData, isEdit = 
 
       await onSubmit(submitData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save account');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save account';
+      setError(errorMessage);
+      await handleError(err instanceof Error ? err : new Error(errorMessage), {
+        component: 'AccountForm',
+        action: isEdit ? 'update_account' : 'create_account',
+        formData: { ...formData, account_number_masked: '[REDACTED]' } // Don't log sensitive data
+      });
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css'
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { ErrorBoundary } from '@/components/providers/ErrorBoundary';
 
 export const metadata: Metadata = {
   title: 'Hi-CFO - Financial Dashboard',
@@ -16,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

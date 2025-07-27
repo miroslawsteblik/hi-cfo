@@ -38,8 +38,8 @@ services:
   backend:
     environment:
       - ENV=production
-      - GIN_MODE=release
-      - LOG_LEVEL=info
+      - GIN_MODE=${GIN_MODE_RELEASE}
+      - LOG_LEVEL=${LOG_LEVEL_INFO}
       - JWT_SECRET_FILE=/run/secrets/jwt_secret
     secrets:
       - jwt_secret

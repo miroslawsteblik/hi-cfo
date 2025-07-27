@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { registerAction } from "@/lib/auth";
@@ -9,10 +9,32 @@ import { registerAction } from "@/lib/auth";
 export default function RegisterPage() {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [csrfToken, setCsrfToken] = useState("");
   const router = useRouter();
+
+  // TODO: Re-enable CSRF token fetching once API routing is fixed
+  // useEffect(() => {
+  //   const fetchCsrfToken = async () => {
+  //     try {
+  //       const response = await fetch('/api/csrf');
+  //       const data = await response.json();
+  //       setCsrfToken(data.csrfToken);
+  //     } catch (error) {
+  //       console.error('Failed to fetch CSRF token:', error);
+  //       setError('Security token error. Please refresh the page.');
+  //     }
+  //   };
+
+  //   fetchCsrfToken();
+  // }, []);
 
   const handleSubmit = async (formData: FormData) => {
     setError("");
+
+    // TODO: Re-enable CSRF token once API routing is fixed
+    // if (csrfToken) {
+    //   formData.append('csrf_token', csrfToken);
+    // }
 
     startTransition(async () => {
       console.log("📝 Starting registration process...");
@@ -22,6 +44,17 @@ export default function RegisterPage() {
       if (result.error) {
         console.error("❌ Registration failed:", result.error);
         setError(result.error);
+        
+        // If CSRF error, refresh token
+        if (result.error.includes('security token')) {
+          try {
+            const response = await fetch('/api/csrf');
+            const data = await response.json();
+            setCsrfToken(data.csrfToken);
+          } catch (error) {
+            console.error('Failed to refresh CSRF token:', error);
+          }
+        }
       } else {
         console.log("✅ Registration successful, redirecting...");
         router.push("/dashboard");

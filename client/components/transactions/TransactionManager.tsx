@@ -10,6 +10,7 @@ import TransactionHeader from "./TransactionHeader";
 import TransactionTable from "./TransactionTable";
 import TransactionSettings from "./TransactionSettings";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { useErrorHandler } from '@/lib/errors';
 
 
 export default function EnhancedTransactionManager({ initialData, accounts, categories, user }: TransactionManagerProps) {
@@ -23,6 +24,7 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { handleError, logUserAction } = useErrorHandler();
 
   // UI State
   const [showImportModal, setShowImportModal] = useState(false);
@@ -130,8 +132,13 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
       setTotalPages(totalPagesNum);
 
     } catch (error) {
-      console.error("❌ Error loading transactions:", error);
-      setError(error instanceof Error ? error.message : "Failed to load transactions");
+      const errorMessage = error instanceof Error ? error.message : "Failed to load transactions";
+      setError(errorMessage);
+      await handleError(error instanceof Error ? error : new Error(errorMessage), {
+        component: 'TransactionManager',
+        action: 'loadTransactions',
+        filters
+      });
       setTransactions([]);
       setTotal(0);
       setCurrentPage(1);
@@ -207,7 +214,12 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
       }
     } catch (err) {
       setError("Failed to update transaction");
-      console.error("Error updating transaction:", err);
+      await handleError(err instanceof Error ? err : new Error("Failed to update transaction"), {
+        component: 'TransactionManager',
+        action: 'updateTransaction',
+        transactionId,
+        categoryId
+      });
     }
   };
 

@@ -12,17 +12,23 @@ import {
 } from "@/lib/types/transactions";
 import { Account, AccountCreateData, AccountsResponse } from "@/lib/types/accounts";
 import { Category, CategoriesResponse } from "@/lib/types/categories";
+import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 
 export async function createTransaction(data: TransactionData) {
   try {
-    console.log("📝 Creating transaction:", data);
+    ErrorLogger.getInstance().logInfo("Creating transaction", { context: 'create_transaction', data });
 
     const transaction = await apiClient.post("/api/v1/transactions", data);
 
-    console.log("✅ Transaction created:", transaction);
+    ErrorLogger.getInstance().logInfo("Transaction created successfully", { context: 'create_transaction', transaction });
     return { success: true, transaction };
   } catch (error) {
-    console.error("❌ Failed to create transaction:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: 'Failed to create transaction',
+      details: { originalError: error, context: 'create_transaction' }
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create transaction",
@@ -42,7 +48,12 @@ export async function getUserAccounts(): Promise<Account[]> {
     // Fallback for other possible formats
     return [];
   } catch (error) {
-    console.error("❌ Failed to fetch accounts:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: 'Failed to fetch user accounts',
+      details: { originalError: error, context: 'get_user_accounts' }
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return [];
   }
 }
@@ -70,7 +81,11 @@ export async function getCategories(): Promise<Category[]> {
     console.warn("Unexpected categories response structure:", categoriesResponse);
     return [];
   } catch (error) {
-    console.error("❌ Failed to fetch categories:", error);
+    await ErrorLogger.getInstance().logError(new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: 'Failed to fetch user categories',
+      details: { originalError: error, context: 'get_user_categories' }
+    }));
     return [];
   }
 }
@@ -100,7 +115,11 @@ export async function getTransactions(params?: TransactionFilters) {
 
     return result;
   } catch (error) {
-    console.error("❌ Failed to fetch transactions:", error);
+    await ErrorLogger.getInstance().logError(new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: 'Failed to fetch transactions',
+      details: { originalError: error, context: 'get_transactions' }
+    }));
     return { transactions: [], total: 0, page: 1, pages: 1 };
   }
 }
@@ -110,10 +129,14 @@ export async function updateTransaction(id: string, data: Partial<TransactionDat
   try {
     const transaction = await apiClient.put(`/api/v1/transactions/${id}`, data);
 
-    console.log("✅ Transaction updated:", transaction);
+    ErrorLogger.getInstance().logInfo("Transaction updated successfully", { context: 'update_transaction', transactionId: id });
     return { success: true, transaction };
   } catch (error) {
-    console.error("❌ Failed to update transaction:", error);
+    await ErrorLogger.getInstance().logError(new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: 'Failed to update transaction',
+      details: { originalError: error, context: 'update_transaction', transactionId: id }
+    }));
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update transaction",

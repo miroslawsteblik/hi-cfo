@@ -23,8 +23,6 @@ services:
       - ./server/trusted_proxies.json:/app/trusted_proxies.json:ro # Mount trusted proxies config
     environment:
       - ENV=development
-      - GIN_MODE=debug
-      - LOG_LEVEL=debug
       - HOT_RELOAD=true
       - ENABLE_SWAGGER=true
 
@@ -45,8 +43,6 @@ services:
       - REDIS_HOST=redis_cache
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-
-
     depends_on:
       redis:
         condition: service_healthy

@@ -3,38 +3,41 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { FinancialAppError, ErrorCode, ErrorLogger } from './errors';
+import { validateCSRFToken } from './csrf';
+import { checkRateLimit, recordFailedAttempt, clearFailedAttempts } from './rate-limit';
+import { createSession, invalidateSession, getSession } from './session';
 
 // Server actions run on the Next.js server (inside Docker)
 // They need to reach nginx through Docker internal networking
 const SERVER_API_URL = process.env.SERVER_API_URL || 'http://nginx_proxy:80';
 
-console.log('🔧 Server Action API URL:', SERVER_API_URL);
-
-interface LoginFormData {
-  email: string;
-  password: string;
-}
-
-interface RegisterFormData {
-  email: string;
-  password: string;
-  first_name?: string;
-  last_name?: string;
-}
-
 export async function loginAction(formData: FormData) {
+  // TODO: Re-enable CSRF protection once API routing is fixed
+  // const csrfToken = formData.get('csrf_token') as string;
+  // if (!csrfToken || !(await validateCSRFToken(csrfToken))) {
+  //   return { error: 'Invalid security token. Please refresh the page.' };
+  // }
+
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
-
-  console.log('🔍 Server Action - Login attempt:', { email });
 
   if (!email || !password) {
     return { error: 'Email and password are required' };
   }
 
-  try {
-    console.log('📡 Making request to:', `${SERVER_API_URL}/api/v1/auth/login`);
+  // Check rate limiting
+  const rateCheck = await checkRateLimit(email);
+  if (!rateCheck.allowed) {
+    if (rateCheck.lockedUntil) {
+      const lockMinutes = Math.ceil((rateCheck.lockedUntil.getTime() - Date.now()) / (1000 * 60));
+      return { 
+        error: `Account temporarily locked due to multiple failed attempts. Try again in ${lockMinutes} minutes.` 
+      };
+    }
+  }
 
+  try {
     const requestBody = {
       email: email,
       password: password,
@@ -45,80 +48,97 @@ export async function loginAction(formData: FormData) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ...requestBody }),
+      body: JSON.stringify(requestBody),
     });
 
-    console.log('📡 Response status:', response.status);
-
-    const responseText = await response.text();
-
     if (!response.ok) {
-      console.error('❌ Login failed with status:', response.status);
+      // Record failed login attempt
+      await recordFailedAttempt(email);
+      
+      const errorText = await response.text();
       let errorMessage = 'Login failed';
       
       try {
-        const errorData = JSON.parse(responseText);
+        const errorData = JSON.parse(errorText);
         errorMessage = errorData.message || errorData.error || errorMessage;
       } catch (e) {
-        errorMessage = responseText || errorMessage;
+        errorMessage = errorText || errorMessage;
       }
       
-      return { error: errorMessage };
+      throw new FinancialAppError({
+        code: ErrorCode.AUTHENTICATION_FAILED,
+        message: errorMessage,
+        details: { status: response.status, context: 'login_action' }
+      });
     }
 
-    //after parsing, variable data is the whole response object, not the data field inside it.
-    let parsedAuthResponse;
-    try {
-      parsedAuthResponse = JSON.parse(responseText);
-      console.log('✅ Parsed response data:', parsedAuthResponse);
-    } catch (parseError) {
-      return { error: 'Invalid response from server' };
-    }
+    const parsedAuthResponse = await response.json();
 
     // Store in httpOnly cookies
     const cookieStore = await cookies();
 
-    const token = parsedAuthResponse.data?.access_token;
+    const accessToken = parsedAuthResponse.data?.access_token;
+    const refreshToken = parsedAuthResponse.data?.refresh_token;
 
-    if (!token) {
-      console.error('❌ No token in response');
-      return { error: 'No authentication token received' };
+    if (!accessToken) {
+      const error = new FinancialAppError({
+        code: ErrorCode.AUTHENTICATION_FAILED,
+        message: 'No authentication token received',
+        details: { context: 'login_action' }
+      });
+      await ErrorLogger.getInstance().logError(error);
+      return { error: error.message };
     }
     
-    cookieStore.set('auth_token', token, {
+    // Store access token (short-lived)
+    cookieStore.set('auth_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 15, // 15 minutes
       path: '/',
     });
 
-    // Fetch and store user data using the centralized getServerUser function
-    try {
-      const userData = await getServerUser();
-      
-      if (userData) {
-        console.log('✅ Login successful, token and user data stored');
-        return { success: true };
-      } else {
-        console.error('❌ Failed to fetch user data from getServerUser');
-        // Still return success since login worked, but user data fetch failed
-        // The dashboard will handle fetching user data separately
-        return { success: true };
-      }
-    } catch (userError) {
-      console.error('❌ Error fetching user data with getServerUser:', userError);
-      // Still return success since login worked, user data can be fetched later
-      return { success: true };
+    // Store refresh token (longer-lived) if provided
+    if (refreshToken) {
+      cookieStore.set('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: '/',
+      });
     }
+
+    // Clear failed attempts on successful login
+    await clearFailedAttempts(email);
+    
+    // Create user session
+    const userData = parsedAuthResponse.data?.user;
+    if (userData) {
+      await createSession(userData.id || userData.user_id, email);
+    }
+    
+    ErrorLogger.getInstance().logInfo('Login successful, token stored', { context: 'login_action' });
+    return { success: true };
   } catch (error) {
-    console.error('❌ Login error:', error);
-    console.error('❌ Error details:', error instanceof Error ? error.message : 'Unknown error');
+    const appError = new FinancialAppError({
+      code: ErrorCode.NETWORK_ERROR,
+      message: 'Login failed due to network or server error',
+      details: { originalError: error, context: 'login_action' }
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return { error: 'Network error. Please try again.' };
   }
 }
 
 export async function registerAction(formData: FormData) {
+  // TODO: Re-enable CSRF protection once API routing is fixed
+  // const csrfToken = formData.get('csrf_token') as string;
+  // if (!csrfToken || !(await validateCSRFToken(csrfToken))) {
+  //   return { error: 'Invalid security token. Please refresh the page.' };
+  // }
+
   try {
     const firstName = formData.get("first_name") as string;
     const lastName = formData.get("last_name") as string;
@@ -126,10 +146,11 @@ export async function registerAction(formData: FormData) {
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirm_password") as string;
 
-    console.log("🔍 Server Action - Register attempt:", {
+    ErrorLogger.getInstance().logInfo("Server Action - Register attempt", {
       email,
       first_name: firstName,
       last_name: lastName,
+      context: 'register_action'
     });
     
     // Client-side validation
@@ -161,9 +182,6 @@ export async function registerAction(formData: FormData) {
       body: JSON.stringify(requestBody),
     });
 
-    console.log('📡 Response status:', response.status);
-
-
     if (!response.ok) {
       const errorText = await response.text();
       
@@ -175,12 +193,15 @@ export async function registerAction(formData: FormData) {
         errorMessage = errorText || "Registration failed";
       }
       
-      console.log("❌ Registration failed with status:", response.status);
-      return { error: errorMessage };
+      throw new FinancialAppError({
+        code: ErrorCode.VALIDATION_ERROR,
+        message: errorMessage,
+        details: { status: response.status, context: 'register_action' }
+      });
     }
 
     const data = await response.json();
-    console.log("✅ Registration successful:", data);
+    ErrorLogger.getInstance().logInfo("Registration successful", { context: 'register_action' });
 
     // Set authentication cookies
     const cookieStore = await cookies();
@@ -204,7 +225,12 @@ export async function registerAction(formData: FormData) {
 
     return { success: true, user: data.user };
   } catch (error) {
-    console.error("💥 Registration error:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.NETWORK_ERROR,
+      message: 'Registration failed due to network or server error',
+      details: { originalError: error, context: 'register_action' }
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return { error: "Network error. Please try again." };
   }
 }
@@ -223,81 +249,150 @@ export async function getServerUser() {
       try {
         return JSON.parse(userCookie);
       } catch (e) {
-        console.error('Failed to parse user cookie:', e);
+        await ErrorLogger.getInstance().logError(new FinancialAppError({
+          code: ErrorCode.VALIDATION_ERROR,
+          message: 'Failed to parse user cookie',
+          details: { originalError: e, context: 'get_server_user' }
+        }));
       }
     }
     
-    // If no user data in cookie, fetch from backend
+    // If no user data in cookie, fetch from backend using direct fetch (not API client)
     try {
-      console.log('📡 Fetching user data from:', `${SERVER_API_URL}/api/v1/me`);
-      console.log('Token used for /api/v1/me:', token);
-
       const response = await fetch(`${SERVER_API_URL}/api/v1/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Cookie': `auth_token=${token}`,
         },
+        cache: 'no-store', // Prevent caching issues
       });
       
       if (response.ok) {
         const userData = await response.json();
-        console.log('✅ User data.data fetched from backend:', userData.data);
-        console.log('✅ User data fetched from backend:', userData );
-        
-        // Store user data in cookie for future use
-        cookieStore.set('auth_user', JSON.stringify(userData.data), {
+        return userData.data;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      return null;
+    }
+  } catch (error) {
+    await ErrorLogger.getInstance().logError(new FinancialAppError({
+      code: ErrorCode.SYSTEM_ERROR,
+      message: 'Failed to get user from server cookies',
+      details: { originalError: error, context: 'get_server_user' }
+    }));
+    return null;
+  }
+}
+
+export async function getServerToken(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('auth_token')?.value;
+    
+    if (accessToken) {
+      return accessToken;
+    }
+    
+    // Try to refresh the token
+    const refreshedToken = await refreshAccessToken();
+    return refreshedToken;
+  } catch (error) {
+    await ErrorLogger.getInstance().logError(new FinancialAppError({
+      code: ErrorCode.SYSTEM_ERROR,
+      message: 'Failed to get token from server cookies',
+      details: { originalError: error, context: 'get_server_token' }
+    }));
+    return null;
+  }
+}
+
+export async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get('refresh_token')?.value;
+    
+    if (!refreshToken) {
+      return null;
+    }
+
+    const response = await fetch(`${SERVER_API_URL}/api/v1/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${refreshToken}`,
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!response.ok) {
+      // Refresh token is invalid, clear all auth cookies
+      cookieStore.delete('auth_token');
+      cookieStore.delete('refresh_token');
+      cookieStore.delete('auth_user');
+      return null;
+    }
+
+    const data = await response.json();
+    const newAccessToken = data.data?.access_token;
+    const newRefreshToken = data.data?.refresh_token;
+
+    if (newAccessToken) {
+      // Store new access token
+      cookieStore.set('auth_token', newAccessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 15, // 15 minutes
+        path: '/',
+      });
+
+      // Update refresh token if provided
+      if (newRefreshToken) {
+        cookieStore.set('refresh_token', newRefreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
           maxAge: 60 * 60 * 24 * 7, // 7 days
           path: '/',
         });
-        
-        return userData.data;
-      } else {
-        console.error('Failed to fetch user data:', response.status);  
-        let errorMessage = 'Failed to fetch user data';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch (e) {
-          console.error('Failed to parse error response:', e);
-        }
-        console.error(errorMessage);
-        return null;  // Return null if user data fetch fails
       }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
+
+      return newAccessToken;
     }
-    
+
     return null;
   } catch (error) {
-    console.error('Failed to get user from server cookies:', error);
+    await ErrorLogger.getInstance().logError(new FinancialAppError({
+      code: ErrorCode.SYSTEM_ERROR,
+      message: 'Failed to refresh access token',
+      details: { originalError: error, context: 'refresh_access_token' }
+    }));
     return null;
   }
 }
 
-export async function getServerToken() {
-  try {
-    const cookieStore = await cookies();
-    return cookieStore.get('auth_token')?.value || null;
-  } catch (error) {
-    console.error('Failed to get token from server cookies:', error);
-    return null;
-  }
-} 
-
 // Logout action
 export async function logoutAction() {
   try {
+    // Invalidate session
+    await invalidateSession();
+    
     const cookieStore = await cookies();
     cookieStore.delete("access_token");
     cookieStore.delete("refresh_token");
     cookieStore.delete("auth_token");
     cookieStore.delete("auth_user");
-    console.log("✅ Logout successful");
+    cookieStore.delete("csrf_token");
+    
+    ErrorLogger.getInstance().logInfo("Logout successful", { context: 'logout_action' });
   } catch (error) {
-    console.error("💥 Logout error:", error);
+    await ErrorLogger.getInstance().logError(new FinancialAppError({
+      code: ErrorCode.SYSTEM_ERROR,
+      message: 'Logout error',
+      details: { originalError: error, context: 'logout_action' }
+    }));
   }
   redirect("/login");
 }

@@ -1,0 +1,46 @@
+# Elasticsearch configuration for Hi-CFO monitoring
+
+# Cluster settings
+cluster.name: hi-cfo-logs
+node.name: elasticsearch-node-1
+discovery.type: single-node
+
+# Network settings
+network.host: 0.0.0.0
+http.port: 9200
+
+# Security (disabled for development)
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
+
+# Memory settings (adjust based on your system)
+bootstrap.memory_lock: false
+
+# Performance settings
+indices.memory.index_buffer_size: 10%
+indices.fielddata.cache.size: 20%
+
+# Logging configuration
+logger.level: WARN
+logger.org.elasticsearch.discovery: WARN
+logger.org.elasticsearch.cluster.service: WARN
+logger.org.elasticsearch.http: WARN
+logger.org.elasticsearch.transport: WARN
+
+# Index settings
+action.auto_create_index: true
+indices.lifecycle.history_index_enabled: false
+
+# Reduce verbosity
+indices.breaker.total.use_real_memory: false
+
+# Development settings - reduce resource usage
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+
+# Disable features not needed for basic log storage
+xpack.watcher.enabled: false
+xpack.ml.enabled: false
+xpack.graph.enabled: false

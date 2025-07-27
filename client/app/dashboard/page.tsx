@@ -4,10 +4,17 @@ import { getServerUser } from "@/lib/auth";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import Link from "next/link";
+import { FinancialDataErrorBoundary } from "@/components/providers/ErrorBoundary";
 
 export default async function DashboardPage() {
   // Get user from server-side cookies
-  const user = await getServerUser();
+  let user;
+  try {
+    user = await getServerUser();
+  } catch (error) {
+    // If getServerUser throws an error, treat it as no user
+    redirect("/login");
+  }
 
   // If no user, redirect to login
   if (!user) {
@@ -112,7 +119,8 @@ export default async function DashboardPage() {
           </div>
 
           {/* Key Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <FinancialDataErrorBoundary>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Total Income */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
@@ -196,7 +204,8 @@ export default async function DashboardPage() {
                 </span>
               </div>
             </div>
-          </div>
+            </div>
+          </FinancialDataErrorBoundary>
 
           {/* Quick Actions & Recent Activity Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
