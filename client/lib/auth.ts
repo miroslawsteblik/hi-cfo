@@ -13,11 +13,11 @@ import { createSession, invalidateSession, getSession } from './session';
 const SERVER_API_URL = process.env.SERVER_API_URL || 'http://nginx_proxy:80';
 
 export async function loginAction(formData: FormData) {
-  // TODO: Re-enable CSRF protection once API routing is fixed
-  // const csrfToken = formData.get('csrf_token') as string;
-  // if (!csrfToken || !(await validateCSRFToken(csrfToken))) {
-  //   return { error: 'Invalid security token. Please refresh the page.' };
-  // }
+  // CSRF Protection
+  const csrfToken = formData.get('csrf_token') as string;
+  if (!csrfToken || !(await validateCSRFToken(csrfToken))) {
+    return { error: 'Invalid security token. Please refresh the page.' };
+  }
 
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -133,11 +133,11 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function registerAction(formData: FormData) {
-  // TODO: Re-enable CSRF protection once API routing is fixed
-  // const csrfToken = formData.get('csrf_token') as string;
-  // if (!csrfToken || !(await validateCSRFToken(csrfToken))) {
-  //   return { error: 'Invalid security token. Please refresh the page.' };
-  // }
+  // CSRF Protection
+  const csrfToken = formData.get('csrf_token') as string;
+  if (!csrfToken || !(await validateCSRFToken(csrfToken))) {
+    return { error: 'Invalid security token. Please refresh the page.' };
+  }
 
   try {
     const firstName = formData.get("first_name") as string;

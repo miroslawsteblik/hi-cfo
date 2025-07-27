@@ -12,29 +12,29 @@ export default function RegisterPage() {
   const [csrfToken, setCsrfToken] = useState("");
   const router = useRouter();
 
-  // TODO: Re-enable CSRF token fetching once API routing is fixed
-  // useEffect(() => {
-  //   const fetchCsrfToken = async () => {
-  //     try {
-  //       const response = await fetch('/api/csrf');
-  //       const data = await response.json();
-  //       setCsrfToken(data.csrfToken);
-  //     } catch (error) {
-  //       console.error('Failed to fetch CSRF token:', error);
-  //       setError('Security token error. Please refresh the page.');
-  //     }
-  //   };
+  // Fetch CSRF token on component mount
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      try {
+        const response = await fetch('/api/csrf');
+        const data = await response.json();
+        setCsrfToken(data.csrfToken);
+      } catch (error) {
+        console.error('Failed to fetch CSRF token:', error);
+        setError('Security token error. Please refresh the page.');
+      }
+    };
 
-  //   fetchCsrfToken();
-  // }, []);
+    fetchCsrfToken();
+  }, []);
 
   const handleSubmit = async (formData: FormData) => {
     setError("");
 
-    // TODO: Re-enable CSRF token once API routing is fixed
-    // if (csrfToken) {
-    //   formData.append('csrf_token', csrfToken);
-    // }
+    // Add CSRF token to form data
+    if (csrfToken) {
+      formData.append('csrf_token', csrfToken);
+    }
 
     startTransition(async () => {
       console.log("📝 Starting registration process...");
