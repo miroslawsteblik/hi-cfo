@@ -1,4 +1,4 @@
-// lib/api-client-enhanced.ts - Enhanced API client with comprehensive error handling
+
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -204,7 +204,6 @@ class ApiClient {
       });
     }
 
-    // Handle other client errors
     if (!response.ok) {
       const errorText = await response.text();
       throw new FinancialAppError({

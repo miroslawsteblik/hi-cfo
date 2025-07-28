@@ -270,7 +270,7 @@ export function shouldRetry(error: unknown): boolean {
   return false;
 }
 
-// Error boundary hook for client components
+
 export function useErrorHandler() {
   const logger = ErrorLogger.getInstance();
 

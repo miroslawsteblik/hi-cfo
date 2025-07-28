@@ -1,5 +1,4 @@
 
-// client/lib/types/transactions/ofx.ts
 import { Account } from '../accounts';
 import { Category } from '../categories';
 

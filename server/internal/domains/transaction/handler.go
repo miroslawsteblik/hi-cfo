@@ -204,7 +204,6 @@ func (h *TransactionHandler) CreateTransaction(c *gin.Context) {
 		return
 	}
 
-	// Optional: Quick client-side validation for better UX
 	if validationErrors := input.IsValid(); len(validationErrors) > 0 {
 		h.RespondWithValidationError(c, "Request validation failed", fmt.Sprintf("%v", validationErrors))
 		return

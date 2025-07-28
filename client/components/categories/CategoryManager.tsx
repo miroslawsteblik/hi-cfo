@@ -1,4 +1,4 @@
-// client/components/categories/CategoryManager.tsx
+
 "use client";
 
 import { useState } from "react";

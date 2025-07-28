@@ -1,4 +1,4 @@
-// server/internal/api/account/handler.go
+
 package account
 
 import (

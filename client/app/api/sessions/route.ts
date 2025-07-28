@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       lastActivity: session.lastActivity,
       ipAddress: session.ipAddress ? session.ipAddress.replace(/\.\d+$/, '.***') : 'Unknown',
       userAgent: session.userAgent ? session.userAgent.substring(0, 100) : 'Unknown',
-      isCurrent: false // Will be determined on client side
+      isCurrent: false 
     }));
 
     return NextResponse.json({ sessions: safeSessions });
