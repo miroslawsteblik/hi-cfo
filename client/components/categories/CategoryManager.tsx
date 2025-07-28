@@ -5,7 +5,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CategoryForm from "@/components/categories/CategoryForm";
 import { createCategory, updateCategory, deleteCategory } from "@/app/actions/categories";
-import { Category, CategoriesClientProps } from "@/lib/types/categories";
+import { Category, CategoriesData } from "@/lib/types/categories";
+import { User } from "@/lib/types/user";
+
+export interface CategoriesClientProps {
+  initialData: CategoriesData;
+  user: User;
+}
 
 export default function CategoriesClient({ initialData, user }: CategoriesClientProps) {
   const [showForm, setShowForm] = useState(false);

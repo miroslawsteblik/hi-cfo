@@ -12,16 +12,14 @@ export interface Account {
   updated_at: string;
 }
 
-
-export interface AccountData {
-  account_name: string;
-  account_type: string;
-  bank_name: string;
-  account_number_masked?: string;
-  routing_number?: string;
-  current_balance?: number;
-  currency?: string;
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pages: number;
+  limit: number;
 }
+export interface AccountsResponse extends PaginatedResponse<Account> {}
 
 export interface AccountFilter {
   page?: number;
@@ -30,38 +28,7 @@ export interface AccountFilter {
   is_active?: boolean;
   search?: string;
 }
-export interface AccountsResponse {
-  accounts: Account[];
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-}
 
-export interface AccountFormProps {
-  onSubmit: (data: AccountFormData) => Promise<void>;
-  onCancel: () => void;
-  initialData?: Partial<AccountFormData>;
-  isEdit?: boolean;
-}
-
-export interface AccountFormData {
-  account_name: string;
-  account_type: string;
-  bank_name: string;
-  account_number_masked?: string;
-  routing_number?: string;
-  current_balance?: number;
-  currency?: string;
-}
-
-
-export interface PagedAccountData {
-  data: Account[];
-  total: number;
-  page: number;
-  pages: number;
-}
 
 
 export interface AccountSummary {

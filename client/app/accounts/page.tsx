@@ -1,16 +1,11 @@
-
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth";
 import { getAccounts, getAccountSummary } from "@/app/actions/accounts";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
-import AccountsClient from "../../components/accounts/AccountManager";
+import AccountManager from "../../components/accounts/AccountManager";
 
-export default async function AccountsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   // Check authentication
   const user = await getServerUser();
   if (!user) {
@@ -28,7 +23,7 @@ export default async function AccountsPage({
   const search = params.search as string;
 
   // Fetch data in parallel
-  const [accountsData, summary] = await Promise.all([
+  const [accountsResult, summary] = await Promise.all([
     getAccounts({
       page,
       limit,
@@ -39,21 +34,30 @@ export default async function AccountsPage({
     getAccountSummary(),
   ]);
 
+  // Handle potential errors from getAccounts
+  if (!accountsResult.success || !accountsResult.data) {
+    return (
+      <AppLayout>
+        <PageHeader title="Accounts" subtitle="Manage your bank accounts and financial institutions" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <div className="text-red-500 mb-4">Error loading accounts: {accountsResult.error || 'Unknown error'}</div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const accountsData = accountsResult.data;
+
   return (
     <AppLayout>
       {/* Page Header */}
-      <PageHeader
-        title="Accounts"
-        subtitle="Manage your bank accounts and financial institutions"
-      />
+      <PageHeader title="Accounts" subtitle="Manage your bank accounts and financial institutions" />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AccountsClient
-          initialData={accountsData}
-          summary={summary}
-          user={user}
-        />
+        <AccountManager accountsData={accountsData} summary={summary} user={user} />
       </div>
     </AppLayout>
   );

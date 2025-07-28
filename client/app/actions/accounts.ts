@@ -2,11 +2,27 @@
 "use server";
 
 import { apiClient } from "@/lib/api-client-enhanced";
-import { AccountData, Account, PagedAccountData, AccountSummary, AccountFilter } from "@/lib/types/accounts";
+import { Account, AccountSummary, AccountFilter, AccountsResponse } from "@/lib/types/accounts";
 import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 
-export async function createAccount(data: AccountData) {
+export async function createAccount(data: Partial<Account>): Promise<{ success: boolean; account?: Account; error?: string }> {
   try {
+    // Validate required fields
+    const requiredFields = ['account_name', 'account_type', 'bank_name', 'currency'];
+    const missingFields = requiredFields.filter(field => !data[field as keyof Account]);
+    
+    if (missingFields.length > 0) {
+      const error = `Missing required fields: ${missingFields.join(', ')}`;
+      await ErrorLogger.getInstance().logError(
+        new FinancialAppError({
+          code: ErrorCode.VALIDATION_ERROR,
+          message: error,
+          details: { missingFields, context: 'create_account' }
+        })
+      );
+      return { success: false, error };
+    }
+
     const account = await apiClient.post<Account>("/api/v1/accounts", data);
 
     ErrorLogger.getInstance().logInfo("Account created successfully", { context: 'create_account', accountId: account.id });
@@ -26,7 +42,7 @@ export async function createAccount(data: AccountData) {
 }
 
 // Get user's accounts with filtering and pagination
-export async function getAccounts(params?: AccountFilter): Promise<PagedAccountData> {
+export async function getAccounts(params?: AccountFilter): Promise<{ success: boolean; data?: AccountsResponse; error?: string }> {
   try {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append("page", params.page.toString());
@@ -36,28 +52,27 @@ export async function getAccounts(params?: AccountFilter): Promise<PagedAccountD
     if (params?.search) queryParams.append("search", params.search);
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const result = await apiClient.get<PagedAccountData>(`/api/v1/accounts${query}`);
+    const result = await apiClient.get<AccountsResponse>(`/api/v1/accounts${query}`);
 
-    return result;
+    return { success: true, data: result };
   } catch (error) {
-    await ErrorLogger.getInstance().logError(
-      new FinancialAppError({
-        code: ErrorCode.API_ERROR,
-        message: "Failed to fetch accounts",
-        details: { originalError: error, context: "get_accounts" },
-      })
-    );
-    return { data: [], total: 0, page: 1, pages: 1 };
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to fetch accounts",
+      details: { originalError: error, context: "get_accounts" },
+    });
+    await ErrorLogger.getInstance().logError(appError);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch accounts",
+    };
   }
 }
 
 export async function getAccountSummary(): Promise<AccountSummary> {
   try {
-    ErrorLogger.getInstance().logInfo("Fetching account summary", { context: 'get_account_summary' });
-
     const result = await apiClient.get<AccountSummary>("/api/v1/accounts/summary");
 
-    ErrorLogger.getInstance().logInfo("Account summary fetched successfully", { context: 'get_account_summary' });
     return (
       result ?? {
         total_accounts: 0,
@@ -84,7 +99,7 @@ export async function getAccountSummary(): Promise<AccountSummary> {
   }
 }
 
-export async function getAccount(id: string) {
+export async function getAccount(id: string): Promise<{ success: boolean; account?: Account; error?: string }> {
   try {
     ErrorLogger.getInstance().logInfo("Fetching account", { context: 'get_account', accountId: id });
 
@@ -106,11 +121,11 @@ export async function getAccount(id: string) {
   }
 }
 
-export async function updateAccount(id: string, data: Partial<AccountData>) {
+export async function updateAccount(id: string, request: Partial<Account>) {
   try {
-    ErrorLogger.getInstance().logInfo("Updating account", { context: 'update_account', accountId: id, data });
+    ErrorLogger.getInstance().logInfo("Updating account", { context: 'update_account', accountId: id });
 
-    const account = await apiClient.put<Account>(`/api/v1/accounts/${id}`, data);
+    const account = await apiClient.put<Account>(`/api/v1/accounts/${id}`, request);
 
     ErrorLogger.getInstance().logInfo("Account updated successfully", { context: 'update_account', accountId: id });
     return { success: true, account };

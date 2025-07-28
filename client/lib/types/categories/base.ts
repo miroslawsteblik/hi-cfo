@@ -18,10 +18,7 @@ export interface CategoriesData {
   pages: number;
 }
 
-export interface CategoriesClientProps {
-  initialData: CategoriesData;
-  user: User;
-}
+
 
 export interface Category {
   id: string;

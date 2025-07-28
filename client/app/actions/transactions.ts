@@ -41,8 +41,8 @@ export async function getUserAccounts(): Promise<Account[]> {
     const accountsResponse = await apiClient.get<AccountsResponse>("/api/v1/accounts");
 
     // Handle paginated response format from backend
-    if (accountsResponse.accounts && Array.isArray(accountsResponse.accounts)) {
-      return accountsResponse.accounts;
+    if (accountsResponse.data && Array.isArray(accountsResponse.data)) {
+      return accountsResponse.data;
     }
 
     // Fallback for other possible formats
