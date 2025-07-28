@@ -1,5 +1,3 @@
-# Step-by-step Taskfile.yml build
-# Add these sections one at a time to your working minimal version
 
 version: '3'
 
@@ -11,7 +9,7 @@ vars:
   BLUE: '\033[34m'
   RESET: '\033[0m'
   
-  # Docker Compose commands (simplified)
+  # Docker Compose commands 
   DEV_CMD: 'docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.development'
   PROD_CMD: 'docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production'
 

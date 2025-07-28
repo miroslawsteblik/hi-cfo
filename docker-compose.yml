@@ -41,7 +41,7 @@ services:
   backend:
     container_name: go_backend
     build:
-      context: ./server
+      context: docker/api
       dockerfile: Dockerfile
       target: ${BUILD_TARGET:-production}
     environment:
@@ -83,7 +83,7 @@ services:
   frontend:
     container_name: nextjs_frontend
     build:
-      context: ./client
+      context: docker/web
       dockerfile: Dockerfile
       target: ${FRONTEND_BUILD_TARGET:-production}
     environment:
@@ -217,13 +217,13 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=15d'
-      - '--web.enable-lifecycle'
-      - '--log.level=warn'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+      - "--log.level=warn"
     networks:
       - monitoring-network
       - backend-network
@@ -244,7 +244,7 @@ services:
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
       - GF_SERVER_ROOT_URL=http://localhost:8088/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
-      - GF_LOG_LEVEL=${LOG_LEVEL_INFO} 
+      - GF_LOG_LEVEL=${LOG_LEVEL_INFO}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro

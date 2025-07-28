@@ -3,14 +3,13 @@ services:
     ports:
       - "5433:5432" # Expose PostgreSQL local on port 5433 to docker host 5432
     environment:
-      POSTGRES_DB: ${DB_NAME}  # Will be hicfo_dev
+      POSTGRES_DB: ${DB_NAME} # Will be hicfo_dev
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
 
   redis:
     ports:
-      - "6379:6379"  # Expose for development tools
-
+      - "6379:6379" # Expose for development tools
 
   backend:
     build:
@@ -19,8 +18,8 @@ services:
       - "8080:8080" # API port
       - "2345:2345" # Delve debugger port
     volumes:
-      - ./server:/app
-      - ./server/trusted_proxies.json:/app/trusted_proxies.json:ro # Mount trusted proxies config
+      - ./api:/app
+      - ./api/trusted_proxies.json:/app/trusted_proxies.json:ro # Mount trusted proxies config
     environment:
       - ENV=development
       - HOT_RELOAD=true
@@ -51,12 +50,11 @@ services:
       - frontend-network
     restart: unless-stopped
 
-
   frontend:
     build:
       target: development
     ports:
-        - "3000:3000" # Next.js dev server
+      - "3000:3000" # Next.js dev
     volumes:
       - ./client:/app # Mount source code into container
       - /app/node_modules # Prevent overwriting node_modules
@@ -95,10 +93,10 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: "False"
-      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: "30"  # WARNING level (10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR)
-      PGADMIN_CONFIG_FILE_LOG_LEVEL: "30"     # WARNING level for file logs
-      GUNICORN_ACCESS_LOGFILE: "/dev/null"    # Disable access logs
-      PYTHONWARNINGS: "ignore"                # Ignore Python warnings
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: "30" # WARNING level (10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR)
+      PGADMIN_CONFIG_FILE_LOG_LEVEL: "30" # WARNING level for file logs
+      GUNICORN_ACCESS_LOGFILE: "/dev/null" # Disable access logs
+      PYTHONWARNINGS: "ignore" # Ignore Python warnings
     depends_on:
       - postgres
     networks:
@@ -112,12 +110,11 @@ services:
       - "8081:8081"
     environment:
       - REDIS_HOSTS=redis:redis:6379:0:${REDIS_PASSWORD}
- 
+
     depends_on:
       - redis
     networks:
       - backend-network
-
 
 volumes:
   pgadmin_data:
