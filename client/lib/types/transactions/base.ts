@@ -208,14 +208,22 @@ export interface TransactionStats {
   }>;
 }
 
-
-
-export interface PagedTransactionData {
-  data: Transaction[];
+export interface PaginatedResponse<T> {
+  data: T[];
   total: number;
   page: number;
   pages: number;
+  limit: number;
 }
+export interface TransactionsResponse extends PaginatedResponse<Transaction> {}
+
+
+// export interface PagedTransactionData {
+//   data: Transaction[];
+//   total: number;
+//   page: number;
+//   pages: number;
+// }
 
 export interface EnhancedTransactionData extends TransactionData {
   suggested_category_id?: string;
@@ -226,7 +234,7 @@ export interface EnhancedTransactionData extends TransactionData {
 }
 
 export interface TransactionsClientProps {
-  initialData: PagedTransactionData;
+  initialData: TransactionsResponse;
   accounts: Account[];
   categories: Category[];
   user: User;

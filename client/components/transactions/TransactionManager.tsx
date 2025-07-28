@@ -25,15 +25,15 @@ interface TransactionManagerProps {
 export default function EnhancedTransactionManager({ initialData, accounts, categories, user }: TransactionManagerProps) {
   // Transaction State
   const [transactions, setTransactions] = useState<TransactionListItem[]>(
-    initialData?.data?.map((transaction: any) => ({
+    initialData?.data?.data?.map((transaction: any) => ({
       ...transaction,
       currency: "USD",
     })) || []
   );
-  const [total, setTotal] = useState(initialData?.total || 0);
+  const [total, setTotal] = useState(initialData?.data?.total || 0);
 
-  const [currentPage, setCurrentPage] = useState(initialData?.page || 1);
-  const [totalPages, setTotalPages] = useState(initialData?.pages || 1);
+  const [currentPage, setCurrentPage] = useState(initialData?.data?.page || 1);
+  const [totalPages, setTotalPages] = useState(initialData?.data?.pages || 1);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +94,8 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
     try {
       const result = await getTransactions(filters);
 
+      console.log("🔍 getTransactions result:", result);
+
       if (!result) {
         throw new Error("Failed to load transactions");
       }
@@ -103,16 +105,20 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
       let currentPageNum = 1;
       let totalPagesNum = 1;
 
-      if (result && result.data && Array.isArray(result.data)) {
-        transactionData = result.data.map((transaction: any) => ({
+      if (result && result.success && result.data && Array.isArray(result.data.data)) {
+        transactionData = result.data.data.map((transaction: any) => ({
           ...transaction,
           currency: "USD", // Default currency if not provided
         }));
-        totalCount = result.total || 0;
-        currentPageNum = result.page || 1;
-        totalPagesNum = result.pages || 1;
+        totalCount = result.data.total || 0;
+        currentPageNum = result.data.page || 1;
+        totalPagesNum = result.data.pages || 1;
+      } else if (result && !result.success) {
+        console.error("❌ API Error:", result.error);
+        throw new Error(result.error || "API returned error");
       } else {
         console.error("❌ Unexpected response format:", result);
+        console.error("❌ Expected: { success: boolean, data: { data: [], total: number, page: number, pages: number } }");
         // Use empty fallback data
         transactionData = [];
         totalCount = 0;
@@ -275,14 +281,7 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
           try {
             console.log(`🔍 Deleting transaction: ${transactionId}`);
             const result = await deleteTransaction(transactionId);
-            // ENHANCED DEBUGGING - Log the full response
-            console.log(`🔍 Full delete result for ${transactionId}:`, {
-              result: result,
-              success: result?.success,
-              error: result?.error,
-              // data: result?.data,
-              allKeys: result ? Object.keys(result) : "no result",
-            });
+
 
             if (result.success) {
               successCount++;
@@ -303,17 +302,14 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
         });
 
         await Promise.all(batchPromises);
-        console.log(`🔍 Batch completed. Success: ${successCount}, Failed: ${failedCount}`);
       }
 
-      console.log(`🔍 Final results - Success: ${successCount}, Failed: ${failedCount}`);
 
       // Clear selections and exit bulk mode FIRST
       setSelectedTransactions(new Set());
       setBulkSelectMode(false);
 
       // Reload transactions from server to ensure consistency
-      console.log("🔍 Reloading transactions from server");
       await loadTransactions();
 
       if (failedCount === 0) {

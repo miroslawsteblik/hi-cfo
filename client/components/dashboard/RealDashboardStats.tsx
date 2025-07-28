@@ -50,9 +50,9 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
         let totalExpenses = 0;
         let categorizedTransactions = 0;
 
-        const transactions = transactionsData.data || [];
+        const transactions = transactionsData.data?.data || [];
 
-        transactions.forEach((transaction: TransactionListItem) => {
+        transactions.forEach((transaction: any) => {
           const amount = Math.abs(transaction.amount || 0);
 
           if (transaction.transaction_type === "income") {

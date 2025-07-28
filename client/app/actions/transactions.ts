@@ -5,7 +5,7 @@ import {
   TransactionData,
   TransactionStats,
   TransactionFilters,
-  PagedTransactionData,
+  TransactionsResponse,
   CategorizationPreview,
   CategorizationAnalysis,
   CategorizationSettings,
@@ -16,11 +16,18 @@ import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 
 export async function createTransaction(data: TransactionData) {
   try {
-    ErrorLogger.getInstance().logInfo("Creating transaction", { context: "create_transaction", data });
+    ErrorLogger.getInstance().logInfo("Creating transaction", {
+      context: "create_transaction",
+      data,
+    });
 
     const transaction = await apiClient.post("/api/v1/transactions", data);
 
-    ErrorLogger.getInstance().logInfo("Transaction created successfully", { context: "create_transaction", transaction });
+    ErrorLogger.getInstance().logInfo("Transaction created successfully", {
+      context: "create_transaction",
+      transaction,
+    });
+
     return { success: true, transaction };
   } catch (error) {
     const appError = new FinancialAppError({
@@ -40,7 +47,7 @@ export async function getUserAccounts(): Promise<Account[]> {
   try {
     const accountsResponse = await apiClient.get<AccountsResponse>("/api/v1/accounts");
 
-    // Handle paginated response format from backend
+    // Handle paginated response format from backend: { data: Account[], total, page, limit, pages }
     if (accountsResponse.data && Array.isArray(accountsResponse.data)) {
       return accountsResponse.data;
     }
@@ -69,7 +76,11 @@ export async function getCategories(): Promise<Category[]> {
     }
 
     // Handle CategoriesResponse structure with categories field (alternative API structure)
-    if (categoriesResponse && categoriesResponse.categories && Array.isArray(categoriesResponse.categories)) {
+    if (
+      categoriesResponse &&
+      categoriesResponse.categories &&
+      Array.isArray(categoriesResponse.categories)
+    ) {
       return categoriesResponse.categories;
     }
 
@@ -113,36 +124,46 @@ export async function getTransactions(params?: TransactionFilters) {
     if (params?.transaction_type) queryParams.append("transaction_type", params.transaction_type);
 
     const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const result = await apiClient.get<PagedTransactionData>(`/api/v1/transactions${query}`);
+    const result = await apiClient.get<TransactionsResponse>(`/api/v1/transactions${query}`);
 
-    return result;
+    return { success: true, data: result };
   } catch (error) {
-    await ErrorLogger.getInstance().logError(
-      new FinancialAppError({
-        code: ErrorCode.API_ERROR,
-        message: "Failed to fetch transactions",
-        details: { originalError: error, context: "get_transactions" },
-      })
-    );
-    return { transactions: [], total: 0, page: 1, pages: 1 };
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to fetch transactions",
+      details: { originalError: error, context: "get_transactions" },
+    });
+    await ErrorLogger.getInstance().logError(appError);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch transactions",
+    };
   }
 }
 
 // Update a transaction
 export async function updateTransaction(id: string, data: Partial<TransactionData>) {
   try {
+    ErrorLogger.getInstance().logInfo("Updating transaction", {
+      context: "update_transaction",
+      transactionId: id,
+    });
+
     const transaction = await apiClient.put(`/api/v1/transactions/${id}`, data);
 
-    ErrorLogger.getInstance().logInfo("Transaction updated successfully", { context: "update_transaction", transactionId: id });
+    ErrorLogger.getInstance().logInfo("Transaction updated successfully", {
+      context: "update_transaction",
+      transactionId: id,
+    });
+
     return { success: true, transaction };
   } catch (error) {
-    await ErrorLogger.getInstance().logError(
-      new FinancialAppError({
-        code: ErrorCode.API_ERROR,
-        message: "Failed to update transaction",
-        details: { originalError: error, context: "update_transaction", transactionId: id },
-      })
-    );
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to update transaction",
+      details: { originalError: error, context: "update_transaction", transactionId: id },
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update transaction",
@@ -153,11 +174,21 @@ export async function updateTransaction(id: string, data: Partial<TransactionDat
 // Delete a transaction
 export async function deleteTransaction(id: string) {
   try {
+    ErrorLogger.getInstance().logInfo("Deleting transaction", {
+      context: "delete_transaction",
+      transactionId: id,
+    });
+
     await apiClient.delete(`/api/v1/transactions/${id}`);
 
     return { success: true };
   } catch (error) {
-    console.error("❌ Failed to delete transaction:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to delete transaction",
+      details: { originalError: error, context: "delete_transaction", transactionId: id },
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete transaction",
@@ -175,11 +206,20 @@ export async function previewBulkCategorization(transactions: TransactionData[])
   try {
     console.log("🔍 Previewing bulk categorization for", transactions.length, "transactions");
 
-    const result = await apiClient.post<CategorizationPreview>("/api/v1/transactions/categorization/preview", { transactions });
+    const result = await apiClient.post<CategorizationPreview>(
+      "/api/v1/transactions/categorization/preview",
+      { transactions }
+    );
 
     return { success: true, data: result };
+
   } catch (error) {
-    console.error("❌ Failed to preview categorization:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to preview categorization",
+      details: { originalError: error, context: "preview_categorization" },
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to preview categorization",
@@ -193,11 +233,20 @@ export async function analyzeTransactionCategorization(descriptions: string[]): 
   error?: string;
 }> {
   try {
-    const result = await apiClient.post<CategorizationAnalysis>("/api/v1/transactions/categorization/analyze", { descriptions });
+    const result = await apiClient.post<CategorizationAnalysis>(
+      "/api/v1/transactions/categorization/analyze",
+      { descriptions }
+    );
 
     return { success: true, data: result };
+
   } catch (error) {
-    console.error("❌ Failed to analyze categorization:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to analyze categorization",
+      details: { originalError: error, context: "analyze_categorization" },
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to analyze categorization",
@@ -221,7 +270,12 @@ export async function testTransactionCategorization(
 
     return { success: true, data: result };
   } catch (error) {
-    console.error("❌ Failed to test categorization:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to test categorization",
+      details: { originalError: error, context: "test_categorization", merchantName: merchantName },
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to test categorization",
@@ -235,19 +289,28 @@ export async function getCategorizationSettings(): Promise<{
   error?: string;
 }> {
   try {
-    const result = await apiClient.get<CategorizationSettings>("/api/v1/transactions/categorization/settings");
+    const result = await apiClient.get<CategorizationSettings>(
+      "/api/v1/transactions/categorization/settings"
+    );
 
     return { success: true, data: result };
   } catch (error) {
-    console.error("❌ Failed to fetch categorization settings:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to fetch categorization settings",
+      details: { originalError: error, context: "fetch_categorization_settings" },
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch settings",
+      error: error instanceof Error ? error.message : "Failed to fetch categorization settings",
     };
   }
 }
 
-export async function updateCategorizationSettings(settings: Partial<CategorizationSettings>): Promise<{
+export async function updateCategorizationSettings(
+  settings: Partial<CategorizationSettings>
+): Promise<{
   success: boolean;
   data?: any;
   error?: string;
@@ -256,11 +319,16 @@ export async function updateCategorizationSettings(settings: Partial<Categorizat
     const result = await apiClient.put("/api/v1/transactions/categorization/settings", settings);
 
     return { success: true, data: result };
-  } catch (error) {
-    console.error("❌ Failed to update categorization settings:", error);
+   } catch (error) {
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to update categorization settings",
+      details: { originalError: error, context: "update_categorization_settings" },
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update settings",
+      error: error instanceof Error ? error.message : "Failed to update categorization settings",
     };
   }
 }
@@ -274,9 +342,6 @@ export async function bulkCreateTransactionsWithCategorization(
   error?: string;
 }> {
   try {
-    console.log("📦 Bulk creating transactions with categorization:", transactions.length);
-
-    // Apply category overrides if provided
     if (categoryOverrides) {
       Object.entries(categoryOverrides).forEach(([indexStr, categoryId]) => {
         const index = parseInt(indexStr);
@@ -316,7 +381,9 @@ export async function bulkCreateTransactionsWithCategorization(
     }
 
     try {
-      const result = await apiClient.post<any>("/api/v1/transactions/bulk", { transactions });
+      const result = await apiClient.post<any>("/api/v1/transactions/bulk", {
+        transactions,
+      });
 
       // Handle different success scenarios
       // 206 status typically indicates partial success (some created, some duplicates)
@@ -339,10 +406,13 @@ export async function bulkCreateTransactionsWithCategorization(
           const errorText = apiError.message.split(" - ")[1];
           const errorData = JSON.parse(errorText);
 
-          console.log("📊 Handling 400 response as business data:", errorData);
 
           // Check if this is a valid duplicate scenario
-          if (errorData.data && errorData.data.duplicates && Array.isArray(errorData.data.duplicates)) {
+          if (
+            errorData.data &&
+            errorData.data.duplicates &&
+            Array.isArray(errorData.data.duplicates)
+          ) {
             // This is a valid business response (all/some duplicates), not an error
             return {
               success: errorData.data.created > 0, // Success if some were created
@@ -358,10 +428,15 @@ export async function bulkCreateTransactionsWithCategorization(
       throw apiError;
     }
   } catch (error) {
-    console.error("❌ Failed to bulk create transactions:", error);
+    const appError = new FinancialAppError({
+      code: ErrorCode.API_ERROR,
+      message: "Failed to update categorization settings",
+      details: { originalError: error, context: "update_categorization_settings" },
+    });
+    await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to create transactions",
+      error: error instanceof Error ? error.message : "Failed to update categorization settings",
     };
   }
 }
@@ -371,23 +446,7 @@ export async function bulkCreateTransactions(transactions: TransactionData[]) {
   return bulkCreateTransactionsWithCategorization(transactions);
 }
 
-// Create a new account
-// export async function createAccount(data: AccountCreateData) {
-//   try {
-//     console.log("🏦 Creating account:", data);
 
-//     const account = await apiClient.post("/api/v1/accounts", data);
-
-//     console.log("✅ Account created:", account);
-//     return { success: true, account };
-//   } catch (error) {
-//     console.error("❌ Failed to create account:", error);
-//     return {
-//       success: false,
-//       error: error instanceof Error ? error.message : "Failed to create account",
-//     };
-//   }
-// }
 
 // Get transaction statistics for dashboard
 export async function getTransactionStats(params?: {

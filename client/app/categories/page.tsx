@@ -31,7 +31,7 @@ export default async function CategoriesPage({
   const search = params.search as string;
 
   // Fetch categories data
-  const categoriesData = await getCategories({
+  const categoriesResponse = await getCategories({
     page,
     limit,
     category_type,
@@ -39,6 +39,15 @@ export default async function CategoriesPage({
     is_active,
     search,
   });
+
+  // Transform CategoriesResponse to CategoriesData format
+  const categoriesData = {
+    categories: categoriesResponse.data,
+    total: categoriesResponse.total,
+    page: categoriesResponse.page,
+    limit: categoriesResponse.limit,
+    pages: categoriesResponse.pages,
+  };
 
   return (
     <AppLayout>

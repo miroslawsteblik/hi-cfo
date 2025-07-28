@@ -95,7 +95,7 @@ export default async function TransactionsPage({
                       Total Transactions
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {transactionsData?.total || 0}
+                      {transactionsData.data?.total || 0}
                     </dd>
                   </dl>
                 </div>
@@ -127,7 +127,7 @@ export default async function TransactionsPage({
                       Auto-Categorized
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {transactionsData?.data?.filter((tx: any) => tx.category_id)?.length || 0}
+                      {transactionsData?.data?.data?.filter((tx: any) => tx.category_id)?.length || 0}
                     </dd>
                   </dl>
                 </div>
@@ -159,7 +159,7 @@ export default async function TransactionsPage({
                       Needs Review
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {transactionsData?.data?.filter((tx: any) => !tx.category_id)?.length || 0}
+                      {transactionsData?.data?.data?.filter((tx: any) => !tx.category_id)?.length || 0}
                     </dd>
                   </dl>
                 </div>

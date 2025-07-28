@@ -1,0 +1,250 @@
+# Step-by-step Taskfile.yml build
+# Add these sections one at a time to your working minimal version
+
+version: '3'
+
+vars:
+  # Colors
+  GREEN: '\033[32m'
+  YELLOW: '\033[33m' 
+  RED: '\033[31m'
+  BLUE: '\033[34m'
+  RESET: '\033[0m'
+  
+  # Docker Compose commands (simplified)
+  DEV_CMD: 'docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.development'
+  PROD_CMD: 'docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production'
+
+tasks:
+  # Default help task
+  default:
+    desc: "Show available commands"
+    silent: true
+    cmds:
+      - echo "{{.BLUE}}🚀 Available Commands:{{.RESET}}"
+      - echo ""
+      - echo "{{.GREEN}}Development:{{.RESET}}"
+      - echo "  dev              - Start development environment"
+      - echo "  dev-build        - Build and start development"
+      - echo "  dev-logs         - Show development logs"
+      - echo "  dev-down         - Stop development"
+      - echo ""
+      - echo "{{.GREEN}}Production:{{.RESET}}"
+      - echo "  prod             - Start production environment"
+      - echo "  prod-build       - Build and start production"  
+      - echo "  prod-logs        - Show production logs"
+      - echo "  prod-down        - Stop production"
+      - echo ""
+      - echo "{{.GREEN}}Utilities:{{.RESET}}"
+      - echo "  status           - Show environment status"
+      - echo "  ps               - Show running containers"
+      - echo "  logs             - Show logs"
+      - echo "  down             - Stop all environments"
+
+  # =============================================================================
+  # DEVELOPMENT COMMANDS
+  # =============================================================================
+  
+  dev:
+    desc: "Start development environment"
+    cmds:
+      - echo "{{.GREEN}}🚀 Starting development environment...{{.RESET}}"
+      - "{{.DEV_CMD}} up"
+
+  dev-build:
+    desc: "Build and start development environment"
+    cmds:
+      - echo "{{.GREEN}}🔨 Building and starting development environment...{{.RESET}}"
+      - "{{.DEV_CMD}} up --build"
+
+  dev-detached:
+    desc: "Start development environment in background"
+    cmds:
+      - echo "{{.GREEN}}🚀 Starting development environment in background...{{.RESET}}"
+      - "{{.DEV_CMD}} up -d"
+
+  dev-logs:
+    desc: "Follow development logs"
+    cmds:
+      - echo "{{.GREEN}}📋 Following development logs...{{.RESET}}"
+      - "{{.DEV_CMD}} logs -f"
+
+  dev-restart:
+    desc: "Restart development services"
+    cmds:
+      - echo "{{.YELLOW}}🔄 Restarting development services...{{.RESET}}"
+      - "{{.DEV_CMD}} restart"
+
+  dev-down:
+    desc: "Stop development environment"
+    cmds:
+      - echo "{{.YELLOW}}🛑 Stopping development environment...{{.RESET}}"
+      - "{{.DEV_CMD}} down"
+
+  # =============================================================================
+  # PRODUCTION COMMANDS
+  # =============================================================================
+
+  prod:
+    desc: "Start production environment"
+    cmds:
+      - echo "{{.GREEN}}🏭 Starting production environment...{{.RESET}}"
+      - "{{.PROD_CMD}} up -d"
+
+  prod-build:
+    desc: "Build and start production environment"
+    cmds:
+      - echo "{{.GREEN}}🔨 Building and starting production environment...{{.RESET}}"
+      - "{{.PROD_CMD}} up -d --build"
+
+  prod-logs:
+    desc: "Follow production logs"
+    cmds:
+      - echo "{{.GREEN}}📋 Following production logs...{{.RESET}}"
+      - "{{.PROD_CMD}} logs -f"
+
+  prod-restart:
+    desc: "Restart production services"
+    cmds:
+      - echo "{{.YELLOW}}🔄 Restarting production services...{{.RESET}}"
+      - "{{.PROD_CMD}} restart"
+
+  prod-down:
+    desc: "Stop production environment"
+    cmds:
+      - echo "{{.YELLOW}}🛑 Stopping production environment...{{.RESET}}"
+      - "{{.PROD_CMD}} down"
+
+  prod-deploy:
+    desc: "Deploy to production (pull + build + start)"
+    cmds:
+      - echo "{{.GREEN}}🚀 Deploying to production...{{.RESET}}"
+      - echo "{{.YELLOW}}Pulling latest images...{{.RESET}}"
+      - "{{.PROD_CMD}} pull"
+      - echo "{{.YELLOW}}Building and starting services...{{.RESET}}"
+      - "{{.PROD_CMD}} up -d --build"
+      - echo "{{.GREEN}}✅ Production deployment complete!{{.RESET}}"
+      - echo "{{.BLUE}}💡 Run 'task prod-logs' to monitor the deployment{{.RESET}}"
+
+  # =============================================================================
+  # UTILITY COMMANDS
+  # =============================================================================
+
+  status:
+    desc: "Show environment status"
+    cmds:
+      - echo "{{.GREEN}}📊 Environment Status:{{.RESET}}"
+      - echo ""
+      - echo "{{.BLUE}}Development Environment:{{.RESET}}"
+      - "{{.DEV_CMD}} ps 2>/dev/null || echo 'Not running'"
+      - echo ""
+      - echo "{{.BLUE}}Production Environment:{{.RESET}}"
+      - "{{.PROD_CMD}} ps 2>/dev/null || echo 'Not running'"
+
+  ps:
+    desc: "Show running containers"
+    cmds:
+      - echo "{{.GREEN}}📋 Development Environment:{{.RESET}}"
+      - "{{.DEV_CMD}} ps 2>/dev/null || echo 'Not running'"
+      - echo ""
+      - echo "{{.GREEN}}📋 Production Environment:{{.RESET}}"
+      - "{{.PROD_CMD}} ps 2>/dev/null || echo 'Not running'"
+
+  logs:
+    desc: "Show logs from current environment"
+    cmds:
+      - echo "{{.GREEN}}📋 Showing logs...{{.RESET}}"
+      - "{{.DEV_CMD}} logs -f 2>/dev/null || {{.PROD_CMD}} logs -f"
+
+  down:
+    desc: "Stop all environments"
+    cmds:
+      - echo "{{.YELLOW}}🛑 Stopping all environments...{{.RESET}}"
+      - "{{.DEV_CMD}} down 2>/dev/null || true"
+      - "{{.PROD_CMD}} down 2>/dev/null || true"
+
+  # =============================================================================
+  # TESTING & DATABASE COMMANDS
+  # =============================================================================
+
+  test:
+    desc: "Run tests"
+    cmds:
+      - echo "{{.GREEN}}🧪 Running tests...{{.RESET}}"
+      - "{{.DEV_CMD}} exec backend go test ./... -v"
+
+  migrate-up:
+    desc: "Run database migrations up"
+    cmds:
+      - echo "{{.GREEN}}⬆️  Running database migrations up...{{.RESET}}"
+      - "{{.DEV_CMD}} exec backend migrate -path ./migrations -database \"$DATABASE_URL\" up"
+
+  backup:
+    desc: "Create database backup"
+    cmds:
+      - echo "{{.GREEN}}💾 Creating database backup...{{.RESET}}"
+      - mkdir -p ./backup
+      - "{{.DEV_CMD}} exec postgres pg_dump -U admin hicfo > ./backup/backup_$(date +%Y%m%d_%H%M%S).sql"
+
+  # =============================================================================
+  # SHELL ACCESS
+  # =============================================================================
+
+  shell-api:
+    desc: "Shell into backend container"
+    cmds:
+      - echo "{{.GREEN}}🐚 Opening backend shell...{{.RESET}}"
+      - "{{.DEV_CMD}} exec backend sh"
+
+  shell-db:
+    desc: "Shell into database container"
+    cmds:
+      - echo "{{.GREEN}}🐚 Opening database shell...{{.RESET}}"
+      - "{{.DEV_CMD}} exec postgres psql -U admin -d hicfo"
+
+  # =============================================================================
+  # CLEANUP COMMANDS
+  # =============================================================================
+
+  clean:
+    desc: "Clean up everything"
+    prompt: "This will remove all containers, images, and volumes. Continue?"
+    cmds:
+      - echo "{{.RED}}🧹 Cleaning up everything...{{.RESET}}"
+      - "{{.DEV_CMD}} down -v --remove-orphans 2>/dev/null || true"
+      - "{{.PROD_CMD}} down -v --remove-orphans 2>/dev/null || true"
+      - docker system prune -af --volumes
+      - echo "{{.GREEN}}✅ Cleanup complete!{{.RESET}}"
+
+  clean-soft:
+    desc: "Soft cleanup (containers only)"
+    cmds:
+      - echo "{{.YELLOW}}🧹 Soft cleanup (containers only)...{{.RESET}}"
+      - "{{.DEV_CMD}} down --remove-orphans 2>/dev/null || true"
+      - "{{.PROD_CMD}} down --remove-orphans 2>/dev/null || true"
+      - docker container prune -f
+
+  # =============================================================================
+  # DEVELOPMENT TOOLS
+  # =============================================================================
+
+  setup-dev:
+    desc: "Set up development environment"
+    cmds:
+      - echo "{{.GREEN}}⚙️  Setting up development environment...{{.RESET}}"
+      - |
+        if [ ! -f .env.development ]; then
+          echo "{{.YELLOW}}Creating .env.development from template...{{.RESET}}"
+          cp .env.development.example .env.development 2>/dev/null || echo "{{.RED}}❌ .env.development.example not found{{.RESET}}"
+        fi
+      - echo "{{.GREEN}}✅ Development setup complete!{{.RESET}}"
+
+  dev-tools:
+    desc: "Show development tools URLs"
+    cmds:
+      - echo "{{.GREEN}}🛠️  Development tools:{{.RESET}}"
+      - 'echo "  pgAdmin        - http://localhost:5050"'
+      - 'echo "  Redis Commander - http://localhost:8081"'
+      - 'echo "  Swagger UI     - http://localhost:8082"'
+      - 'echo "  MailHog        - http://localhost:8025"'
+      - 'echo "  MinIO          - http://localhost:9001"'
