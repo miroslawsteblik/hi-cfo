@@ -394,3 +394,128 @@ type TransactionPreview struct {
 	MatchMethod           string     `json:"match_method"`
 	WillBeCategorized     bool       `json:"will_be_categorized"`
 }
+
+// ========================================
+// Analytics Domain Models
+// ========================================
+
+// PivotData represents transaction data aggregated by category and time period
+type PivotData struct {
+	Categories []CategoryPivot  `json:"categories"`
+	Periods    []string         `json:"periods"`
+	Totals     PivotTotals      `json:"totals"`
+	Summary    PivotSummary     `json:"summary"`
+}
+
+type CategoryPivot struct {
+	CategoryID   string             `json:"category_id"`
+	CategoryName string             `json:"category_name"`
+	CategoryType string             `json:"category_type"`
+	Color        *string            `json:"color,omitempty"`
+	Periods      map[string]float64 `json:"periods"`
+	Total        float64            `json:"total"`
+	Average      float64            `json:"average"`
+	Count        int                `json:"count"`
+}
+
+type PivotTotals struct {
+	Periods      map[string]float64 `json:"periods"`
+	GrandTotal   float64            `json:"grand_total"`
+	TotalIncome  float64            `json:"total_income"`
+	TotalExpense float64            `json:"total_expense"`
+}
+
+type PivotSummary struct {
+	DateRange      DateRange `json:"date_range"`
+	TotalCategories int      `json:"total_categories"`
+	TotalPeriods   int       `json:"total_periods"`
+	TransactionCount int     `json:"transaction_count"`
+}
+
+// TrendsData represents transaction trends over time
+type TrendsData struct {
+	Periods         []TrendPeriod  `json:"periods"`
+	TotalIncome     []float64      `json:"total_income"`
+	TotalExpenses   []float64      `json:"total_expenses"`
+	NetIncome       []float64      `json:"net_income"`
+	TopCategories   []CategoryTrend `json:"top_categories"`
+	Summary         TrendSummary   `json:"summary"`
+}
+
+type TrendPeriod struct {
+	Period       string  `json:"period"`
+	Income       float64 `json:"income"`
+	Expenses     float64 `json:"expenses"`
+	NetIncome    float64 `json:"net_income"`
+	TransactionCount int `json:"transaction_count"`
+}
+
+type CategoryTrend struct {
+	CategoryID   string    `json:"category_id"`
+	CategoryName string    `json:"category_name"`
+	Color        *string   `json:"color,omitempty"`
+	Values       []float64 `json:"values"`
+	Total        float64   `json:"total"`
+	Trend        string    `json:"trend"` // "increasing", "decreasing", "stable"
+}
+
+type TrendSummary struct {
+	DateRange       DateRange `json:"date_range"`
+	AverageIncome   float64   `json:"average_income"`
+	AverageExpenses float64   `json:"average_expenses"`
+	GrowthRate      float64   `json:"growth_rate"`
+	Volatility      float64   `json:"volatility"`
+}
+
+// ComparisonData represents period-over-period comparison
+type ComparisonData struct {
+	Current        PeriodData        `json:"current"`
+	Previous       PeriodData        `json:"previous"`
+	Comparison     ComparisonMetrics `json:"comparison"`
+	CategoryChanges []CategoryComparison `json:"category_changes"`
+}
+
+type PeriodData struct {
+	Period           string             `json:"period"`
+	Income           float64            `json:"income"`
+	Expenses         float64            `json:"expenses"`
+	NetIncome        float64            `json:"net_income"`
+	TransactionCount int                `json:"transaction_count"`
+	Categories       map[string]float64 `json:"categories"`
+	TopCategories    []CategorySummary  `json:"top_categories"`
+}
+
+type CategorySummary struct {
+	CategoryID   string  `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	Amount       float64 `json:"amount"`
+	Count        int     `json:"count"`
+	Percentage   float64 `json:"percentage"`
+}
+
+type ComparisonMetrics struct {
+	IncomeChange        float64 `json:"income_change"`         // Absolute change
+	IncomeChangePercent float64 `json:"income_change_percent"` // Percentage change
+	ExpenseChange       float64 `json:"expense_change"`
+	ExpenseChangePercent float64 `json:"expense_change_percent"`
+	NetIncomeChange     float64 `json:"net_income_change"`
+	NetIncomeChangePercent float64 `json:"net_income_change_percent"`
+	TransactionCountChange int   `json:"transaction_count_change"`
+}
+
+type CategoryComparison struct {
+	CategoryID       string  `json:"category_id"`
+	CategoryName     string  `json:"category_name"`
+	CurrentAmount    float64 `json:"current_amount"`
+	PreviousAmount   float64 `json:"previous_amount"`
+	Change           float64 `json:"change"`
+	ChangePercent    float64 `json:"change_percent"`
+	IsNew            bool    `json:"is_new"`
+	IsGone           bool    `json:"is_gone"`
+}
+
+// DateRange helper struct
+type DateRange struct {
+	StartDate time.Time `json:"start_date"`
+	EndDate   time.Time `json:"end_date"`
+}

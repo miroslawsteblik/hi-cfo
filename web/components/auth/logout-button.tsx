@@ -1,4 +1,4 @@
-// components/auth/logout-button.tsx
+
 "use client";
 
 import { useTransition } from "react";

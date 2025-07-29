@@ -1,17 +1,16 @@
-
-version: '3'
+version: "3"
 
 vars:
   # Colors
   GREEN: '\033[32m'
-  YELLOW: '\033[33m' 
+  YELLOW: '\033[33m'
   RED: '\033[31m'
   BLUE: '\033[34m'
   RESET: '\033[0m'
-  
-  # Docker Compose commands 
-  DEV_CMD: 'docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.development'
-  PROD_CMD: 'docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production'
+
+  # Docker Compose commands
+  DEV_CMD: "docker compose -f docker-compose.yml -f docker-compose.dev.yml --env-file .env.development"
+  PROD_CMD: "docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production"
 
 tasks:
   # Default help task
@@ -29,7 +28,7 @@ tasks:
       - echo ""
       - echo "{{.GREEN}}Production:{{.RESET}}"
       - echo "  prod             - Start production environment"
-      - echo "  prod-build       - Build and start production"  
+      - echo "  prod-build       - Build and start production"
       - echo "  prod-logs        - Show production logs"
       - echo "  prod-down        - Stop production"
       - echo ""
@@ -38,11 +37,30 @@ tasks:
       - echo "  ps               - Show running containers"
       - echo "  logs             - Show logs"
       - echo "  down             - Stop all environments"
+      - echo "  migrate-up      - Run database migrations up"
+      - echo "  backup          - Create database backup"
+      - echo "  shell-api       - Shell into backend container"
+      - echo "  shell-db        - Shell into database container"
+      - echo "  clean           - Clean up everything"
+      - echo "  clean-soft      - Soft cleanup (containers only)"
+      - echo "  setup-dev       - Set up development environment"
+      - echo "  dev-tools       - Show development tools URLs"
+      - echo ""
+      - echo "{{.GREEN}}Additional Tasks:{{.RESET}}"
+      - echo "  go-fmt          - Format Go code"
+      - echo "  go-lint         - Lint Go code"
+      - echo "  go-test-local   - Run Go tests locally"
+      - echo "  go-install      - Install Go dependencies"
+      - echo "  go-build        - Build Go binary"
+      - echo "  frontend-install - Install frontend dependencies"
+      - echo "  frontend-dev    - Run frontend in development mode"
+      - echo "  frontend-build  - Build frontend for production"
+      - echo "  frontend-lint   - Lint frontend code"
 
   # =============================================================================
   # DEVELOPMENT COMMANDS
   # =============================================================================
-  
+
   dev:
     desc: "Start development environment"
     cmds:
@@ -175,7 +193,7 @@ tasks:
     desc: "Run database migrations up"
     cmds:
       - echo "{{.GREEN}}⬆️  Running database migrations up...{{.RESET}}"
-      - "{{.DEV_CMD}} exec backend migrate -path ./migrations -database \"$DATABASE_URL\" up"
+      - '{{.DEV_CMD}} exec backend migrate -path ./migrations -database "$DATABASE_URL" up'
 
   backup:
     desc: "Create database backup"
@@ -246,3 +264,64 @@ tasks:
       - 'echo "  Swagger UI     - http://localhost:8082"'
       - 'echo "  MailHog        - http://localhost:8025"'
       - 'echo "  MinIO          - http://localhost:9001"'
+
+  # =============================================================================
+  # ADDITIONAL GO-SPECIFIC TASKS FOR YOUR BACKEND
+  # =============================================================================
+
+  go-install:
+    desc: "Install Go dependencies"
+    dir: hi-cfo/api
+    cmds:
+      - go mod tidy
+      - go mod download
+  go-fmt:
+    desc: "Format Go code in backend"
+    dir: hi-cfo/api
+    cmds:
+      - goimports -w .
+      - gofmt -w .
+
+  go-lint:
+    desc: "Lint Go code in backend"
+    dir: hi-cfo/api
+    deps: [go-fmt]
+    cmds:
+      - golangci-lint run
+
+  go-test-local:
+    desc: "Run Go tests locally (not in Docker)"
+    dir: hi-cfo/api
+    cmds:
+      - go test -v ./...
+
+  go-build:
+    desc: "Build Go binary locally"
+    dir: hi-cfo/api
+    cmds:
+      - go build -o ../../bin/api ./cmd/main.go
+
+  # Frontend specific tasks
+  frontend-install:
+    desc: "Install frontend dependencies"
+    dir: hi-cfo/web
+    cmds:
+      - npm install
+
+  frontend-dev:
+    desc: "Run frontend in development mode"
+    dir: hi-cfo/web
+    cmds:
+      - npm run dev
+
+  frontend-build:
+    desc: "Build frontend for production"
+    dir: hi-cfo/web
+    cmds:
+      - npm run build
+
+  frontend-lint:
+    desc: "Lint frontend code"
+    dir: hi-cfo/web
+    cmds:
+      - npm run lint

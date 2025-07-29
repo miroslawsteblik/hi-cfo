@@ -769,3 +769,78 @@ func (s *TransactionService) DeleteTransaction(ctx context.Context, userID, tran
 func (s *TransactionService) GetTransactionStats(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, groupBy string) (*TransactionStats, error) {
 	return s.repo.GetTransactionStats(ctx, userID, startDate, endDate, groupBy)
 }
+
+// ========================================
+// Analytics Service Methods
+// ========================================
+
+func (s *TransactionService) GetTransactionPivotData(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time) (*PivotData, error) {
+	s.logger.WithFields(logrus.Fields{
+		"user_id":    userID,
+		"start_date": startDate,
+		"end_date":   endDate,
+	}).Debug("Getting transaction pivot data")
+
+	pivotData, err := s.repo.GetTransactionPivotData(ctx, userID, startDate, endDate)
+	if err != nil {
+		appErr := customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to retrieve transaction pivot data").
+			WithDomain("transaction").
+			WithUserID(userID).
+			WithDetails(map[string]interface{}{
+				"start_date": startDate,
+				"end_date":   endDate,
+			})
+		appErr.Log()
+		return nil, appErr
+	}
+
+	return pivotData, nil
+}
+
+func (s *TransactionService) GetTransactionTrends(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, groupBy string) (*TrendsData, error) {
+	s.logger.WithFields(logrus.Fields{
+		"user_id":    userID,
+		"start_date": startDate,
+		"end_date":   endDate,
+		"group_by":   groupBy,
+	}).Debug("Getting transaction trends")
+
+	trendsData, err := s.repo.GetTransactionTrends(ctx, userID, startDate, endDate, groupBy)
+	if err != nil {
+		appErr := customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to retrieve transaction trends").
+			WithDomain("transaction").
+			WithUserID(userID).
+			WithDetails(map[string]interface{}{
+				"start_date": startDate,
+				"end_date":   endDate,
+				"group_by":   groupBy,
+			})
+		appErr.Log()
+		return nil, appErr
+	}
+
+	return trendsData, nil
+}
+
+func (s *TransactionService) GetTransactionComparison(ctx context.Context, userID uuid.UUID, period, current string) (*ComparisonData, error) {
+	s.logger.WithFields(logrus.Fields{
+		"user_id": userID,
+		"period":  period,
+		"current": current,
+	}).Debug("Getting transaction comparison")
+
+	comparisonData, err := s.repo.GetTransactionComparison(ctx, userID, period, current)
+	if err != nil {
+		appErr := customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to retrieve transaction comparison").
+			WithDomain("transaction").
+			WithUserID(userID).
+			WithDetails(map[string]interface{}{
+				"period":  period,
+				"current": current,
+			})
+		appErr.Log()
+		return nil, appErr
+	}
+
+	return comparisonData, nil
+}

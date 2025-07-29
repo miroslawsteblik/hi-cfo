@@ -504,6 +504,144 @@ func (h *TransactionHandler) DeleteTransaction(c *gin.Context) {
 	h.RespondWithSuccess(c, http.StatusNoContent, nil, "Transaction deleted successfully")
 }
 
+// ============ GET /transactions/analytics/pivot
+func (h *TransactionHandler) GetTransactionPivot(c *gin.Context) {
+	userID, ok := h.HandleUserIDExtraction(c)
+	if !ok {
+		return
+	}
+
+	// Parse date range
+	var startDate, endDate *time.Time
+	if startDateStr := c.Query("start_date"); startDateStr != "" {
+		if parsed, err := shared.ParseFlexibleDate(startDateStr); err == nil {
+			startDate = &parsed
+		} else {
+			h.RespondWithValidationError(c, "Invalid start_date format", err.Error())
+			return
+		}
+	}
+	if endDateStr := c.Query("end_date"); endDateStr != "" {
+		if parsed, err := shared.ParseFlexibleDate(endDateStr); err == nil {
+			endDate = &parsed
+		} else {
+			h.RespondWithValidationError(c, "Invalid end_date format", err.Error())
+			return
+		}
+	}
+
+	h.logger.WithFields(logrus.Fields{
+		"user_id":    userID,
+		"start_date": startDate,
+		"end_date":   endDate,
+	}).Debug("Getting transaction pivot data")
+
+	pivotData, err := h.service.GetTransactionPivotData(c.Request.Context(), userID, startDate, endDate)
+	if err != nil {
+		if appErr, ok := err.(*customerrors.AppError); ok {
+			c.JSON(appErr.StatusCode, appErr)
+			return
+		}
+		h.logger.WithFields(logrus.Fields{
+			"user_id": userID,
+			"error":   err.Error(),
+		}).Error("Unexpected error retrieving transaction pivot data")
+		h.RespondWithInternalError(c, "Failed to retrieve transaction pivot data")
+		return
+	}
+
+	h.RespondWithSuccess(c, http.StatusOK, pivotData)
+}
+
+// ============ GET /transactions/analytics/trends
+func (h *TransactionHandler) GetTransactionTrends(c *gin.Context) {
+	userID, ok := h.HandleUserIDExtraction(c)
+	if !ok {
+		return
+	}
+
+	// Parse date range
+	var startDate, endDate *time.Time
+	if startDateStr := c.Query("start_date"); startDateStr != "" {
+		if parsed, err := shared.ParseFlexibleDate(startDateStr); err == nil {
+			startDate = &parsed
+		} else {
+			h.RespondWithValidationError(c, "Invalid start_date format", err.Error())
+			return
+		}
+	}
+	if endDateStr := c.Query("end_date"); endDateStr != "" {
+		if parsed, err := shared.ParseFlexibleDate(endDateStr); err == nil {
+			endDate = &parsed
+		} else {
+			h.RespondWithValidationError(c, "Invalid end_date format", err.Error())
+			return
+		}
+	}
+
+	groupBy := c.DefaultQuery("group_by", "month")
+
+	h.logger.WithFields(logrus.Fields{
+		"user_id":    userID,
+		"start_date": startDate,
+		"end_date":   endDate,
+		"group_by":   groupBy,
+	}).Debug("Getting transaction trends")
+
+	trendsData, err := h.service.GetTransactionTrends(c.Request.Context(), userID, startDate, endDate, groupBy)
+	if err != nil {
+		if appErr, ok := err.(*customerrors.AppError); ok {
+			c.JSON(appErr.StatusCode, appErr)
+			return
+		}
+		h.logger.WithFields(logrus.Fields{
+			"user_id": userID,
+			"error":   err.Error(),
+		}).Error("Unexpected error retrieving transaction trends")
+		h.RespondWithInternalError(c, "Failed to retrieve transaction trends")
+		return
+	}
+
+	h.RespondWithSuccess(c, http.StatusOK, trendsData)
+}
+
+// ============ GET /transactions/analytics/comparison
+func (h *TransactionHandler) GetTransactionComparison(c *gin.Context) {
+	userID, ok := h.HandleUserIDExtraction(c)
+	if !ok {
+		return
+	}
+
+	period := c.DefaultQuery("period", "month")
+	current := c.Query("current")
+	if current == "" {
+		h.RespondWithValidationError(c, "Current period is required", "")
+		return
+	}
+
+	h.logger.WithFields(logrus.Fields{
+		"user_id": userID,
+		"period":  period,
+		"current": current,
+	}).Debug("Getting transaction comparison")
+
+	comparisonData, err := h.service.GetTransactionComparison(c.Request.Context(), userID, period, current)
+	if err != nil {
+		if appErr, ok := err.(*customerrors.AppError); ok {
+			c.JSON(appErr.StatusCode, appErr)
+			return
+		}
+		h.logger.WithFields(logrus.Fields{
+			"user_id": userID,
+			"error":   err.Error(),
+		}).Error("Unexpected error retrieving transaction comparison")
+		h.RespondWithInternalError(c, "Failed to retrieve transaction comparison")
+		return
+	}
+
+	h.RespondWithSuccess(c, http.StatusOK, comparisonData)
+}
+
 // ============ GET /transactions/stats
 func (h *TransactionHandler) GetTransactionStats(c *gin.Context) {
 	userID, ok := h.HandleUserIDExtraction(c)

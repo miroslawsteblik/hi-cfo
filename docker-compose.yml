@@ -41,8 +41,8 @@ services:
   backend:
     container_name: go_backend
     build:
-      context: docker/api
-      dockerfile: Dockerfile
+      context: ./api
+      dockerfile: ../docker/api/Dockerfile
       target: ${BUILD_TARGET:-production}
     environment:
       - ENV=${ENV:-production}
@@ -83,8 +83,8 @@ services:
   frontend:
     container_name: nextjs_frontend
     build:
-      context: docker/web
-      dockerfile: Dockerfile
+      context: ./web
+      dockerfile: ../docker/web/Dockerfile
       target: ${FRONTEND_BUILD_TARGET:-production}
     environment:
       - NODE_ENV=${NODE_ENV:-production}

@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 
-
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
@@ -23,8 +22,8 @@ var (
 
 	httpRequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "http_request_duration_seconds",
-			Help: "Duration of HTTP requests in seconds",
+			Name:    "http_request_duration_seconds",
+			Help:    "Duration of HTTP requests in seconds",
 			Buckets: prometheus.DefBuckets,
 		},
 		[]string{"method", "route"},
@@ -41,8 +40,8 @@ var (
 
 	transactionAmount = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name: "financial_transaction_amount",
-			Help: "Amount of financial transactions",
+			Name:    "financial_transaction_amount",
+			Help:    "Amount of financial transactions",
 			Buckets: []float64{1, 10, 50, 100, 500, 1000, 5000, 10000, 50000},
 		},
 		[]string{"type"},
@@ -99,20 +98,20 @@ var (
 func PrometheusMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		
+
 		// Process request
 		c.Next()
-		
+
 		// Record metrics
 		duration := time.Since(start).Seconds()
 		status := strconv.Itoa(c.Writer.Status())
-		
+
 		httpRequestsTotal.WithLabelValues(
 			c.Request.Method,
 			c.FullPath(),
 			status,
 		).Inc()
-		
+
 		httpRequestDuration.WithLabelValues(
 			c.Request.Method,
 			c.FullPath(),

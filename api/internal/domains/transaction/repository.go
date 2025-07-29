@@ -27,6 +27,11 @@ type Repository interface {
 	CreateTransactions(ctx context.Context, userID uuid.UUID, transactions []*Transaction) (*BatchOperationResult, error)
 	GetTransactionsByFitIDs(ctx context.Context, userID uuid.UUID, fitIDs []string) (map[string]*Transaction, error)
 	GetTransactionStats(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, groupBy string) (*TransactionStats, error)
+	
+	// Analytics operations
+	GetTransactionPivotData(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time) (*PivotData, error)
+	GetTransactionTrends(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, groupBy string) (*TrendsData, error)
+	GetTransactionComparison(ctx context.Context, userID uuid.UUID, period, current string) (*ComparisonData, error)
 }
 
 type TransactionRepository struct {
@@ -648,4 +653,459 @@ func (r *TransactionRepository) GetTransactionStats(ctx context.Context, userID 
 	}
 
 	return &stats, nil
+}
+
+// ========================================
+// Analytics Repository Methods
+// ========================================
+
+func (r *TransactionRepository) GetTransactionPivotData(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time) (*PivotData, error) {
+	var dateRange DateRange
+	now := time.Now()
+	
+	if startDate == nil {
+		start := now.AddDate(0, -12, 0)
+		dateRange.StartDate = start
+	} else {
+		dateRange.StartDate = *startDate
+	}
+	
+	if endDate == nil {
+		dateRange.EndDate = now
+	} else {
+		dateRange.EndDate = *endDate
+	}
+
+	// Query to get pivot data grouped by category and month
+	var pivotResults []struct {
+		CategoryID   *uuid.UUID `json:"category_id"`
+		CategoryName *string    `json:"category_name"`
+		CategoryType *string    `json:"category_type"`
+		Color        *string    `json:"color"`
+		Period       string     `json:"period"`
+		Amount       float64    `json:"amount"`
+		Count        int        `json:"count"`
+	}
+
+	query := r.db.WithContext(ctx).
+		Table("transactions t").
+		Select(`
+			t.category_id as category_id,
+			COALESCE(c.name, 'Uncategorized') as category_name,
+			COALESCE(c.category_type, 'expense') as category_type,
+			c.color as color,
+			TO_CHAR(t.transaction_date, 'YYYY-MM') as period,
+			SUM(ABS(t.amount)) as amount,
+			COUNT(*) as count
+		`).
+		Joins("LEFT JOIN categories c ON c.id = t.category_id").
+		Where("t.user_id = ?", userID).
+		Where("t.transaction_date >= ?", dateRange.StartDate).
+		Where("t.transaction_date <= ?", dateRange.EndDate).
+		Group("t.category_id, c.name, c.category_type, c.color, TO_CHAR(t.transaction_date, 'YYYY-MM')").
+		Order("period, category_name")
+
+	if err := query.Find(&pivotResults).Error; err != nil {
+		return nil, customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to get pivot data").
+			WithDomain("transaction").
+			WithUserID(userID)
+	}
+
+	// Process results into pivot structure
+	categoryMap := make(map[string]*CategoryPivot)
+	periodSet := make(map[string]bool)
+	totalsByPeriod := make(map[string]float64)
+	totalIncome := 0.0
+	totalExpense := 0.0
+	transactionCount := 0
+
+	for _, result := range pivotResults {
+		categoryKey := "uncategorized"
+		categoryName := "Uncategorized"
+		categoryType := "expense"
+		
+		if result.CategoryID != nil {
+			categoryKey = result.CategoryID.String()
+			if result.CategoryName != nil {
+				categoryName = *result.CategoryName
+			}
+			if result.CategoryType != nil {
+				categoryType = *result.CategoryType
+			}
+		}
+
+		if _, exists := categoryMap[categoryKey]; !exists {
+			categoryMap[categoryKey] = &CategoryPivot{
+				CategoryID:   categoryKey,
+				CategoryName: categoryName,
+				CategoryType: categoryType,
+				Color:        result.Color,
+				Periods:      make(map[string]float64),
+				Total:        0,
+				Count:        0,
+			}
+		}
+
+		categoryMap[categoryKey].Periods[result.Period] = result.Amount
+		categoryMap[categoryKey].Total += result.Amount
+		categoryMap[categoryKey].Count += result.Count
+		
+		periodSet[result.Period] = true
+		totalsByPeriod[result.Period] += result.Amount
+		
+		if categoryType == "income" {
+			totalIncome += result.Amount
+		} else {
+			totalExpense += result.Amount
+		}
+		transactionCount += result.Count
+	}
+
+	// Convert maps to slices
+	var categories []CategoryPivot
+	for _, category := range categoryMap {
+		// Calculate average
+		if len(category.Periods) > 0 {
+			category.Average = category.Total / float64(len(category.Periods))
+		}
+		categories = append(categories, *category)
+	}
+
+	var periods []string
+	for period := range periodSet {
+		periods = append(periods, period)
+	}
+
+	pivotData := &PivotData{
+		Categories: categories,
+		Periods:    periods,
+		Totals: PivotTotals{
+			Periods:      totalsByPeriod,
+			GrandTotal:   totalIncome + totalExpense,
+			TotalIncome:  totalIncome,
+			TotalExpense: totalExpense,
+		},
+		Summary: PivotSummary{
+			DateRange:        dateRange,
+			TotalCategories:  len(categories),
+			TotalPeriods:     len(periods),
+			TransactionCount: transactionCount,
+		},
+	}
+
+	return pivotData, nil
+}
+
+func (r *TransactionRepository) GetTransactionTrends(ctx context.Context, userID uuid.UUID, startDate, endDate *time.Time, groupBy string) (*TrendsData, error) {
+	var dateRange DateRange
+	now := time.Now()
+	
+	if startDate == nil {
+		start := now.AddDate(0, -12, 0)
+		dateRange.StartDate = start
+	} else {
+		dateRange.StartDate = *startDate
+	}
+	
+	if endDate == nil {
+		dateRange.EndDate = now
+	} else {
+		dateRange.EndDate = *endDate
+	}
+
+	// Determine date format based on groupBy
+	var dateFormat string
+	switch groupBy {
+	case "day":
+		dateFormat = "YYYY-MM-DD"
+	case "week":
+		dateFormat = "YYYY-\"W\"WW"
+	case "month":
+		dateFormat = "YYYY-MM"
+	case "year":
+		dateFormat = "YYYY"
+	default:
+		dateFormat = "YYYY-MM"
+	}
+
+	// Query for trend data
+	var trendResults []struct {
+		Period           string  `json:"period"`
+		Income           float64 `json:"income"`
+		Expenses         float64 `json:"expenses"`
+		NetIncome        float64 `json:"net_income"`
+		TransactionCount int     `json:"transaction_count"`
+	}
+
+	query := r.db.WithContext(ctx).
+		Table("transactions").
+		Select(fmt.Sprintf(`
+			TO_CHAR(transaction_date, '%s') as period,
+			SUM(CASE WHEN transaction_type = 'income' THEN amount ELSE 0 END) as income,
+			SUM(CASE WHEN transaction_type != 'income' THEN ABS(amount) ELSE 0 END) as expenses,
+			SUM(CASE WHEN transaction_type = 'income' THEN amount ELSE -ABS(amount) END) as net_income,
+			COUNT(*) as transaction_count
+		`, dateFormat)).
+		Where("user_id = ?", userID).
+		Where("transaction_date >= ?", dateRange.StartDate).
+		Where("transaction_date <= ?", dateRange.EndDate).
+		Group(fmt.Sprintf("TO_CHAR(transaction_date, '%s')", dateFormat)).
+		Order("period")
+
+	if err := query.Find(&trendResults).Error; err != nil {
+		return nil, customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to get trend data").
+			WithDomain("transaction").
+			WithUserID(userID)
+	}
+
+	// Convert to trend periods
+	periods := make([]TrendPeriod, len(trendResults))
+	totalIncome := make([]float64, len(trendResults))
+	totalExpenses := make([]float64, len(trendResults))
+	netIncome := make([]float64, len(trendResults))
+
+	var avgIncome, avgExpenses, totalIncomeSum, totalExpensesSum float64
+	for i, result := range trendResults {
+		periods[i] = TrendPeriod{
+			Period:           result.Period,
+			Income:           result.Income,
+			Expenses:         result.Expenses,
+			NetIncome:        result.NetIncome,
+			TransactionCount: result.TransactionCount,
+		}
+		totalIncome[i] = result.Income
+		totalExpenses[i] = result.Expenses
+		netIncome[i] = result.NetIncome
+		
+		totalIncomeSum += result.Income
+		totalExpensesSum += result.Expenses
+	}
+
+	if len(trendResults) > 0 {
+		avgIncome = totalIncomeSum / float64(len(trendResults))
+		avgExpenses = totalExpensesSum / float64(len(trendResults))
+	}
+
+	// Calculate growth rate and volatility
+	growthRate := 0.0
+	if len(netIncome) > 1 && netIncome[0] != 0 {
+		growthRate = ((netIncome[len(netIncome)-1] - netIncome[0]) / math.Abs(netIncome[0])) * 100
+	}
+
+	trendsData := &TrendsData{
+		Periods:       periods,
+		TotalIncome:   totalIncome,
+		TotalExpenses: totalExpenses,
+		NetIncome:     netIncome,
+		TopCategories: []CategoryTrend{}, // TODO: Implement top categories
+		Summary: TrendSummary{
+			DateRange:       dateRange,
+			AverageIncome:   avgIncome,
+			AverageExpenses: avgExpenses,
+			GrowthRate:      growthRate,
+			Volatility:      0.0, // TODO: Calculate volatility
+		},
+	}
+
+	return trendsData, nil
+}
+
+func (r *TransactionRepository) GetTransactionComparison(ctx context.Context, userID uuid.UUID, period, current string) (*ComparisonData, error) {
+	// Parse current period
+	currentTime, err := time.Parse("2006-01", current)
+	if err != nil {
+		return nil, customerrors.Wrap(err, customerrors.ErrCodeValidation, "Invalid current period format").
+			WithDomain("transaction").
+			WithUserID(userID)
+	}
+
+	// Calculate previous period
+	var previousTime time.Time
+	switch period {
+	case "month":
+		previousTime = currentTime.AddDate(0, -1, 0)
+	case "quarter":
+		previousTime = currentTime.AddDate(0, -3, 0)
+	case "year":
+		previousTime = currentTime.AddDate(-1, 0, 0)
+	default:
+		previousTime = currentTime.AddDate(0, -1, 0)
+	}
+
+	// Get current period data
+	currentData, err := r.getPeriodData(ctx, userID, currentTime, period)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get previous period data
+	previousData, err := r.getPeriodData(ctx, userID, previousTime, period)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate comparison metrics
+	comparison := ComparisonMetrics{
+		IncomeChange:  currentData.Income - previousData.Income,
+		ExpenseChange: currentData.Expenses - previousData.Expenses,
+		NetIncomeChange: currentData.NetIncome - previousData.NetIncome,
+		TransactionCountChange: currentData.TransactionCount - previousData.TransactionCount,
+	}
+
+	// Calculate percentage changes
+	if previousData.Income != 0 {
+		comparison.IncomeChangePercent = (comparison.IncomeChange / previousData.Income) * 100
+	}
+	if previousData.Expenses != 0 {
+		comparison.ExpenseChangePercent = (comparison.ExpenseChange / previousData.Expenses) * 100
+	}
+	if previousData.NetIncome != 0 {
+		comparison.NetIncomeChangePercent = (comparison.NetIncomeChange / previousData.NetIncome) * 100
+	}
+
+	// Calculate category changes
+	var categoryChanges []CategoryComparison
+	allCategories := make(map[string]bool)
+	
+	for category := range currentData.Categories {
+		allCategories[category] = true
+	}
+	for category := range previousData.Categories {
+		allCategories[category] = true
+	}
+
+	for category := range allCategories {
+		currentAmount := currentData.Categories[category]
+		previousAmount := previousData.Categories[category]
+		
+		change := currentAmount - previousAmount
+		changePercent := 0.0
+		if previousAmount != 0 {
+			changePercent = (change / previousAmount) * 100
+		}
+
+		categoryChanges = append(categoryChanges, CategoryComparison{
+			CategoryID:     category,
+			CategoryName:   category, // TODO: Get actual category name
+			CurrentAmount:  currentAmount,
+			PreviousAmount: previousAmount,
+			Change:         change,
+			ChangePercent:  changePercent,
+			IsNew:          previousAmount == 0 && currentAmount > 0,
+			IsGone:         previousAmount > 0 && currentAmount == 0,
+		})
+	}
+
+	comparisonData := &ComparisonData{
+		Current:         *currentData,
+		Previous:        *previousData,
+		Comparison:      comparison,
+		CategoryChanges: categoryChanges,
+	}
+
+	return comparisonData, nil
+}
+
+func (r *TransactionRepository) getPeriodData(ctx context.Context, userID uuid.UUID, periodTime time.Time, period string) (*PeriodData, error) {
+	var startDate, endDate time.Time
+	
+	switch period {
+	case "month":
+		startDate = time.Date(periodTime.Year(), periodTime.Month(), 1, 0, 0, 0, 0, periodTime.Location())
+		endDate = startDate.AddDate(0, 1, -1)
+	case "quarter":
+		quarter := (int(periodTime.Month()) - 1) / 3
+		startDate = time.Date(periodTime.Year(), time.Month(quarter*3+1), 1, 0, 0, 0, 0, periodTime.Location())
+		endDate = startDate.AddDate(0, 3, -1)
+	case "year":
+		startDate = time.Date(periodTime.Year(), 1, 1, 0, 0, 0, 0, periodTime.Location())
+		endDate = startDate.AddDate(1, 0, -1)
+	default:
+		startDate = time.Date(periodTime.Year(), periodTime.Month(), 1, 0, 0, 0, 0, periodTime.Location())
+		endDate = startDate.AddDate(0, 1, -1)
+	}
+
+	var result struct {
+		Income           float64 `json:"income"`
+		Expenses         float64 `json:"expenses"`
+		NetIncome        float64 `json:"net_income"`
+		TransactionCount int     `json:"transaction_count"`
+	}
+
+	err := r.db.WithContext(ctx).
+		Table("transactions").
+		Select(`
+			SUM(CASE WHEN transaction_type = 'income' THEN amount ELSE 0 END) as income,
+			SUM(CASE WHEN transaction_type != 'income' THEN ABS(amount) ELSE 0 END) as expenses,
+			SUM(CASE WHEN transaction_type = 'income' THEN amount ELSE -ABS(amount) END) as net_income,
+			COUNT(*) as transaction_count
+		`).
+		Where("user_id = ?", userID).
+		Where("transaction_date >= ?", startDate).
+		Where("transaction_date <= ?", endDate).
+		First(&result).Error
+
+	if err != nil {
+		return nil, customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to get period data").
+			WithDomain("transaction").
+			WithUserID(userID)
+	}
+
+	// Get categories breakdown
+	var categoryResults []struct {
+		CategoryName string  `json:"category_name"`
+		Amount       float64 `json:"amount"`
+		Count        int     `json:"count"`
+	}
+
+	err = r.db.WithContext(ctx).
+		Table("transactions t").
+		Select(`
+			COALESCE(c.name, 'Uncategorized') as category_name,
+			SUM(ABS(t.amount)) as amount,
+			COUNT(*) as count
+		`).
+		Joins("LEFT JOIN categories c ON c.id = t.category_id").
+		Where("t.user_id = ?", userID).
+		Where("t.transaction_date >= ?", startDate).
+		Where("t.transaction_date <= ?", endDate).
+		Group("c.name").
+		Find(&categoryResults).Error
+
+	if err != nil {
+		return nil, customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to get category data").
+			WithDomain("transaction").
+			WithUserID(userID)
+	}
+
+	categories := make(map[string]float64)
+	var topCategories []CategorySummary
+	
+	for _, cat := range categoryResults {
+		categories[cat.CategoryName] = cat.Amount
+		percentage := 0.0
+		if result.Expenses > 0 {
+			percentage = (cat.Amount / result.Expenses) * 100
+		}
+		
+		topCategories = append(topCategories, CategorySummary{
+			CategoryID:   cat.CategoryName, // TODO: Use actual category ID
+			CategoryName: cat.CategoryName,
+			Amount:       cat.Amount,
+			Count:        cat.Count,
+			Percentage:   percentage,
+		})
+	}
+
+	periodData := &PeriodData{
+		Period:           periodTime.Format("2006-01"),
+		Income:           result.Income,
+		Expenses:         result.Expenses,
+		NetIncome:        result.NetIncome,
+		TransactionCount: result.TransactionCount,
+		Categories:       categories,
+		TopCategories:    topCategories,
+	}
+
+	return periodData, nil
 }
