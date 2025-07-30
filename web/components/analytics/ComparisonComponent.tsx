@@ -152,40 +152,40 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
 
       {/* Period Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded-lg border">
-          <h4 className="font-medium text-gray-900 mb-3">Current Period ({comparisonData.current.period})</h4>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Current Period ({comparisonData.current.period})</h4>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">Transactions:</span>
-              <span className="font-medium">{comparisonData.current.transaction_count}</span>
+              <span className="text-gray-600 dark:text-gray-300">Transactions:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{comparisonData.current.transaction_count}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Categories:</span>
-              <span className="font-medium">{Object.keys(comparisonData.current.categories).length}</span>
+              <span className="text-gray-600 dark:text-gray-300">Categories:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{Object.keys(comparisonData.current.categories).length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Avg per transaction:</span>
-              <span className="font-medium">
+              <span className="text-gray-600 dark:text-gray-300">Avg per transaction:</span>
+              <span className="font-medium text-gray-900 dark:text-white">
                 {formatCurrency(comparisonData.current.expenses / comparisonData.current.transaction_count)}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border">
-          <h4 className="font-medium text-gray-900 mb-3">Previous Period ({comparisonData.previous.period})</h4>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Previous Period ({comparisonData.previous.period})</h4>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">Transactions:</span>
-              <span className="font-medium">{comparisonData.previous.transaction_count}</span>
+              <span className="text-gray-600 dark:text-gray-300">Transactions:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{comparisonData.previous.transaction_count}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Categories:</span>
-              <span className="font-medium">{Object.keys(comparisonData.previous.categories).length}</span>
+              <span className="text-gray-600 dark:text-gray-300">Categories:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{Object.keys(comparisonData.previous.categories).length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Avg per transaction:</span>
-              <span className="font-medium">
+              <span className="text-gray-600 dark:text-gray-300">Avg per transaction:</span>
+              <span className="font-medium text-gray-900 dark:text-white">
                 {formatCurrency(comparisonData.previous.expenses / comparisonData.previous.transaction_count)}
               </span>
             </div>
@@ -194,20 +194,20 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
       </div>
 
       {/* Transaction Count Change */}
-      <div className="bg-gray-50 p-4 rounded-lg">
+      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
         <div className="flex items-center justify-between">
-          <h4 className="font-medium text-gray-900">Transaction Activity</h4>
+          <h4 className="font-medium text-gray-900 dark:text-white">Transaction Activity</h4>
           <div className="flex items-center space-x-2">
             {getChangeIcon(comparisonData.comparison.transaction_count_change)}
             <span className={`font-medium ${
-              comparisonData.comparison.transaction_count_change > 0 ? 'text-blue-600' : 'text-gray-600'
+              comparisonData.comparison.transaction_count_change > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'
             }`}>
               {comparisonData.comparison.transaction_count_change > 0 ? '+' : ''}
               {comparisonData.comparison.transaction_count_change} transactions
             </span>
           </div>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
           {comparisonData.comparison.transaction_count_change > 0 
             ? 'You had more transactions this period compared to the previous period.'
             : comparisonData.comparison.transaction_count_change < 0
@@ -219,7 +219,7 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
 
       {/* Category Changes */}
       {showDetails && significantChanges.length > 0 && (
-        <div className="bg-white rounded-lg border">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-gray-900">Significant Category Changes</h4>

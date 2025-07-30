@@ -129,7 +129,7 @@ export default function AnalyticsDashboard() {
   return (
     <div className="space-y-6">
       {/* Controls Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -156,7 +156,7 @@ export default function AnalyticsDashboard() {
           <div className="flex items-center gap-1 ml-2">
             <button
               onClick={() => handleExport("csv")}
-              className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+              className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded transition-colors"
               title="Export as CSV"
             >
               <Download size={14} />
@@ -164,7 +164,7 @@ export default function AnalyticsDashboard() {
             </button>
             <button
               onClick={() => handleExport("excel")}
-              className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+              className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded transition-colors"
               title="Export as Excel"
             >
               <Download size={14} />
@@ -187,15 +187,15 @@ export default function AnalyticsDashboard() {
 
             {/* Quick Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-lg border">
-                <h3 className="text-lg font-semibold mb-4">Monthly Trends</h3>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Monthly Trends</h3>
                 {state.trendsData?.success && state.trendsData.data && (
                   <TrendsChartComponent data={state.trendsData} height={300} showControls={false} />
                 )}
               </div>
 
-              <div className="bg-white p-6 rounded-lg border">
-                <h3 className="text-lg font-semibold mb-4">Category Breakdown</h3>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Category Breakdown</h3>
                 {state.pivotData?.success && state.pivotData.data && (
                   <CategoryBreakdownChart data={state.pivotData} height={300} showLegend={true} />
                 )}
@@ -204,8 +204,8 @@ export default function AnalyticsDashboard() {
 
             {/* Month-over-Month Comparison */}
             {state.comparisonData?.success && state.comparisonData.data && (
-              <div className="bg-white p-6 rounded-lg border">
-                <h3 className="text-lg font-semibold mb-4">Period Comparison</h3>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Period Comparison</h3>
                 <ComparisonComponent data={state.comparisonData} showDetails={false} />
               </div>
             )}
@@ -213,9 +213,9 @@ export default function AnalyticsDashboard() {
         )}
 
         {activeTab === "pivot" && state.pivotData?.success && state.pivotData.data && (
-          <div className="bg-white p-6 rounded-lg border">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold">Transaction Pivot Analysis</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Transaction Pivot Analysis</h3>
               <p className="text-sm text-gray-600">
                 {state.pivotData?.data?.summary.transaction_count} transactions •
                 {state.pivotData?.data?.summary.total_categories} categories •
@@ -227,14 +227,14 @@ export default function AnalyticsDashboard() {
         )}
 
         {activeTab === "trends" && state.trendsData?.success && state.trendsData.data && (
-          <div className="bg-white p-6 rounded-lg border">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold">Financial Trends Analysis</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Financial Trends Analysis</h3>
               <div className="flex items-center gap-2">
                 <select
                   value={state.filters.group_by || "month"}
                   onChange={(e) => handleFiltersChange({ group_by: e.target.value as any })}
-                  className="px-3 py-1 border rounded text-sm"
+                  className="px-3 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                 >
                   <option value="day">Daily</option>
                   <option value="week">Weekly</option>
@@ -249,14 +249,14 @@ export default function AnalyticsDashboard() {
 
         {activeTab === "comparison" && state.comparisonData?.success && state.comparisonData.data && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg border">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold">Period-over-Period Comparison</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Period-over-Period Comparison</h3>
                 <div className="flex items-center gap-2">
                   <select
                     value={state.filters.period || "month"}
                     onChange={(e) => handleFiltersChange({ period: e.target.value as any })}
-                    className="px-3 py-1 border rounded text-sm"
+                    className="px-3 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   >
                     <option value="month">Month-over-Month</option>
                     <option value="quarter">Quarter-over-Quarter</option>

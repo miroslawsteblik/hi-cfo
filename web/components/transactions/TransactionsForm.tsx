@@ -178,7 +178,7 @@ export default function TransactionForm({
             id="account_id"
             value={formData.account_id}
             onChange={(e) => setFormData((prev) => ({ ...prev, account_id: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             required
           >
             <option value="">Select an account</option>
@@ -205,7 +205,7 @@ export default function TransactionForm({
                 merchant_name: e.target.value,
               }))
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             placeholder="Store, company, or person"
           />
           {autoCategorizingMerchant && (
@@ -244,7 +244,7 @@ export default function TransactionForm({
             id="category_id"
             value={formData.category_id}
             onChange={(e) => setFormData((prev) => ({ ...prev, category_id: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="">Select a category</option>
             {filteredCategories.map((category) => (
@@ -273,7 +273,7 @@ export default function TransactionForm({
                 transaction_date: e.target.value,
               }))
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             required
           />
         </div>
@@ -295,7 +295,7 @@ export default function TransactionForm({
                 amount: parseFloat(e.target.value) || 0,
               }))
             }
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             placeholder="0.00"
             required
           />
@@ -311,7 +311,7 @@ export default function TransactionForm({
             id="description"
             value={formData.description}
             onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             placeholder="What was this transaction for?"
             required
           />
@@ -326,7 +326,7 @@ export default function TransactionForm({
             id="memo"
             value={formData.memo}
             onChange={(e) => setFormData((prev) => ({ ...prev, memo: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             rows={3}
             placeholder="Additional notes about this transaction"
           />

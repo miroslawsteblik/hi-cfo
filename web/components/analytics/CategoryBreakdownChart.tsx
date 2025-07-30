@@ -121,7 +121,7 @@ export default function CategoryBreakdownChart({
           <select
             value={chartType}
             onChange={(e) => setChartType(e.target.value as any)}
-            className="px-2 py-1 border rounded text-sm"
+            className="px-2 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
           >
             <option value="pie">Pie Chart</option>
             <option value="bar">Bar Chart</option>
@@ -130,7 +130,7 @@ export default function CategoryBreakdownChart({
           <select
             value={showType}
             onChange={(e) => setShowType(e.target.value as any)}
-            className="px-2 py-1 border rounded text-sm"
+            className="px-2 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
           >
             <option value="expense">Expenses Only</option>
             <option value="income">Income Only</option>
@@ -213,8 +213,8 @@ export default function CategoryBreakdownChart({
 
       {/* Category List */}
       {chartData.length > 0 && (
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h4 className="font-medium text-gray-900 mb-3">Category Breakdown</h4>
+        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-3">Category Breakdown</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {chartData.map((category, index) => (
               <div key={index} className="flex items-center justify-between py-1">
@@ -223,15 +223,15 @@ export default function CategoryBreakdownChart({
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: category.color }}
                   />
-                  <span className="text-sm text-gray-700 truncate">
+                  <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
                     {category.name}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-gray-900 dark:text-white">
                     {formatCurrency(category.value)}
                   </span>
-                  <span className="text-gray-500 text-xs">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs">
                     ({category.percentage.toFixed(1)}%)
                   </span>
                 </div>

@@ -165,7 +165,7 @@ export default function OFXCategorizationStep({
                       <select
                         value={transaction.manualCategoryId || catPreview?.suggested_category || ""}
                         onChange={(e) => onCategoryChange(index, e.target.value)}
-                        className="text-sm border border-gray-300 rounded-md px-2 py-1 min-w-[150px]"
+                        className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 min-w-[150px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       >
                         <option value="">No category</option>
                         {Array.isArray(safeCategories) && safeCategories.map((category) => (

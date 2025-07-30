@@ -88,10 +88,11 @@ export default function CategoryAssignment({
           onChange={(e) => onCategoryChange(e.target.value)}
           disabled={disabled || loadingSuggestion}
           className={`
-            w-full border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500
+            w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500
             ${sizeClasses[size]}
-            ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
+            ${disabled ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-800"}
             ${loadingSuggestion ? "opacity-50" : ""}
+            text-gray-900 dark:text-white
           `}
         >
           <option value="">{loadingSuggestion ? "Getting suggestion..." : "Select category..."}</option>

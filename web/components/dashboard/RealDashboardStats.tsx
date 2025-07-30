@@ -98,7 +98,7 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
       <div className={`${className}`}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 animate-pulse">
+            <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 animate-pulse">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
@@ -134,10 +134,10 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
     <div className={`${className}`}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Total Income */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Income</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Income</p>
               <p className="text-2xl font-bold text-green-600 mt-1">{formatCurrency(stats.totalIncome)}</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -150,10 +150,10 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
         </div>
 
         {/* Total Expenses */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Expenses</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Expenses</p>
               <p className="text-2xl font-bold text-red-600 mt-1">{formatCurrency(stats.totalExpenses)}</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -166,10 +166,10 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
         </div>
 
         {/* Net Income */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Net Income</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Net Income</p>
               <p className={`text-2xl font-bold mt-1 ${stats.netIncome >= 0 ? "text-blue-600" : "text-red-600"}`}>
                 {formatCurrency(stats.netIncome)}
               </p>
@@ -188,10 +188,10 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
         </div>
 
         {/* Auto-Categorization Rate */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Categorization Rate</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Categorization Rate</p>
               <p className="text-2xl font-bold text-purple-600 mt-1">{stats.categorizationRate}%</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">

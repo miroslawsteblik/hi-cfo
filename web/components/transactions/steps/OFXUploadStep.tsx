@@ -89,7 +89,7 @@ export default function OFXUploadStep({
           <select
             value={selectedAccountId}
             onChange={(e) => onAccountSelect(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="">Choose an account...</option>
             {accounts.map((account) => (

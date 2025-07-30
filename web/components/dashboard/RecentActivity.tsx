@@ -61,9 +61,9 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ transactions, thisMonth
   const recentTransactions = transactions.slice(0, 5);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
         <Link href="/transactions" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
           View All →
         </Link>
@@ -72,7 +72,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ transactions, thisMonth
       <div className="space-y-4">
         {recentTransactions.length > 0 ? (
           recentTransactions.map((transaction) => (
-            <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+            <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
               <div className="flex items-center">
                 <div className={`w-8 h-8 ${getIconBgColor(transaction.transaction_type)} rounded-full flex items-center justify-center mr-3`}>
                   <span className="text-xs">
@@ -80,10 +80,10 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ transactions, thisMonth
                   </span>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">
+                  <p className="font-medium text-gray-900 dark:text-white text-sm">
                     {transaction.merchant_name || transaction.description || "Transaction"}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {formatRelativeTime(transaction.transaction_date)}
                   </p>
                 </div>
@@ -94,7 +94,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ transactions, thisMonth
             </div>
           ))
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <p className="text-sm">No recent transactions found</p>
             <Link href="/transactions" className="text-blue-600 hover:text-blue-700 text-sm mt-2 inline-block">
               Add your first transaction →
@@ -103,8 +103,8 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ transactions, thisMonth
         )}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <p className="text-sm text-gray-600 text-center">
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
           {thisMonthTransactions} transactions this month
         </p>
       </div>

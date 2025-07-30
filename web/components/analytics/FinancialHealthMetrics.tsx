@@ -16,7 +16,7 @@ export default function FinancialHealthMetrics({
   if (!pivotData?.success || !trendsData?.success || !comparisonData?.success || 
       !pivotData.data || !trendsData.data || !comparisonData.data) {
     return (
-      <div className="bg-white p-6 rounded-lg border">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -30,8 +30,8 @@ export default function FinancialHealthMetrics({
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg border">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Financial Health Overview</h3>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Financial Health Overview</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="text-sm font-medium text-green-800">Savings Rate</div>

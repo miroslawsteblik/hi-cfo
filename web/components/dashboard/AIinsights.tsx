@@ -210,34 +210,34 @@ const getInsightStyles = (type: InsightData['type']) => {
   switch (type) {
     case 'positive':
       return {
-        container: 'bg-green-50 border border-green-200',
+        container: 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700',
         iconBg: 'bg-green-600',
-        title: 'text-green-900',
-        message: 'text-green-700',
+        title: 'text-green-900 dark:text-green-100',
+        message: 'text-green-700 dark:text-green-300',
         button: 'bg-green-600 hover:bg-green-700'
       };
     case 'warning':
       return {
-        container: 'bg-yellow-50 border border-yellow-200',
+        container: 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700',
         iconBg: 'bg-yellow-600',
-        title: 'text-yellow-900',
-        message: 'text-yellow-700',
+        title: 'text-yellow-900 dark:text-yellow-100',
+        message: 'text-yellow-700 dark:text-yellow-300',
         button: 'bg-yellow-600 hover:bg-yellow-700'
       };
     case 'negative':
       return {
-        container: 'bg-red-50 border border-red-200',
+        container: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700',
         iconBg: 'bg-red-600',
-        title: 'text-red-900',
-        message: 'text-red-700',
+        title: 'text-red-900 dark:text-red-100',
+        message: 'text-red-700 dark:text-red-300',
         button: 'bg-red-600 hover:bg-red-700'
       };
     default:
       return {
-        container: 'bg-blue-50 border border-blue-200',
+        container: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700',
         iconBg: 'bg-blue-600',
-        title: 'text-blue-900',
-        message: 'text-blue-700',
+        title: 'text-blue-900 dark:text-blue-100',
+        message: 'text-blue-700 dark:text-blue-300',
         button: 'bg-blue-600 hover:bg-blue-700'
       };
   }
@@ -264,8 +264,8 @@ export default function AIInsights({
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
   
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">AI Insights</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">AI Insights</h3>
       
       <div className="space-y-4">
         {topInsights.map((insight, index) => {
@@ -297,27 +297,27 @@ export default function AIInsights({
         })}
         
         {/* Financial Health Summary */}
-        <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+        <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
           <div className="flex items-start">
             <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
               <span className="text-white text-sm">📋</span>
             </div>
             <div>
-              <h4 className="font-medium text-gray-900">Financial Health Score</h4>
+              <h4 className="font-medium text-gray-900 dark:text-white">Financial Health Score</h4>
               <div className="flex items-center mt-2 space-x-4 text-sm">
                 <div>
-                  <span className="text-gray-600">Savings Rate: </span>
-                  <span className={`font-semibold ${savingsRate > 20 ? 'text-green-600' : savingsRate > 10 ? 'text-yellow-600' : 'text-red-600'}`}>
+                  <span className="text-gray-600 dark:text-gray-300">Savings Rate: </span>
+                  <span className={`font-semibold ${savingsRate > 20 ? 'text-green-600 dark:text-green-400' : savingsRate > 10 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
                     {savingsRate.toFixed(1)}%
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Active Accounts: </span>
-                  <span className="font-semibold text-gray-900">{accounts.filter(a => a.is_active).length}</span>
+                  <span className="text-gray-600 dark:text-gray-300">Active Accounts: </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{accounts.filter(a => a.is_active).length}</span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Categorization: </span>
-                  <span className="font-semibold text-blue-600">
+                  <span className="text-gray-600 dark:text-gray-300">Categorization: </span>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">
                     {((categorizedTransactions / (categorizedTransactions + uncategorizedTransactions)) * 100).toFixed(1)}%
                   </span>
                 </div>

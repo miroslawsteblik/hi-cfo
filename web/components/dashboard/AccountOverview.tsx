@@ -58,8 +58,8 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accounts }) => {
     .slice(0, 3);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Account Overview</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Account Overview</h3>
       
       <div className="space-y-4">
         {displayAccounts.length > 0 ? (
@@ -68,14 +68,14 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accounts }) => {
             const balance = account.current_balance || 0;
             
             return (
-              <div key={account.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
+              <div key={account.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
                 <div className="flex items-center">
                   <div className={`w-10 h-10 ${bgColor} rounded-lg flex items-center justify-center mr-4`}>
                     <span className="text-lg">{icon}</span>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900">{account.account_name}</h4>
-                    <p className="text-sm text-gray-600">
+                    <h4 className="font-medium text-gray-900 dark:text-white">{account.account_name}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       {maskAccountNumber(account.account_number_masked)}
                       {account.bank_name && ` • ${account.bank_name}`}
                     </p>
@@ -93,7 +93,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ accounts }) => {
             );
           })
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">🏦</span>
             </div>

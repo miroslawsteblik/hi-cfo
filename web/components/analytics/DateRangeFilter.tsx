@@ -46,7 +46,7 @@ export default function DateRangeFilter({ filters, onChange }: DateRangeFilterPr
       <Calendar size={16} className="text-gray-500" />
 
       <select
-        className="px-3 py-1 border rounded text-sm"
+        className="px-3 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
         onChange={(e) => handlePresetChange(e.target.value === 'custom' ? 'custom' : parseInt(e.target.value))}
       >
         {presetRanges.map((range) => (

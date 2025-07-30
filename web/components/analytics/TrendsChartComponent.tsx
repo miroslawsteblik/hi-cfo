@@ -45,7 +45,7 @@ export default function TrendsChartComponent({
     <div>
       {showControls && (
         <div className="mb-4">
-          <h4 className="text-lg font-semibold text-gray-900 mb-2">Financial Trends</h4>
+          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Financial Trends</h4>
           <div className="flex items-center space-x-4 text-sm text-gray-600">
             <div className="flex items-center">
               <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>

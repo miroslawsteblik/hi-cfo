@@ -117,7 +117,7 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             placeholder="e.g., Groceries, Dining Out, Salary"
             required
           />
@@ -168,7 +168,7 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
             id="description"
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             rows={3}
             placeholder="Optional description for this category"
           />
@@ -219,7 +219,7 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
               type="text"
               value={formData.icon}
               onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-              className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               placeholder="Or enter custom emoji/icon"
             />
           </div>
@@ -256,7 +256,7 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
-              className="flex-1 px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               placeholder="e.g., grocery, restaurant, gas"
             />
             <button
@@ -300,7 +300,7 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
               value={patternInput}
               onChange={(e) => setPatternInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addMerchantPattern())}
-              className="flex-1 px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               placeholder="e.g., walmart, starbucks, shell"
             />
             <button

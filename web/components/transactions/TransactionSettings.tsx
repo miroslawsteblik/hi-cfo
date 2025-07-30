@@ -240,7 +240,7 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
                       onChange={(e) =>
                         setUserPrefs({ ...userPrefs, defaultPageSize: parseInt(e.target.value) })
                       }
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     >
                       <option value={10}>10 transactions</option>
                       <option value={20}>20 transactions</option>
@@ -256,7 +256,7 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
                     <select
                       value={userPrefs.dateFormat}
                       onChange={(e) => setUserPrefs({ ...userPrefs, dateFormat: e.target.value })}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     >
                       <option value="MM/dd/yyyy">MM/dd/yyyy (US)</option>
                       <option value="dd/MM/yyyy">dd/MM/yyyy (UK)</option>
@@ -271,7 +271,7 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
                     <select
                       value={userPrefs.currency}
                       onChange={(e) => setUserPrefs({ ...userPrefs, currency: e.target.value })}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     >
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
