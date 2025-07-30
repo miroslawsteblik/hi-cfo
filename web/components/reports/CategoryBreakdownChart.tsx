@@ -88,11 +88,11 @@ export default function CategoryBreakdownChart({
       <text 
         x={x} 
         y={y} 
-        fill=\"white\" 
+        fill="white" 
         textAnchor={x > cx ? 'start' : 'end'} 
-        dominantBaseline=\"central\"
+        dominantBaseline="central"
         fontSize={12}
-        fontWeight=\"bold\"
+        fontWeight="bold"
       >
         {`${(percent * 100).toFixed(0)}%`}
       </text>
@@ -100,60 +100,63 @@ export default function CategoryBreakdownChart({
   };
 
   return (
-    <div className=\"space-y-4\">
+    <div className="space-y-4">
       {/* Controls */}
-      <div className=\"flex flex-wrap items-center justify-between gap-2\">
-        <div className=\"flex items-center gap-2\">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
           <select
             value={chartType}
             onChange={(e) => setChartType(e.target.value as any)}
-            className=\"px-2 py-1 border rounded text-sm\"
+            className="px-2 py-1 border rounded text-sm"
           >
-            <option value=\"pie\">Pie Chart</option>
-            <option value=\"bar\">Bar Chart</option>
+            <option value="pie">Pie Chart</option>
+            <option value="bar">Bar Chart</option>
           </select>
           
           <select
             value={showType}
             onChange={(e) => setShowType(e.target.value as any)}
-            className=\"px-2 py-1 border rounded text-sm\"
+            className="px-2 py-1 border rounded text-sm"
           >
-            <option value=\"expense\">Expenses Only</option>
-            <option value=\"income\">Income Only</option>
-            <option value=\"all\">All Categories</option>
+            <option value="expense">Expenses Only</option>
+            <option value="income">Income Only</option>
+            <option value="all">All Categories</option>
           </select>
         </div>
-        
-        <div className=\"text-sm text-gray-600\">
+
+        <div className="text-sm text-gray-600">
           Top {chartData.length} categories • {formatCurrency(chartData.reduce((sum, item) => sum + item.value, 0))} total
         </div>
       </div>
 
       {/* Chart */}
       <div style={{ height }}>
-        <ResponsiveContainer width=\"100%\" height=\"100%\">
+        <ResponsiveContainer width="100%" height="100%">
           {chartType === 'pie' ? (
             <PieChart>
+              {/* @ts-ignore */}
               <Pie
                 data={chartData}
-                cx=\"50%\"
-                cy=\"50%\"
+                cx="50%"
+                cy="50%"
                 labelLine={false}
                 label={renderCustomizedLabel}
                 outerRadius={height * 0.35}
-                fill=\"#8884d8\"
-                dataKey=\"value\"
+                fill="#8884d8"
+                dataKey="value"
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
+              {/* @ts-ignore */}
               <Tooltip formatter={formatTooltipValue} />
               {showLegend && (
-                <Legend 
-                  verticalAlign=\"bottom\" 
+                /* @ts-ignore */
+                <Legend
+                  verticalAlign="bottom"
                   height={36}
-                  formatter={(value, entry: any) => (
+                  formatter={(value: any, entry: any) => (
                     <span style={{ color: entry.color }}>
                       {value} ({entry.payload.percentage.toFixed(1)}%)
                     </span>
@@ -166,20 +169,25 @@ export default function CategoryBreakdownChart({
               data={chartData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray=\"3 3\" />
-              <XAxis 
-                dataKey=\"name\" 
+              {/* @ts-ignore */}
+              <CartesianGrid strokeDasharray="3 3" />
+              {/* @ts-ignore */}
+              <XAxis
+                dataKey="name"
                 tick={{ fontSize: 11 }}
                 angle={-45}
-                textAnchor=\"end\"
+                textAnchor="end"
                 height={80}
               />
+              {/* @ts-ignore */}
               <YAxis 
                 tick={{ fontSize: 11 }}
-                tickFormatter={(value) => formatCurrency(value)}
+                tickFormatter={(value: any) => formatCurrency(value)}
               />
+              {/* @ts-ignore */}
               <Tooltip formatter={formatTooltipValue} />
-              <Bar dataKey=\"value\" radius={[4, 4, 0, 0]}>
+              {/* @ts-ignore */}
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
@@ -191,25 +199,25 @@ export default function CategoryBreakdownChart({
 
       {/* Category List */}
       {chartData.length > 0 && (
-        <div className=\"bg-gray-50 p-4 rounded-lg\">
-          <h4 className=\"font-medium text-gray-900 mb-3\">Category Breakdown</h4>
-          <div className=\"grid grid-cols-1 sm:grid-cols-2 gap-2\">
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-medium text-gray-900 mb-3">Category Breakdown</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {chartData.map((category, index) => (
-              <div key={index} className=\"flex items-center justify-between py-1\">
-                <div className=\"flex items-center gap-2\">
-                  <div 
-                    className=\"w-3 h-3 rounded-full\" 
+              <div key={index} className="flex items-center justify-between py-1">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: category.color }}
                   />
-                  <span className=\"text-sm text-gray-700 truncate\">
+                  <span className="text-sm text-gray-700 truncate">
                     {category.name}
                   </span>
                 </div>
-                <div className=\"flex items-center gap-2 text-sm\">
-                  <span className=\"font-medium text-gray-900\">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-medium text-gray-900">
                     {formatCurrency(category.value)}
                   </span>
-                  <span className=\"text-gray-500 text-xs\">
+                  <span className="text-gray-500 text-xs">
                     ({category.percentage.toFixed(1)}%)
                   </span>
                 </div>
@@ -220,4 +228,4 @@ export default function CategoryBreakdownChart({
       )}
     </div>
   );
-}"
+}

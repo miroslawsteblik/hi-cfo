@@ -38,6 +38,19 @@ services:
       - backend-network
     restart: unless-stopped
 
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=redis:redis:6379:0:${REDIS_PASSWORD}
+
+    depends_on:
+      - redis
+    networks:
+      - backend-network
+
   backend:
     container_name: go_backend
     build:
@@ -124,152 +137,12 @@ services:
       - frontend-network
     restart: unless-stopped
 
-  # Redis metrics exporter
-  redis_exporter:
-    image: oliver006/redis_exporter:latest
-    container_name: redis_exporter
-    environment:
-      REDIS_ADDR: "redis://redis_cache:6379"
-      REDIS_PASSWORD: "${REDIS_PASSWORD}"
-    depends_on:
-      - redis
-    networks:
-      - backend-network
-      - monitoring-network
-    restart: unless-stopped
 
-  # PostgreSQL metrics exporter
-  postgres_exporter:
-    image: prometheuscommunity/postgres-exporter:latest
-    container_name: postgres_exporter
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${DB_USER}:${DB_PASSWORD}@postgres_db:5432/${DB_NAME}?sslmode=disable"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - backend-network
-      - monitoring-network
-    restart: unless-stopped
-
-  # Monitoring Stack
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - cluster.name=hi-cfo-logs
-      - node.name=elasticsearch-node-1
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-      - ./monitoring/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-      - ./monitoring/elasticsearch/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties:ro
-    networks:
-      - monitoring-network
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "2"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.8.0
-    container_name: kibana
-    ports:
-      - "5601:5601"
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-      SERVER_BASEPATH: "/kibana"
-      SERVER_REWRITEBASEPATH: "true"
-      LOGGING_LEVEL: ${LOG_LEVEL_INFO}
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - monitoring-network
-      - frontend-network
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "2"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5601/kibana/api/status || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  prometheus:
-    image: prom/prometheus:v2.47.0
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/etc/prometheus/console_libraries"
-      - "--web.console.templates=/etc/prometheus/consoles"
-      - "--storage.tsdb.retention.time=15d"
-      - "--web.enable-lifecycle"
-      - "--log.level=warn"
-    networks:
-      - monitoring-network
-      - backend-network
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "2"
-
-  grafana:
-    image: grafana/grafana:10.2.0
-    container_name: grafana
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
-      - GF_SERVER_ROOT_URL=http://localhost:8088/grafana/
-      - GF_SERVER_SERVE_FROM_SUB_PATH=true
-      - GF_LOG_LEVEL=${LOG_LEVEL_INFO}
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    networks:
-      - monitoring-network
-      - frontend-network
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "2"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
 volumes:
   postgres_data:
   redis_data:
-  elasticsearch_data:
-  prometheus_data:
-  grafana_data:
+
 
 networks:
   backend-network:
@@ -277,5 +150,4 @@ networks:
     internal: true # Backend services don't need internet access
   frontend-network:
     driver: bridge # Frontend network allows external access via nginx
-  monitoring-network:
-    driver: bridge
+

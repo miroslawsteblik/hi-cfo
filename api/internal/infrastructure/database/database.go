@@ -2,7 +2,7 @@ package database
 
 import (
 	"fmt"
-	"log"
+
 	"os"
 	"time"
 
@@ -14,6 +14,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	internallogger "hi-cfo/api/internal/logger"
 )
 
 type DB = gorm.DB
@@ -62,7 +63,7 @@ func InitializeDatabase() (*DB, error) {
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
-	log.Println("Connected to PostgreSQL database successfully")
+	internallogger.Infof("Connected to PostgreSQL database successfully")
 
 	if err := runMigration(db); err != nil {
 		return nil, fmt.Errorf("failed to run database migrations: %w", err)
@@ -72,7 +73,6 @@ func InitializeDatabase() (*DB, error) {
 }
 
 func runMigration(db *DB) error {
-	log.Println("📋 Starting database migration...")
 
 	if err := db.AutoMigrate(&MigrationRecord{}); err != nil {
 		return fmt.Errorf("failed to create migration table: %w", err)
@@ -87,7 +87,6 @@ func runMigration(db *DB) error {
 
 // runTableMigrations creates/updates all table structures
 func runTableMigrations(db *DB) error {
-	log.Println("Running table migrations...")
 
 	models := []interface{}{
 		&user.User{},
@@ -100,6 +99,6 @@ func runTableMigrations(db *DB) error {
 		return err
 	}
 
-	log.Println("Table migrations completed")
+	internallogger.Infof("Table migrations completed")
 	return nil
 }

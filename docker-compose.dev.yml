@@ -25,16 +25,6 @@ services:
       - HOT_RELOAD=true
       - ENABLE_SWAGGER=true
 
-      - DB_HOST=postgres_db
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
-      - DB_PORT=5432
-
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRY=${JWT_EXPIRY}
-      - JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}
-
       - API_PORT=${API_PORT}
       - APP_NAME=${APP_NAME}
       - TRUSTED_PROXIES_CONFIG=/app/trusted_proxies.json # Path to trusted proxies config
@@ -49,6 +39,13 @@ services:
       - backend-network
       - frontend-network
     restart: unless-stopped
+    # tmpfs:
+    #   - /tmp # Use tmpfs for temporary files
+    #   - /app/tmp # Use tmpfs for app temporary files
+
+    security_opt:
+      - seccomp:unconfined  # For debugging
+
 
   frontend:
     build:
@@ -57,8 +54,9 @@ services:
       - "3000:3000" # Next.js dev
     volumes:
       - ./web:/app # Mount source code into container
-      - /app/node_modules # Prevent overwriting node_modules
-      - /app/.next # Prevent overwriting .next build artifacts
+      # - /app/node_modules # Prevent overwriting node_modules
+      # - /app/.next # Prevent overwriting .next build artifacts
+      - nextjs-cache:/app/.next/cache 
     environment:
       - NODE_ENV=development # DEV mode
       - NEXT_TELEMETRY_DISABLED=1
@@ -102,22 +100,10 @@ services:
     networks:
       - backend-network
 
-  # Redis (for caching/sessions)
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: redis_commander
-    ports:
-      - "8081:8081"
-    environment:
-      - REDIS_HOSTS=redis:redis:6379:0:${REDIS_PASSWORD}
-
-    depends_on:
-      - redis
-    networks:
-      - backend-network
 
 volumes:
   pgadmin_data:
+  nextjs-cache:
 
 networks:
   backend-network:

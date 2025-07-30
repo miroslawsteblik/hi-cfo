@@ -42,8 +42,37 @@ export default function DateRangeFilter({ filters, onChange }: DateRangeFilterPr
   };
 
   return (
-    <div className=\"flex items-center gap-2\">
-      <Calendar size={16} className=\"text-gray-500\" />
-      
+    <div className="flex items-center gap-2">
+      <Calendar size={16} className="text-gray-500" />
+
       <select
-        className=\"px-3 py-1 border rounded text-sm\"\n        onChange={(e) => handlePresetChange(e.target.value === 'custom' ? 'custom' : parseInt(e.target.value))}\n      >\n        {presetRanges.map((range) => (\n          <option key={range.label} value={range.value}>\n            {range.label}\n          </option>\n        ))}\n      </select>\n\n      {showCustom && (\n        <div className=\"flex items-center gap-2 ml-2\">\n          <input\n            type=\"date\"\n            value={filters.start_date || ''}\n            onChange={(e) => handleCustomDateChange('start_date', e.target.value)}\n            className=\"px-2 py-1 border rounded text-sm\"\n          />\n          <span className=\"text-gray-500\">to</span>\n          <input\n            type=\"date\"\n            value={filters.end_date || ''}\n            onChange={(e) => handleCustomDateChange('end_date', e.target.value)}\n            className=\"px-2 py-1 border rounded text-sm\"\n          />\n        </div>\n      )}\n    </div>\n  );\n}"
+        className="px-3 py-1 border rounded text-sm"
+        onChange={(e) => handlePresetChange(e.target.value === 'custom' ? 'custom' : parseInt(e.target.value))}
+      >
+        {presetRanges.map((range) => (
+          <option key={range.label} value={range.value}>
+            {range.label}
+          </option>
+        ))}
+      </select>
+
+      {showCustom && (
+        <div className="flex items-center gap-2 ml-2">
+          <input
+            type="date"
+            value={filters.start_date || ''}
+            onChange={(e) => handleCustomDateChange('start_date', e.target.value)}
+            className="px-2 py-1 border rounded text-sm"
+          />
+          <span className="text-gray-500">to</span>
+          <input
+            type="date"
+            value={filters.end_date || ''}
+            onChange={(e) => handleCustomDateChange('end_date', e.target.value)}
+            className="px-2 py-1 border rounded text-sm"
+          />
+        </div>
+      )}
+    </div>
+  );
+}

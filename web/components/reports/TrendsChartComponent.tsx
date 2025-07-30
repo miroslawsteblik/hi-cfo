@@ -54,14 +54,20 @@ export default function TrendsChartComponent({
 
       <ResponsiveContainer width="100%" height={height}>
         <LineChart data={chartData}>
+          {/* @ts-ignore */}
           <CartesianGrid strokeDasharray="3 3" />
+          {/* @ts-ignore */}
           <XAxis dataKey="period" />
+          {/* @ts-ignore */}
           <YAxis tickFormatter={(value: number) => formatCurrency(value)} />
+          {/* @ts-ignore */}
           <Tooltip 
             formatter={(value: number, name: string) => [formatCurrency(value), name]}
             labelFormatter={(label: string) => `Period: ${label}`}
           />
+          {/* @ts-ignore */}
           <Legend />
+          {/* @ts-ignore */}
           <Line 
             type="monotone" 
             dataKey="income" 
@@ -69,6 +75,7 @@ export default function TrendsChartComponent({
             strokeWidth={2}
             name="Income"
           />
+          {/* @ts-ignore */}
           <Line 
             type="monotone" 
             dataKey="expenses" 
@@ -76,6 +83,7 @@ export default function TrendsChartComponent({
             strokeWidth={2}
             name="Expenses"
           />
+          {/* @ts-ignore */}
           <Line 
             type="monotone" 
             dataKey="net_income" 
