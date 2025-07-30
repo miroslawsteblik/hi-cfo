@@ -3,9 +3,7 @@ import { getServerUser } from "@/lib/auth";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { FinancialDataErrorBoundary } from "@/components/providers/ErrorBoundary";
-
-// Analytics components
-import AnalyticsDashboard from "@/components/reports/AnalyticsDashboard";
+import AnalyticsDashboard from "@/components/analytics/AnalyticsDashboard";
 
 export default async function ReportsPage() {
   // Get user from server-side cookies

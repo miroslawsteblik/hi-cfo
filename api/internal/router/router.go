@@ -173,6 +173,7 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, deps *Dependencies) {
 		setupTransactionRoutes(protected, deps)
 		setupAccountRoutes(protected, deps)
 		setupCategoryRoutes(protected, deps)
+		setupAnalyticsRoutes(protected, deps)
 	}
 }
 
@@ -229,13 +230,6 @@ func setupTransactionRoutes(protected *gin.RouterGroup, deps *Dependencies) {
 		transactionRoutes.DELETE("/:id", deps.TransactionHandler.DeleteTransaction)      // Delete transaction by ID
 		transactionRoutes.POST("/bulk", deps.TransactionHandler.CreateBatchTransactions) // Bulk upload transactions
 
-		// Analytics routes
-		analytics := transactionRoutes.Group("/analytics")
-		{
-			analytics.GET("/pivot", deps.TransactionHandler.GetTransactionPivot)         // Get pivot table data
-			analytics.GET("/trends", deps.TransactionHandler.GetTransactionTrends)       // Get trends data
-			analytics.GET("/comparison", deps.TransactionHandler.GetTransactionComparison) // Get comparison data
-		}
 
 		transactionRoutes.POST("/categorization/preview", deps.TransactionHandler.PreviewCategorization)
 		transactionRoutes.POST("/categorization/analyze", deps.TransactionHandler.AnalyzeTransactionCategorization)
@@ -243,6 +237,15 @@ func setupTransactionRoutes(protected *gin.RouterGroup, deps *Dependencies) {
 		transactionRoutes.GET("/categorization/settings", deps.TransactionHandler.GetCategorizationSettings)
 		transactionRoutes.PUT("/categorization/settings", deps.TransactionHandler.UpdateCategorizationSettings)
 
+	}
+}
+
+func setupAnalyticsRoutes(protected *gin.RouterGroup, deps *Dependencies) {
+	analytics := protected.Group("/analytics")
+	{
+		analytics.GET("/pivot", deps.TransactionHandler.GetTransactionPivot)         // Get pivot table data
+		analytics.GET("/trends", deps.TransactionHandler.GetTransactionTrends)       // Get trends data
+		analytics.GET("/comparison", deps.TransactionHandler.GetTransactionComparison) // Get comparison data
 	}
 }
 

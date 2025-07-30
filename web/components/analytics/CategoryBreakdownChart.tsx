@@ -17,7 +17,7 @@ import {
 } from 'recharts';
 
 interface CategoryBreakdownChartProps {
-  data: PivotData;
+  data: { success: boolean; data?: PivotData; error?: string } | null;
   height?: number;
   showLegend?: boolean;
 }
@@ -29,6 +29,20 @@ export default function CategoryBreakdownChart({
 }: CategoryBreakdownChartProps) {
   const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
   const [showType, setShowType] = useState<'all' | 'expense' | 'income'>('expense');
+
+  if (!data?.success || !data.data) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="flex justify-between">
+          <div className="h-8 bg-gray-200 rounded w-32"></div>
+          <div className="h-8 bg-gray-200 rounded w-48"></div>
+        </div>
+        <div className="bg-gray-200 rounded" style={{ height }}></div>
+      </div>
+    );
+  }
+
+  const pivotData = data.data;
 
   // Generate colors for categories
   const generateColors = (count: number) => {
@@ -46,7 +60,7 @@ export default function CategoryBreakdownChart({
   };
 
   // Transform data for charts
-  const chartData: CategoryChartData[] = data.categories
+  const chartData: CategoryChartData[] = pivotData.categories
     .filter(category => {
       if (showType === 'all') return true;
       return category.category_type === showType;
@@ -56,8 +70,8 @@ export default function CategoryBreakdownChart({
     .map((category, index) => ({
       name: category.category_name,
       value: category.total,
-      color: category.color || generateColors(data.categories.length)[index],
-      percentage: (category.total / data.totals.grand_total) * 100,
+      color: category.color || generateColors(pivotData.categories.length)[index],
+      percentage: (category.total / pivotData.totals.grand_total) * 100,
     }));
 
   const formatCurrency = (value: number) => {
@@ -70,7 +84,7 @@ export default function CategoryBreakdownChart({
   };
 
   const formatTooltipValue = (value: number, name: string) => {
-    const percentage = ((value / data.totals.grand_total) * 100).toFixed(1);
+    const percentage = ((value / pivotData.totals.grand_total) * 100).toFixed(1);
     return [`${formatCurrency(value)} (${percentage}%)`, name];
   };
 

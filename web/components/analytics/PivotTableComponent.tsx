@@ -3,10 +3,20 @@
 import { PivotData } from '@/lib/types/analytics';
 
 interface PivotTableComponentProps {
-  data: PivotData;
+  data: { success: boolean; data?: PivotData; error?: string } | null;
 }
 
 export default function PivotTableComponent({ data }: PivotTableComponentProps) {
+  if (!data?.success || !data.data) {
+    return (
+      <div className="overflow-x-auto animate-pulse">
+        <div className="h-64 bg-gray-200 rounded"></div>
+      </div>
+    );
+  }
+
+  const pivotData = data.data;
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -24,7 +34,7 @@ export default function PivotTableComponent({ data }: PivotTableComponentProps) 
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Category
             </th>
-            {data.periods.map((period) => (
+            {pivotData.periods.map((period) => (
               <th key={period} className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {period}
               </th>
@@ -35,12 +45,12 @@ export default function PivotTableComponent({ data }: PivotTableComponentProps) 
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {data.categories.map((category) => (
+          {pivotData.categories.map((category) => (
             <tr key={category.category_name}>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 {category.category_name}
               </td>
-              {data.periods.map((period) => {
+              {pivotData.periods.map((period) => {
                 const amount = category.periods[period] || 0;
                 return (
                   <td key={period} className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">

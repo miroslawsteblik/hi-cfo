@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, TrendingUp, PieChart, BarChart3, Download } from "lucide-react";
-import { AnalyticsAPI } from "@/lib/api/analytics";
+import { getPivotData, getTrendsData, getComparisonData } from "@/app/actions/analytics";
+import { getCurrentMonth, getDateRange } from "@/lib/utils/date";
 import { PivotData, TrendsData, ComparisonData, AnalyticsFilters } from "@/lib/types/analytics";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { ErrorMessage } from "../ui/ErrorMessage";
@@ -16,9 +17,9 @@ import FinancialHealthMetrics from "./FinancialHealthMetrics";
 import DateRangeFilter from "./DateRangeFilter";
 
 interface AnalyticsState {
-  pivotData: PivotData | null;
-  trendsData: TrendsData | null;
-  comparisonData: ComparisonData | null;
+  pivotData: { success: boolean; data?: PivotData; error?: string } | null;
+  trendsData: { success: boolean; data?: TrendsData; error?: string } | null;
+  comparisonData: { success: boolean; data?: ComparisonData; error?: string } | null;
   loading: boolean;
   error: string | null;
   filters: AnalyticsFilters;
@@ -32,10 +33,10 @@ export default function AnalyticsDashboard() {
     loading: true,
     error: null,
     filters: {
-      ...AnalyticsAPI.getDateRange(12),
+      ...getDateRange(12),
       group_by: "month",
       period: "month",
-      current: AnalyticsAPI.getCurrentMonth(),
+      current: getCurrentMonth(),
     },
   });
 
@@ -49,9 +50,9 @@ export default function AnalyticsDashboard() {
 
     try {
       const [pivotData, trendsData, comparisonData] = await Promise.all([
-        AnalyticsAPI.getPivotData(filters),
-        AnalyticsAPI.getTrendsData(filters),
-        AnalyticsAPI.getComparisonData(filters),
+        getPivotData(filters),
+        getTrendsData(filters),
+        getComparisonData(filters),
       ]);
 
       setState((prev) => ({
@@ -188,21 +189,21 @@ export default function AnalyticsDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-lg border">
                 <h3 className="text-lg font-semibold mb-4">Monthly Trends</h3>
-                {state.trendsData && (
+                {state.trendsData?.success && state.trendsData.data && (
                   <TrendsChartComponent data={state.trendsData} height={300} showControls={false} />
                 )}
               </div>
 
               <div className="bg-white p-6 rounded-lg border">
                 <h3 className="text-lg font-semibold mb-4">Category Breakdown</h3>
-                {state.pivotData && (
+                {state.pivotData?.success && state.pivotData.data && (
                   <CategoryBreakdownChart data={state.pivotData} height={300} showLegend={true} />
                 )}
               </div>
             </div>
 
             {/* Month-over-Month Comparison */}
-            {state.comparisonData && (
+            {state.comparisonData?.success && state.comparisonData.data && (
               <div className="bg-white p-6 rounded-lg border">
                 <h3 className="text-lg font-semibold mb-4">Period Comparison</h3>
                 <ComparisonComponent data={state.comparisonData} showDetails={false} />
@@ -211,21 +212,21 @@ export default function AnalyticsDashboard() {
           </div>
         )}
 
-        {activeTab === "pivot" && state.pivotData && (
+        {activeTab === "pivot" && state.pivotData?.success && state.pivotData.data && (
           <div className="bg-white p-6 rounded-lg border">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold">Transaction Pivot Analysis</h3>
               <p className="text-sm text-gray-600">
-                {state.pivotData.summary.transaction_count} transactions •
-                {state.pivotData.summary.total_categories} categories •
-                {state.pivotData.summary.total_periods} periods
+                {state.pivotData?.data?.summary.transaction_count} transactions •
+                {state.pivotData?.data?.summary.total_categories} categories •
+                {state.pivotData?.data?.summary.total_periods} periods
               </p>
             </div>
             <PivotTableComponent data={state.pivotData} />
           </div>
         )}
 
-        {activeTab === "trends" && state.trendsData && (
+        {activeTab === "trends" && state.trendsData?.success && state.trendsData.data && (
           <div className="bg-white p-6 rounded-lg border">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold">Financial Trends Analysis</h3>
@@ -246,7 +247,7 @@ export default function AnalyticsDashboard() {
           </div>
         )}
 
-        {activeTab === "comparison" && state.comparisonData && (
+        {activeTab === "comparison" && state.comparisonData?.success && state.comparisonData.data && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg border">
               <div className="flex justify-between items-center mb-6">

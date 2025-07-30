@@ -4,7 +4,7 @@ import { TrendsData } from '@/lib/types/analytics';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface TrendsChartComponentProps {
-  data: TrendsData;
+  data: { success: boolean; data?: TrendsData; error?: string } | null;
   height?: number;
   showControls?: boolean;
 }
@@ -14,6 +14,17 @@ export default function TrendsChartComponent({
   height = 400, 
   showControls = false 
 }: TrendsChartComponentProps) {
+  if (!data?.success || !data.data) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+        <div className="h-96 bg-gray-200 rounded"></div>
+      </div>
+    );
+  }
+
+  const trendsData = data.data;
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -23,7 +34,7 @@ export default function TrendsChartComponent({
     }).format(Math.abs(value));
   };
 
-  const chartData = data.periods.map(period => ({
+  const chartData = trendsData.periods.map(period => ({
     period: period.period,
     income: period.income,
     expenses: Math.abs(period.expenses),
@@ -99,15 +110,15 @@ export default function TrendsChartComponent({
           <div>
             <span>Growth Rate: </span>
             <span className={`font-medium ${
-              data.summary.growth_rate >= 0 ? 'text-green-600' : 'text-red-600'
+              trendsData.summary.growth_rate >= 0 ? 'text-green-600' : 'text-red-600'
             }`}>
-              {data.summary.growth_rate.toFixed(1)}%
+              {trendsData.summary.growth_rate.toFixed(1)}%
             </span>
           </div>
           <div>
             <span>Volatility: </span>
             <span className="font-medium text-gray-900">
-              {data.summary.volatility.toFixed(1)}%
+              {trendsData.summary.volatility.toFixed(1)}%
             </span>
           </div>
         </div>

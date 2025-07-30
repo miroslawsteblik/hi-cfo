@@ -1,16 +1,36 @@
 'use client';
 
-import { ComparisonData } from '@/lib/types/analytics';
+import { ComparisonData, CategoryComparison } from '@/lib/types/analytics';
 import { Minus, ArrowUp, ArrowDown } from 'lucide-react';
 import { useState } from 'react';
 
 interface ComparisonComponentProps {
-  data: ComparisonData;
+  data: { success: boolean; data?: ComparisonData; error?: string } | null;
   showDetails?: boolean;
 }
 
 export default function ComparisonComponent({ data, showDetails = true }: ComparisonComponentProps) {
   const [showCategoryDetails, setShowCategoryDetails] = useState(false);
+
+  if (!data?.success || !data.data) {
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="h-40 bg-gray-200 rounded-lg"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // TypeScript now knows data.data is defined due to the guard above
+  const comparisonData = data.data;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -45,7 +65,7 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
   };
 
   // Filter significant category changes
-  const significantChanges = data.category_changes
+  const significantChanges = comparisonData.category_changes
     .filter(change => Math.abs(change.change_percent) > 5 || change.is_new || change.is_gone)
     .sort((a, b) => Math.abs(b.change_percent) - Math.abs(a.change_percent))
     .slice(0, 10);
@@ -59,22 +79,22 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-medium text-green-800">Income</h4>
             <div className="flex items-center space-x-1">
-              {getChangeIcon(data.comparison.income_change)}
-              <span className={`text-sm font-medium ${getChangeColor(data.comparison.income_change_percent)}`}>
-                {formatPercentage(data.comparison.income_change_percent)}
+              {getChangeIcon(comparisonData.comparison.income_change)}
+              <span className={`text-sm font-medium ${getChangeColor(comparisonData.comparison.income_change_percent)}`}>
+                {formatPercentage(comparisonData.comparison.income_change_percent)}
               </span>
             </div>
           </div>
           
           <div className="space-y-1">
             <div className="text-2xl font-bold text-green-900">
-              {formatCurrency(data.current.income)}
+              {formatCurrency(comparisonData.current.income)}
             </div>
             <div className="text-sm text-green-700">
-              vs {formatCurrency(data.previous.income)} previously
+              vs {formatCurrency(comparisonData.previous.income)} previously
             </div>
-            <div className={`text-sm font-medium ${getChangeColor(data.comparison.income_change_percent)}`}>
-              {data.comparison.income_change >= 0 ? '+' : ''}{formatCurrency(data.comparison.income_change)} change
+            <div className={`text-sm font-medium ${getChangeColor(comparisonData.comparison.income_change_percent)}`}>
+              {comparisonData.comparison.income_change >= 0 ? '+' : ''}{formatCurrency(comparisonData.comparison.income_change)} change
             </div>
           </div>
         </div>
@@ -84,22 +104,22 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-medium text-red-800">Expenses</h4>
             <div className="flex items-center space-x-1">
-              {getChangeIcon(data.comparison.expense_change)}
-              <span className={`text-sm font-medium ${getChangeColor(data.comparison.expense_change_percent, true)}`}>
-                {formatPercentage(data.comparison.expense_change_percent)}
+              {getChangeIcon(comparisonData.comparison.expense_change)}
+              <span className={`text-sm font-medium ${getChangeColor(comparisonData.comparison.expense_change_percent, true)}`}>
+                {formatPercentage(comparisonData.comparison.expense_change_percent)}
               </span>
             </div>
           </div>
           
           <div className="space-y-1">
             <div className="text-2xl font-bold text-red-900">
-              {formatCurrency(data.current.expenses)}
+              {formatCurrency(comparisonData.current.expenses)}
             </div>
             <div className="text-sm text-red-700">
-              vs {formatCurrency(data.previous.expenses)} previously
+              vs {formatCurrency(comparisonData.previous.expenses)} previously
             </div>
-            <div className={`text-sm font-medium ${getChangeColor(data.comparison.expense_change_percent, true)}`}>
-              {data.comparison.expense_change >= 0 ? '+' : ''}{formatCurrency(data.comparison.expense_change)} change
+            <div className={`text-sm font-medium ${getChangeColor(comparisonData.comparison.expense_change_percent, true)}`}>
+              {comparisonData.comparison.expense_change >= 0 ? '+' : ''}{formatCurrency(comparisonData.comparison.expense_change)} change
             </div>
           </div>
         </div>
@@ -109,22 +129,22 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-medium text-blue-800">Net Income</h4>
             <div className="flex items-center space-x-1">
-              {getChangeIcon(data.comparison.net_income_change)}
-              <span className={`text-sm font-medium ${getChangeColor(data.comparison.net_income_change_percent)}`}>
-                {formatPercentage(data.comparison.net_income_change_percent)}
+              {getChangeIcon(comparisonData.comparison.net_income_change)}
+              <span className={`text-sm font-medium ${getChangeColor(comparisonData.comparison.net_income_change_percent)}`}>
+                {formatPercentage(comparisonData.comparison.net_income_change_percent)}
               </span>
             </div>
           </div>
           
           <div className="space-y-1">
             <div className="text-2xl font-bold text-blue-900">
-              {formatCurrency(data.current.net_income)}
+              {formatCurrency(comparisonData.current.net_income)}
             </div>
             <div className="text-sm text-blue-700">
-              vs {formatCurrency(data.previous.net_income)} previously
+              vs {formatCurrency(comparisonData.previous.net_income)} previously
             </div>
-            <div className={`text-sm font-medium ${getChangeColor(data.comparison.net_income_change_percent)}`}>
-              {data.comparison.net_income_change >= 0 ? '+' : ''}{formatCurrency(data.comparison.net_income_change)} change
+            <div className={`text-sm font-medium ${getChangeColor(comparisonData.comparison.net_income_change_percent)}`}>
+              {comparisonData.comparison.net_income_change >= 0 ? '+' : ''}{formatCurrency(comparisonData.comparison.net_income_change)} change
             </div>
           </div>
         </div>
@@ -133,40 +153,40 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
       {/* Period Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-4 rounded-lg border">
-          <h4 className="font-medium text-gray-900 mb-3">Current Period ({data.current.period})</h4>
+          <h4 className="font-medium text-gray-900 mb-3">Current Period ({comparisonData.current.period})</h4>
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Transactions:</span>
-              <span className="font-medium">{data.current.transaction_count}</span>
+              <span className="font-medium">{comparisonData.current.transaction_count}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Categories:</span>
-              <span className="font-medium">{Object.keys(data.current.categories).length}</span>
+              <span className="font-medium">{Object.keys(comparisonData.current.categories).length}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Avg per transaction:</span>
               <span className="font-medium">
-                {formatCurrency(data.current.expenses / data.current.transaction_count)}
+                {formatCurrency(comparisonData.current.expenses / comparisonData.current.transaction_count)}
               </span>
             </div>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border">
-          <h4 className="font-medium text-gray-900 mb-3">Previous Period ({data.previous.period})</h4>
+          <h4 className="font-medium text-gray-900 mb-3">Previous Period ({comparisonData.previous.period})</h4>
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Transactions:</span>
-              <span className="font-medium">{data.previous.transaction_count}</span>
+              <span className="font-medium">{comparisonData.previous.transaction_count}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Categories:</span>
-              <span className="font-medium">{Object.keys(data.previous.categories).length}</span>
+              <span className="font-medium">{Object.keys(comparisonData.previous.categories).length}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Avg per transaction:</span>
               <span className="font-medium">
-                {formatCurrency(data.previous.expenses / data.previous.transaction_count)}
+                {formatCurrency(comparisonData.previous.expenses / comparisonData.previous.transaction_count)}
               </span>
             </div>
           </div>
@@ -178,19 +198,19 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
         <div className="flex items-center justify-between">
           <h4 className="font-medium text-gray-900">Transaction Activity</h4>
           <div className="flex items-center space-x-2">
-            {getChangeIcon(data.comparison.transaction_count_change)}
+            {getChangeIcon(comparisonData.comparison.transaction_count_change)}
             <span className={`font-medium ${
-              data.comparison.transaction_count_change > 0 ? 'text-blue-600' : 'text-gray-600'
+              comparisonData.comparison.transaction_count_change > 0 ? 'text-blue-600' : 'text-gray-600'
             }`}>
-              {data.comparison.transaction_count_change > 0 ? '+' : ''}
-              {data.comparison.transaction_count_change} transactions
+              {comparisonData.comparison.transaction_count_change > 0 ? '+' : ''}
+              {comparisonData.comparison.transaction_count_change} transactions
             </span>
           </div>
         </div>
         <p className="text-sm text-gray-600 mt-1">
-          {data.comparison.transaction_count_change > 0 
+          {comparisonData.comparison.transaction_count_change > 0 
             ? 'You had more transactions this period compared to the previous period.'
-            : data.comparison.transaction_count_change < 0
+            : comparisonData.comparison.transaction_count_change < 0
             ? 'You had fewer transactions this period compared to the previous period.'
             : 'Transaction count remained the same between periods.'
           }
@@ -213,7 +233,7 @@ export default function ComparisonComponent({ data, showDetails = true }: Compar
           </div>
           
           <div className="divide-y divide-gray-200">
-            {significantChanges.slice(0, showCategoryDetails ? 10 : 5).map((change, index) => (
+            {significantChanges.slice(0, showCategoryDetails ? 10 : 5).map((change: CategoryComparison, index: number) => (
               <div key={index} className="px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">

@@ -1043,7 +1043,7 @@ func (r *TransactionRepository) getPeriodData(ctx context.Context, userID uuid.U
 		Where("user_id = ?", userID).
 		Where("transaction_date >= ?", startDate).
 		Where("transaction_date <= ?", endDate).
-		First(&result).Error
+		Scan(&result).Error
 
 	if err != nil {
 		return nil, customerrors.Wrap(err, customerrors.ErrCodeInternal, "Failed to get period data").

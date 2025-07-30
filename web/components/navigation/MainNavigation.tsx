@@ -52,10 +52,10 @@ const navigation: NavItem[] = [
     description: "Financial goals",
   },
   {
-    name: "Reports",
-    href: "/reports",
+    name: "Analytics",
+    href: "/analytics",
     icon: "📈",
-    description: "Financial reports",
+    description: "Financial analytics",
   },
   {
     name: "Settings",

@@ -3,9 +3,9 @@
 import { PivotData, TrendsData, ComparisonData } from '@/lib/types/analytics';
 
 interface FinancialHealthMetricsProps {
-  pivotData: PivotData | null;
-  trendsData: TrendsData | null;
-  comparisonData: ComparisonData | null;
+  pivotData: { success: boolean; data?: PivotData; error?: string } | null;
+  trendsData: { success: boolean; data?: TrendsData; error?: string } | null;
+  comparisonData: { success: boolean; data?: ComparisonData; error?: string } | null;
 }
 
 export default function FinancialHealthMetrics({ 
@@ -13,7 +13,8 @@ export default function FinancialHealthMetrics({
   trendsData, 
   comparisonData 
 }: FinancialHealthMetricsProps) {
-  if (!pivotData || !trendsData || !comparisonData) {
+  if (!pivotData?.success || !trendsData?.success || !comparisonData?.success || 
+      !pivotData.data || !trendsData.data || !comparisonData.data) {
     return (
       <div className="bg-white p-6 rounded-lg border">
         <div className="animate-pulse">
