@@ -12,13 +12,9 @@ export interface Account {
   updated_at: string;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pages: number;
-  limit: number;
-}
+// Import the centralized PaginatedResponse from api.ts
+import type { PaginatedResponse } from '../api';
+
 export interface AccountsResponse extends PaginatedResponse<Account> {}
 
 export interface AccountFilter {

@@ -111,10 +111,8 @@ export interface CategoryComparison {
   is_gone: boolean;
 }
 
-export interface DateRange {
-  start_date: string;
-  end_date: string;
-}
+// Use the DateRange from common.ts instead
+import type { DateRange } from './common';
 
 // Chart data interfaces for Recharts
 export interface PivotChartData {

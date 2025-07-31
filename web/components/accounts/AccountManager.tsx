@@ -415,23 +415,23 @@ export default function AccountManager({ accountsData, summary }: AccountManager
       </div>
 
       {/* Pagination */}
-      {accountsData && accountsData.pages > 1 && (
+      {accountsData && accountsData.pages && accountsData.pages > 1 && (
         <nav className="flex justify-center" aria-label="Accounts pagination">
           <div className="flex space-x-2">
-            {Array.from({ length: accountsData.pages }, (_, i) => i + 1).map((page) => (
+            {Array.from({ length: accountsData.pages }, (_, i) => i + 1).map((pageNum) => (
               <button
-                key={page}
-                onClick={() => router.push(`/accounts?page=${page}`)}
+                key={pageNum}
+                onClick={() => router.push(`/accounts?page=${pageNum}`)}
                 disabled={loading}
                 className={`px-3 py-2 rounded-md text-sm disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  page === accountsData.page
+                  pageNum === accountsData.page
                     ? "bg-blue-600 text-white"
                     : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                 }`}
-                aria-label={`Go to page ${page}`}
-                aria-current={page === accountsData.page ? "page" : undefined}
+                aria-label={`Go to page ${pageNum}`}
+                aria-current={pageNum === accountsData.page ? "page" : undefined}
               >
-                {page}
+                {pageNum}
               </button>
             ))}
           </div>
