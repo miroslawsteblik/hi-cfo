@@ -1,6 +1,6 @@
 "use server";
 
-import { apiClient } from "@/lib/api-client-enhanced";
+import { apiClient } from "@/lib/api/client";
 import {
   TransactionData,
   TransactionStats,
@@ -9,9 +9,9 @@ import {
   CategorizationPreview,
   CategorizationAnalysis,
   CategorizationSettings,
-} from "@/lib/types/transactions";
-import { Account, AccountsResponse } from "@/lib/types/accounts";
-import { Category, CategoriesResponse } from "@/lib/types/categories";
+} from "./types";
+import { Account, AccountsResponse } from "@/lib/features/accounts/types";
+import { Category, CategoriesResponse } from "@/lib/features/categories/types";
 import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 
 export async function createTransaction(data: TransactionData) {

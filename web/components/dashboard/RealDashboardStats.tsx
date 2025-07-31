@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getTransactions } from "@/lib/actions/transactions";
-import { TransactionListItem } from "@/lib/types/transactions/base";
+import { getTransactions } from "@/lib/features/transactions";
+
 
 interface DashboardStatsData {
   totalIncome: number;

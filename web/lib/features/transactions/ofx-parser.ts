@@ -1,6 +1,6 @@
 
 
-import { OFXTransaction, OFXAccount, OFXStatement, ParsedOFX, ParseOFXResponse } from "@/lib/types/transactions/ofx";
+import { OFXTransaction, OFXAccount, OFXStatement, ParsedOFX, ParseOFXResponse } from "./types";
 
 // ==========================================
 // MAIN EXPORT - Single parseOFXFile function

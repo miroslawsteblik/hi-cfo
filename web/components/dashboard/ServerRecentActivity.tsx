@@ -1,6 +1,6 @@
-import { getTransactions } from "@/lib/actions/transactions";
+
 import RecentActivity from "./RecentActivity";
-import { TransactionListItem } from "@/lib/types/transactions/base";
+import { TransactionListItem , getTransactions} from "@/lib/features/transactions";
 
 export default async function ServerRecentActivity() {
   let transactions: TransactionListItem[] = [];

@@ -1,7 +1,7 @@
 // components/transactions/OFX-manager.tsx
 "use client";
 
-import { OFXImportProps } from "@/lib/types/transactions";
+import { OFXImportProps } from "@/lib/features/transactions";
 import { useOFXImport } from "@/hooks/useOFXImport";
 
 // Import step components

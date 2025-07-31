@@ -1,6 +1,6 @@
 "use client";
 
-import { AnalyticsFilters } from "@/lib/types/analytics/analytics";
+import { AnalyticsFilters } from "@/lib/features/analytics";
 import { Calendar } from "lucide-react";
 import { useState } from "react";
 

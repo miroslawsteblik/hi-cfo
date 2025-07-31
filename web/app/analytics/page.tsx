@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getServerUser } from "@/lib/auth";
+import { getServerUser } from "@/lib/auth/auth";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import { FinancialDataErrorBoundary } from "@/components/providers/ErrorBoundary";

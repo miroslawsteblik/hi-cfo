@@ -1,9 +1,9 @@
 
 "use server";
 
-import { apiClient } from "@/lib/api-client-enhanced";
-import { CategoryData, Category, CategoriesResponse, CategoryFilter } from "@/lib/types/categories";
-import { CategoryMatchResult } from "@/lib/types/transactions";
+import { apiClient } from "@/lib/api/client";
+import { CategoryData, Category, CategoriesResponse, CategoryFilter } from "./types";
+import { CategoryMatchResult } from "@/lib/features/transactions/types";
 import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 export async function createCategory(data: CategoryData) {
   try {

@@ -1,7 +1,6 @@
-import { getTransactions, getUserAccounts } from "@/lib/actions/transactions";
+import { getTransactions, getUserAccounts, TransactionListItem } from "@/lib/features/transactions";
 import AIInsights from "./AIinsights";
-import { TransactionListItem } from "@/lib/types/transactions/base";
-import { Account } from "@/lib/types/accounts/base";
+import { Account } from "@/lib/features/accounts";
 
 export default async function ServerAIInsights() {
   let transactions: TransactionListItem[] = [];

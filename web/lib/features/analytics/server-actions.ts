@@ -1,6 +1,6 @@
 "use server";
 
-import { apiClient } from "@/lib/api-client-enhanced";
+import { apiClient } from "@/lib/api/client";
 
 import {
   PivotData,
@@ -8,7 +8,7 @@ import {
   ComparisonData,
   AnalyticsFilters,
   AnalyticsApiResponse,
-} from "@/lib/types/analytics/analytics";
+} from "./types";
 import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 
 export async function getPivotData(filters: AnalyticsFilters = {}): Promise<{

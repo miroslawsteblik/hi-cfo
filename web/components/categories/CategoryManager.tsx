@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CategoryForm from "@/components/categories/CategoryForm";
-import { createCategory, updateCategory, deleteCategory } from "@/lib/actions/categories";
-import { Category, CategoriesData } from "@/lib/types/categories";
-import { User } from "@/lib/types/user";
+import { createCategory, updateCategory, deleteCategory } from "@/lib/features/categories";
+import { Category, CategoriesData } from "@/lib/features/categories";
+import { User } from "@/lib/shared/types";
 
 export interface CategoriesClientProps {
   initialData: CategoriesData;

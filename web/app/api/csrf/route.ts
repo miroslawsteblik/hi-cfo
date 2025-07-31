@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { setCSRFToken } from '@/lib/csrf';
+import { setCSRFToken } from '@/lib/auth/csrf';
 
 export async function GET() {
   try {

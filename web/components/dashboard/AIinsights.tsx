@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { TransactionListItem } from "@/lib/types/transactions/base";
-import { Account } from "@/lib/types/accounts/base";
+import { TransactionListItem } from "@/lib/features/transactions";
+import { Account } from "@/lib/features/accounts";
 
 interface AIInsightsProps {
   transactions: TransactionListItem[];

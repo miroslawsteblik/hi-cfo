@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { TransactionListItem } from "@/lib/types/transactions/base";
+import { TransactionListItem } from "@/lib/features/transactions";
 
 interface RecentActivityProps {
   transactions: TransactionListItem[];

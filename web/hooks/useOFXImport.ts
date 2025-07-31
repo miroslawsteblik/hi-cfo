@@ -1,12 +1,20 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { parseOFXFile, OFXParser } from "@/lib/ofx-parser";
+import { parseOFXFile } from "@/lib/features/transactions";
+
+// Utility functions to replace OFXParser methods
+const mapTransactionType = (trnType: string, amount: number): "income" | "expense" | "transfer" => {
+  if (amount >= 0) return "income";
+  return "expense";
+};
+
+const cleanMerchantName = (name: string): string => {
+  return name?.trim() || "";
+};
 import {
   previewBulkCategorization,
   bulkCreateTransactionsWithCategorization,
-} from "@/lib/actions/transactions";
-import {
   TransactionData,
   ParsedOFX,
   EnhancedPreviewTransaction,
@@ -14,7 +22,7 @@ import {
   ImportStep,
   ImportResult,
   ParseOFXResponse,
-} from "@/lib/types/transactions";
+} from "@/lib/features/transactions";
 
 interface UseOFXImportProps {
   onSuccess: () => void;
@@ -124,7 +132,7 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
     setError(null);
 
     try {
-      const { mapTransactionType, cleanMerchantName } = OFXParser;
+      // Use local utility functions
 
       const transactionsToPreview: TransactionData[] = selectedTransactions.map((ofxTxn) => ({
         account_id: selectedAccountId,
@@ -216,7 +224,7 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
     setError(null);
 
     try {
-      const { mapTransactionType, cleanMerchantName } = OFXParser;
+      // Use local utility functions
 
       const transactionsToImport: TransactionData[] = selectedTransactions.map((ofxTxn) => {
         const originalIndex = previewTransactions.findIndex(

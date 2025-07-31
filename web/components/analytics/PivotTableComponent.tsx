@@ -1,6 +1,6 @@
 "use client";
 
-import { PivotData } from "@/lib/types/analytics/analytics";
+import { PivotData } from "@/lib/features/analytics";
 
 interface PivotTableComponentProps {
   data: { success: boolean; data?: PivotData; error?: string } | null;

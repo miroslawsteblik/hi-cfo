@@ -6,7 +6,7 @@ import {
   ErrorLogger,
   isFinancialAppError,
   getErrorMessage,
-} from './errors';
+} from '../errors';
 
 export interface ActionResult<T = unknown> {
   success: boolean;

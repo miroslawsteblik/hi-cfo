@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserSessions, invalidateUserSessions, getSession } from '@/lib/session';
-import { getServerUser } from '@/lib/auth';
+import { getUserSessions, invalidateUserSessions, getSession } from '@/lib/auth/session';
+import { getServerUser } from '@/lib/auth/auth';
 
 export async function GET(request: NextRequest) {
   try {

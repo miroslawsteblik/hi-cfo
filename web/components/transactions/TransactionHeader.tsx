@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { TransactionListItem } from "@/lib/types/transactions";
+
 
 interface TransactionHeaderProps {
   total: number;

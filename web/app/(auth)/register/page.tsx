@@ -4,7 +4,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { registerAction } from "@/lib/auth";
+import { registerAction } from "@/lib/auth/auth";
 
 export default function RegisterPage() {
   const [error, setError] = useState("");

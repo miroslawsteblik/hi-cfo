@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { autoCategorizeTransaction } from "@/lib/actions/categories";
-import { TransactionData, TransactionFormProps } from "@/lib/types/transactions";
+import { autoCategorizeTransaction } from "@/lib/features/categories";
+import { TransactionData, TransactionFormProps } from "@/lib/features/transactions";
 
 export default function TransactionForm({
   accounts,

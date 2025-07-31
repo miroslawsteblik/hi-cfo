@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getServerUser } from "@/lib/auth";
-import { getCategories } from "@/lib/actions/categories";
+import { getServerUser } from "@/lib/auth/auth";
+import { getCategories } from "@/lib/features/categories";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import CategoriesClient from "../../components/categories/CategoryManager";

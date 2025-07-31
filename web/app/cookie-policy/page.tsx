@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { COOKIE_CATEGORIES } from '@/lib/cookie-consent';
+import { COOKIE_CATEGORIES } from '@/lib/shared/cookie-consent';
 
 export default function CookiePolicyPage() {
   return (

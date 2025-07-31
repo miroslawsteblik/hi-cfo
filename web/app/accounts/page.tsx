@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
-import { getServerUser } from "@/lib/auth";
-import { getAccounts, getAccountSummary } from "@/lib/actions/accounts";
-import { AccountManager, PageHeader, AppLayout } from "@/components";
+import { getServerUser } from "@/lib/auth/auth";
+import { getAccounts, getAccountSummary } from "@/lib/features/accounts";
+import AccountManager from "@/components/accounts/AccountManager";
+import PageHeader from "@/components/layout/PageHeader";
+import AppLayout from "@/components/layout/AppLayout";
 
 export default async function AccountsPage({
   searchParams,

@@ -2,10 +2,10 @@
 "use client";
 
 import { useState } from "react";
-import { TransactionListItem } from "@/lib/types/transactions";
-import { Category } from "@/lib/types/categories";
+import { TransactionListItem } from "@/lib/features/transactions";
+import { Category } from "@/lib/features/categories";
 import CategoryAssignment from "./CategoryAssignment";
-import { formatCurrency, formatDate } from "@/lib/utils/utils";
+import { formatCurrency, formatDate } from "@/lib/shared/utils";
 
 interface TransactionTableProps {
   transactions: TransactionListItem[];

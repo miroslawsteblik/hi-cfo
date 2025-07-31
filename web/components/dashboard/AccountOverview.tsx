@@ -1,4 +1,4 @@
-import { Account } from "@/lib/types/accounts/base";
+import { Account } from "@/lib/features/accounts";
 import Link from "next/link";
 
 interface AccountOverviewProps {

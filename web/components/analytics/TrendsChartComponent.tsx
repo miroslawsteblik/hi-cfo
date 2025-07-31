@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendsData } from "@/lib/types/analytics/analytics";
+import { TrendsData } from "@/lib/features/analytics";
 import {
   LineChart,
   Line,

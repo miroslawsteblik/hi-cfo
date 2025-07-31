@@ -1,6 +1,6 @@
-import { getUserAccounts } from "@/lib/actions/transactions";
+import { getUserAccounts } from "@/lib/features/transactions";
 import AccountOverview from "./AccountOverview";
-import { Account } from "@/lib/types/accounts/base";
+import { Account } from "@/lib/features/accounts";
 
 export default async function ServerAccountOverview() {
   let accounts: Account[] = [];

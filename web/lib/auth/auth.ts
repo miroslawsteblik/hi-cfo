@@ -3,9 +3,9 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { FinancialAppError, ErrorCode, ErrorLogger } from './errors';
+import { FinancialAppError, ErrorCode, ErrorLogger } from '../errors';
 import { validateCSRFToken } from './csrf';
-import { checkRateLimit, recordFailedAttempt, clearFailedAttempts } from './rate-limit';
+import { checkRateLimit, recordFailedAttempt, clearFailedAttempts } from '../shared/rate-limit';
 import { createSession, invalidateSession, getSession } from './session';
 
 // Server actions run on the Next.js server (inside Docker)

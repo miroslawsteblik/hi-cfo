@@ -1,7 +1,7 @@
 // components/transactions/steps/OFXResultStep.tsx
 "use client";
 
-import { ImportResult } from "@/lib/types/transactions";
+import { ImportResult } from "@/lib/features/transactions";
 
 interface OFXResultStepProps {
   importResult: ImportResult;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ComparisonData, CategoryComparison } from "@/lib/types/analytics/analytics";
+import { ComparisonData, CategoryComparison } from "@/lib/features/analytics";
 import { Minus, ArrowUp, ArrowDown } from "lucide-react";
 import { useState } from "react";
 

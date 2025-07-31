@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { invalidateSession } from '@/lib/session';
+import { invalidateSession } from '@/lib/auth/session';
 import { ErrorLogger, FinancialAppError, ErrorCode } from '@/lib/errors';
 
 export async function POST() {

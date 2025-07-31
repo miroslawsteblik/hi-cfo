@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, TrendingUp, PieChart, BarChart3, Download } from "lucide-react";
-import { getPivotData, getTrendsData, getComparisonData } from "@/lib/actions/analytics";
-import { getCurrentMonth, getDateRange } from "@/lib/utils/utils";
+import { getPivotData, getTrendsData, getComparisonData } from "@/lib/features/analytics";
+import { getCurrentMonth, getDateRange } from "@/lib/shared/utils";
 import {
   PivotData,
   TrendsData,
   ComparisonData,
   AnalyticsFilters,
-} from "@/lib/types/analytics/analytics";
+} from "@/lib/features/analytics";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { ErrorMessage } from "../ui/ErrorMessage";
 

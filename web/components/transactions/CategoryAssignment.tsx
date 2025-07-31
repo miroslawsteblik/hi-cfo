@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { type CategorizationSettings, CategorySuggestion } from "@/lib/types/transactions";
 import {
+  type CategorizationSettings,
+  CategorySuggestion,
   testTransactionCategorization,
   getCategorizationSettings,
   updateCategorizationSettings,
-} from "@/lib/actions/transactions";
-import { CategoryAssignmentProps } from "@/lib/types/categories";
+} from "@/lib/features/transactions";
+import { CategoryAssignmentProps } from "@/lib/features/categories";
 
 export default function CategoryAssignment({
   categories,

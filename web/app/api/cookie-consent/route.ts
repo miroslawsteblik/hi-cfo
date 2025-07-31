@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { CookieConsent, DEFAULT_CONSENT } from '@/lib/cookie-consent';
+import { CookieConsent, DEFAULT_CONSENT } from '@/lib/shared/cookie-consent';
 
 export async function GET() {
   try {

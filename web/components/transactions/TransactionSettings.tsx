@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CategorizationSettings } from "@/lib/types/transactions";
 import {
   getCategorizationSettings,
   updateCategorizationSettings,
-} from "@/lib/actions/transactions";
+  CategorizationSettings
+} from "@/lib/features/transactions";
 
 interface TransactionSettingsProps {
   isOpen: boolean;

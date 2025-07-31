@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { getServerUser } from "@/lib/auth";
-import { getTransactions, getUserAccounts, getCategories } from "@/lib/actions/transactions";
+import { getServerUser } from "@/lib/auth/auth";
+import { getTransactions, getUserAccounts, getCategories } from "@/lib/features/transactions";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import EnhancedTransactionManager from "@/components/transactions/TransactionManager";

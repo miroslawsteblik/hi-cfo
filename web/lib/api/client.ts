@@ -9,7 +9,7 @@ import {
   createAuthError,
   createNetworkError,
   shouldRetry,
-} from './errors';
+} from '../errors';
 
 const SERVER_API_URL = process.env.SERVER_API_URL || 'http://nginx_proxy:80';
 const DEFAULT_TIMEOUT = 10000; // 10 seconds

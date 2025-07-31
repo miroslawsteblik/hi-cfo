@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@/lib/types";
+import { User } from "@/lib/shared/types";
 import ThemeToggle from "@/components/dark-mode/ThemeToggle";
 
 interface SettingsContentProps {

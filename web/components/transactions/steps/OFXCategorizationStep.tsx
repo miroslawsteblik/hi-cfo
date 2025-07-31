@@ -2,9 +2,9 @@
 "use client";
 
 import { useState } from "react";
-import { EnhancedPreviewTransaction, CategorizationPreview } from "@/lib/types/transactions";
-import { Category } from "@/lib/types/categories";
-import { formatCurrency, formatDate } from "@/lib/utils/utils";
+import { EnhancedPreviewTransaction, CategorizationPreview } from "@/lib/features/transactions";
+import { Category } from "@/lib/features/categories";
+import { formatCurrency, formatDate } from "@/lib/shared/utils";
 
 interface OFXCategorizationStepProps {
   previewTransactions: EnhancedPreviewTransaction[];

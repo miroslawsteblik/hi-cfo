@@ -1,9 +1,8 @@
 // components/transactions/steps/OFXPreviewStep.tsx
 "use client";
 
-import { ParsedOFX, EnhancedPreviewTransaction } from "@/lib/types/transactions";
-import { OFXParser } from "@/lib/ofx-parser";
-import { formatCurrency, formatDate } from "@/lib/utils/utils";
+import { ParsedOFX, EnhancedPreviewTransaction } from "@/lib/features/transactions";
+import { formatCurrency, formatDate } from "@/lib/shared/utils";
 
 interface OFXPreviewStepProps {
   parsedData: ParsedOFX;
@@ -124,10 +123,7 @@ export default function OFXPreviewStep({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                      {OFXParser.mapTransactionType(
-                        transaction.original.trnType,
-                        transaction.original.amount
-                      )}
+                      {transaction.original.amount >= 0 ? 'Income' : 'Expense'}
                     </span>
                   </td>
                 </tr>

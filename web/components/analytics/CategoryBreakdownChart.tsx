@@ -1,6 +1,6 @@
 "use client";
 
-import { PivotData, CategoryChartData } from "@/lib/types/analytics/analytics";
+import { PivotData, CategoryChartData } from "@/lib/features/analytics";
 import { useState } from "react";
 import {
   PieChart,

@@ -1,5 +1,5 @@
 // components/layout/AppLayout.tsx
-import { getServerUser } from "@/lib/auth";
+import { getServerUser } from "@/lib/auth/auth";
 import MainNavigation from "@/components/navigation/MainNavigation";
 import LogoutButton from "@/components/auth/logout-button";
 import ClientThemeToggle from "@/components/dark-mode/ClientThemeToggle";

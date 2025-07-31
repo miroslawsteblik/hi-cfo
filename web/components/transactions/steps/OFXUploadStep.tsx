@@ -2,7 +2,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Account } from "@/lib/types/accounts";
+import { Account } from "@/lib/features/accounts";
 
 interface OFXUploadStepProps {
   file: File | null;

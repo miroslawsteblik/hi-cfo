@@ -1,29 +1,29 @@
 "use client";
 
-import {EnhancedOFXManager} from "@/components";
+import { EnhancedOFXManager } from "@/components";
 import {
   updateTransaction,
   deleteTransaction,
   analyzeTransactionCategorization,
   getTransactions,
-} from "@/lib/actions/transactions";
+} from "@/lib/features/transactions";
 import { useState, useEffect, useCallback } from "react";
 import {
   TransactionFilters,
   CategorizationAnalysis,
   TransactionListItem,
   CategorizationSettings,
-} from "@/lib/types/transactions";
+} from "@/lib/features/transactions";
 
 import TransactionHeader from "./TransactionHeader";
 import TransactionTable from "./TransactionTable";
 import TransactionSettings from "./TransactionSettings";
-import { formatCurrency, formatDate } from "@/lib";
+import { formatCurrency, formatDate } from "@/lib/shared/utils";
 import { useErrorHandler } from "@/lib/errors";
 
-import { Account } from "@/lib/types/accounts";
-import { Category } from "@/lib/types/categories";
-import { User } from "@/lib/types/user";
+import { Account } from "@/lib/features/accounts";
+import { Category } from "@/lib/features/categories";
+import { User } from "@/lib/shared/types";
 
 interface TransactionManagerProps {
   initialData: any;

@@ -1,7 +1,7 @@
 "use server";
 
-import { apiClient } from "@/lib/api-client-enhanced";
-import { Account, AccountSummary, AccountFilter, AccountsResponse } from "@/lib/types/accounts";
+import { apiClient } from "@/lib/api/client";
+import { Account, AccountSummary, AccountFilter, AccountsResponse } from "./types";
 import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
 
 export async function createAccount(

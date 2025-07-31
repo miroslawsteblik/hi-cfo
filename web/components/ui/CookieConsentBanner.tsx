@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { CookieConsent, COOKIE_CATEGORIES, DEFAULT_CONSENT, getCookieConsentClient, setCookieConsentClient, hasValidConsent } from '@/lib/cookie-consent';
+import { CookieConsent, COOKIE_CATEGORIES, DEFAULT_CONSENT, getCookieConsentClient, setCookieConsentClient, hasValidConsent } from '@/lib/shared/cookie-consent';
 
 export default function CookieConsentBanner() {
   const [showBanner, setShowBanner] = useState(false);

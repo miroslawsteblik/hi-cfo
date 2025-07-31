@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import {  CategoryFormData, CategoryFormProps } from '@/lib/types/categories';
+import {  CategoryFormData, CategoryFormProps } from '@/lib/features/categories';
 
 
 const CATEGORY_TYPES = [

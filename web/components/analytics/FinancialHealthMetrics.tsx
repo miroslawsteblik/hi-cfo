@@ -1,6 +1,6 @@
 "use client";
 
-import { PivotData, TrendsData, ComparisonData } from "@/lib/types/analytics/analytics";
+import { PivotData, TrendsData, ComparisonData } from "@/lib/features/analytics";
 
 interface FinancialHealthMetricsProps {
   pivotData: { success: boolean; data?: PivotData; error?: string } | null;

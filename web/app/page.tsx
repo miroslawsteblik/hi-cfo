@@ -1,7 +1,7 @@
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getServerUser } from "@/lib/auth";
+import { getServerUser } from "@/lib/auth/auth";
 
 export default async function HomePage() {
   // Check if user is already authenticated
