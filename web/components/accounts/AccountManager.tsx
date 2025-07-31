@@ -1,15 +1,12 @@
-
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AccountForm, { AccountFormData } from "@/components/accounts/AccountForm";
-import { createAccount, updateAccount, deleteAccount } from "@/app/actions/accounts";
+import { createAccount, updateAccount, deleteAccount } from "@/lib/actions/accounts";
 
 import { Account, AccountsResponse, AccountSummary } from "@/lib/types/accounts";
 import { User } from "@/lib/types/user";
-
-
 
 interface AccountManagerProps {
   accountsData: AccountsResponse;
@@ -49,10 +46,15 @@ export default function AccountManager({ accountsData, summary }: AccountManager
     if (formData.routing_number) {
       apiData.routing_number = formData.routing_number;
     }
-    if (formData.current_balance !== undefined && formData.current_balance !== null && formData.current_balance !== '') {
-      const balance = typeof formData.current_balance === 'string' 
-        ? parseFloat(formData.current_balance) 
-        : formData.current_balance;
+    if (
+      formData.current_balance !== undefined &&
+      formData.current_balance !== null &&
+      formData.current_balance !== ""
+    ) {
+      const balance =
+        typeof formData.current_balance === "string"
+          ? parseFloat(formData.current_balance)
+          : formData.current_balance;
       if (!isNaN(balance)) {
         apiData.current_balance = balance;
       }

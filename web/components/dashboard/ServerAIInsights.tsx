@@ -1,4 +1,4 @@
-import { getTransactions, getUserAccounts } from "@/app/actions/transactions";
+import { getTransactions, getUserAccounts } from "@/lib/actions/transactions";
 import AIInsights from "./AIinsights";
 import { TransactionListItem } from "@/lib/types/transactions/base";
 import { Account } from "@/lib/types/accounts/base";
@@ -15,7 +15,7 @@ export default async function ServerAIInsights() {
     // Fetch transactions and accounts in parallel
     const [transactionsResult, accountsResult] = await Promise.all([
       getTransactions({ page: 1, limit: 100 }), // Get more transactions for better analysis
-      getUserAccounts()
+      getUserAccounts(),
     ]);
 
     // Process transactions
@@ -28,7 +28,7 @@ export default async function ServerAIInsights() {
       // Calculate financial metrics
       transactions.forEach((transaction) => {
         const amount = Math.abs(transaction.amount || 0);
-        
+
         if (transaction.transaction_type === "income") {
           totalIncome += amount;
         } else if (transaction.transaction_type === "expense") {
@@ -46,7 +46,6 @@ export default async function ServerAIInsights() {
 
     // Process accounts
     accounts = accountsResult || [];
-
   } catch (error) {
     console.error("Error fetching AI insights data:", error);
     // Component will handle empty state gracefully

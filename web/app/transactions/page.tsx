@@ -1,12 +1,7 @@
-
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getServerUser } from "@/lib/auth";
-import {
-  getTransactions,
-  getUserAccounts,
-  getCategories,
-} from "@/app/actions/transactions";
+import { getTransactions, getUserAccounts, getCategories } from "@/lib/actions/transactions";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import EnhancedTransactionManager from "@/components/transactions/TransactionManager";
@@ -18,8 +13,8 @@ export default async function TransactionsPage({
 }) {
   // Ensure user is authenticated
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
-  
+  const token = cookieStore.get("auth_token")?.value;
+
   if (!token) {
     redirect("/login");
   }
@@ -44,9 +39,7 @@ export default async function TransactionsPage({
 
   // Calculate date range (default to last 30 days)
   const end_date = new Date().toISOString().split("T")[0];
-  const start_date = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
+  const start_date = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   // Fetch data in parallel
   const [transactionsData, accounts, categories] = await Promise.all([
@@ -123,11 +116,10 @@ export default async function TransactionsPage({
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Auto-Categorized
-                    </dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Auto-Categorized</dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {transactionsData?.data?.data?.filter((tx: any) => tx.category_id)?.length || 0}
+                      {transactionsData?.data?.data?.filter((tx: any) => tx.category_id)?.length ||
+                        0}
                     </dd>
                   </dl>
                 </div>
@@ -155,11 +147,10 @@ export default async function TransactionsPage({
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Needs Review
-                    </dt>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Needs Review</dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {transactionsData?.data?.data?.filter((tx: any) => !tx.category_id)?.length || 0}
+                      {transactionsData?.data?.data?.filter((tx: any) => !tx.category_id)?.length ||
+                        0}
                     </dd>
                   </dl>
                 </div>
@@ -190,9 +181,7 @@ export default async function TransactionsPage({
                     <dt className="text-sm font-medium text-gray-500 truncate">
                       Categories Available
                     </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {categories?.length || 0}
-                    </dd>
+                    <dd className="text-lg font-medium text-gray-900">{categories?.length || 0}</dd>
                   </dl>
                 </div>
               </div>

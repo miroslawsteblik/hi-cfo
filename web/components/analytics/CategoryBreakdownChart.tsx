@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { PivotData, CategoryChartData } from '@/lib/types/analytics';
-import { useState } from 'react';
+import { PivotData, CategoryChartData } from "@/lib/types/analytics/analytics";
+import { useState } from "react";
 import {
   PieChart,
   Pie,
@@ -14,7 +14,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-} from 'recharts';
+} from "recharts";
 
 interface CategoryBreakdownChartProps {
   data: { success: boolean; data?: PivotData; error?: string } | null;
@@ -22,13 +22,13 @@ interface CategoryBreakdownChartProps {
   showLegend?: boolean;
 }
 
-export default function CategoryBreakdownChart({ 
-  data, 
-  height = 300, 
-  showLegend = true 
+export default function CategoryBreakdownChart({
+  data,
+  height = 300,
+  showLegend = true,
 }: CategoryBreakdownChartProps) {
-  const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
-  const [showType, setShowType] = useState<'all' | 'expense' | 'income'>('expense');
+  const [chartType, setChartType] = useState<"pie" | "bar">("pie");
+  const [showType, setShowType] = useState<"all" | "expense" | "income">("expense");
 
   if (!data?.success || !data.data) {
     return (
@@ -47,11 +47,23 @@ export default function CategoryBreakdownChart({
   // Generate colors for categories
   const generateColors = (count: number) => {
     const colors = [
-      '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-      '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16',
-      '#06b6d4', '#d946ef', '#eab308', '#22c55e', '#f43f5e',
+      "#3b82f6",
+      "#ef4444",
+      "#10b981",
+      "#f59e0b",
+      "#8b5cf6",
+      "#ec4899",
+      "#14b8a6",
+      "#f97316",
+      "#6366f1",
+      "#84cc16",
+      "#06b6d4",
+      "#d946ef",
+      "#eab308",
+      "#22c55e",
+      "#f43f5e",
     ];
-    
+
     const result = [];
     for (let i = 0; i < count; i++) {
       result.push(colors[i % colors.length]);
@@ -61,8 +73,8 @@ export default function CategoryBreakdownChart({
 
   // Transform data for charts
   const chartData: CategoryChartData[] = pivotData.categories
-    .filter(category => {
-      if (showType === 'all') return true;
+    .filter((category) => {
+      if (showType === "all") return true;
       return category.category_type === showType;
     })
     .sort((a, b) => b.total - a.total)
@@ -75,9 +87,9 @@ export default function CategoryBreakdownChart({
     }));
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(Math.abs(value));
@@ -89,21 +101,19 @@ export default function CategoryBreakdownChart({
   };
 
   const RADIAN = Math.PI / 180;
-  const renderCustomizedLabel = ({
-    cx, cy, midAngle, innerRadius, outerRadius, percent
-  }: any) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
     if (percent < 0.05) return null; // Don't show labels for very small slices
-    
+
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
     return (
-      <text 
-        x={x} 
-        y={y} 
-        fill="white" 
-        textAnchor={x > cx ? 'start' : 'end'} 
+      <text
+        x={x}
+        y={y}
+        fill="white"
+        textAnchor={x > cx ? "start" : "end"}
         dominantBaseline="central"
         fontSize={12}
         fontWeight="bold"
@@ -126,7 +136,7 @@ export default function CategoryBreakdownChart({
             <option value="pie">Pie Chart</option>
             <option value="bar">Bar Chart</option>
           </select>
-          
+
           <select
             value={showType}
             onChange={(e) => setShowType(e.target.value as any)}
@@ -139,14 +149,15 @@ export default function CategoryBreakdownChart({
         </div>
 
         <div className="text-sm text-gray-600">
-          Top {chartData.length} categories • {formatCurrency(chartData.reduce((sum, item) => sum + item.value, 0))} total
+          Top {chartData.length} categories •{" "}
+          {formatCurrency(chartData.reduce((sum, item) => sum + item.value, 0))} total
         </div>
       </div>
 
       {/* Chart */}
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
-          {chartType === 'pie' ? (
+          {chartType === "pie" ? (
             <PieChart>
               {/* @ts-ignore */}
               <Pie
@@ -179,10 +190,7 @@ export default function CategoryBreakdownChart({
               )}
             </PieChart>
           ) : (
-            <BarChart
-              data={chartData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               {/* @ts-ignore */}
               <CartesianGrid strokeDasharray="3 3" />
               {/* @ts-ignore */}
@@ -194,7 +202,7 @@ export default function CategoryBreakdownChart({
                 height={80}
               />
               {/* @ts-ignore */}
-              <YAxis 
+              <YAxis
                 tick={{ fontSize: 11 }}
                 tickFormatter={(value: any) => formatCurrency(value)}
               />

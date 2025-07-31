@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import { getServerUser } from "@/lib/auth";
-import { getAccounts, getAccountSummary } from "@/app/actions/accounts";
-import AppLayout from "@/components/layout/AppLayout";
-import PageHeader from "@/components/layout/PageHeader";
-import AccountManager from "../../components/accounts/AccountManager";
+import { getAccounts, getAccountSummary } from "@/lib/actions/accounts";
+import { AccountManager, PageHeader, AppLayout } from "@/components";
 
-export default async function AccountsPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+export default async function AccountsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   // Check authentication
   const user = await getServerUser();
   if (!user) {
@@ -38,10 +40,15 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   if (!accountsResult.success || !accountsResult.data) {
     return (
       <AppLayout>
-        <PageHeader title="Accounts" subtitle="Manage your bank accounts and financial institutions" />
+        <PageHeader
+          title="Accounts"
+          subtitle="Manage your bank accounts and financial institutions"
+        />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
-            <div className="text-red-500 mb-4">Error loading accounts: {accountsResult.error || 'Unknown error'}</div>
+            <div className="text-red-500 mb-4">
+              Error loading accounts: {accountsResult.error || "Unknown error"}
+            </div>
           </div>
         </div>
       </AppLayout>
@@ -53,7 +60,10 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   return (
     <AppLayout>
       {/* Page Header */}
-      <PageHeader title="Accounts" subtitle="Manage your bank accounts and financial institutions" />
+      <PageHeader
+        title="Accounts"
+        subtitle="Manage your bank accounts and financial institutions"
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -3,7 +3,10 @@
 
 import { useState, useEffect } from "react";
 import { CategorizationSettings } from "@/lib/types/transactions";
-import { getCategorizationSettings, updateCategorizationSettings } from "@/app/actions/transactions";
+import {
+  getCategorizationSettings,
+  updateCategorizationSettings,
+} from "@/lib/actions/transactions";
 
 interface TransactionSettingsProps {
   isOpen: boolean;
@@ -68,7 +71,7 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
   const saveSettings = async () => {
     setSaving(true);
     setError(null);
-    
+
     try {
       const result = await updateCategorizationSettings(settings);
       if (result.success) {
@@ -107,13 +110,20 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Transaction Settings</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Transaction Settings
+            </h2>
             <button
               onClick={handleClose}
               className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -139,7 +149,9 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
             <div className="space-y-8">
               {/* Auto-Categorization Settings */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Auto-Categorization</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Auto-Categorization
+                </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -174,7 +186,10 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
                       step="0.1"
                       value={settings.confidence_threshold}
                       onChange={(e) =>
-                        setSettings({ ...settings, confidence_threshold: parseFloat(e.target.value) })
+                        setSettings({
+                          ...settings,
+                          confidence_threshold: parseFloat(e.target.value),
+                        })
                       }
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
@@ -193,9 +208,21 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
                     </label>
                     <div className="space-y-2">
                       {[
-                        { key: "exact_match", label: "Exact Match", desc: "Match exact merchant names" },
-                        { key: "fuzzy_match", label: "Fuzzy Match", desc: "Match similar merchant names" },
-                        { key: "keyword_match", label: "Keyword Match", desc: "Match by keywords in description" },
+                        {
+                          key: "exact_match",
+                          label: "Exact Match",
+                          desc: "Match exact merchant names",
+                        },
+                        {
+                          key: "fuzzy_match",
+                          label: "Fuzzy Match",
+                          desc: "Match similar merchant names",
+                        },
+                        {
+                          key: "keyword_match",
+                          label: "Keyword Match",
+                          desc: "Match by keywords in description",
+                        },
                       ].map((method) => (
                         <label key={method.key} className="flex items-center">
                           <input
@@ -210,15 +237,21 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
                               } else {
                                 setSettings({
                                   ...settings,
-                                  enabled_methods: settings.enabled_methods.filter((m) => m !== method.key),
+                                  enabled_methods: settings.enabled_methods.filter(
+                                    (m) => m !== method.key
+                                  ),
                                 });
                               }
                             }}
                             className="h-4 w-4 text-blue-600 rounded border-gray-300"
                           />
                           <div className="ml-3">
-                            <span className="text-sm font-medium text-gray-700">{method.label}</span>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{method.desc}</p>
+                            <span className="text-sm font-medium text-gray-700">
+                              {method.label}
+                            </span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {method.desc}
+                            </p>
                           </div>
                         </label>
                       ))}
@@ -229,7 +262,9 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
 
               {/* Display Preferences */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Display Preferences</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Display Preferences
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -285,7 +320,9 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
                       type="checkbox"
                       id="compactView"
                       checked={userPrefs.compactView}
-                      onChange={(e) => setUserPrefs({ ...userPrefs, compactView: e.target.checked })}
+                      onChange={(e) =>
+                        setUserPrefs({ ...userPrefs, compactView: e.target.checked })
+                      }
                       className="h-4 w-4 text-blue-600 rounded border-gray-300"
                     />
                     <label htmlFor="compactView" className="ml-2 text-sm text-gray-700">
@@ -298,7 +335,9 @@ export default function TransactionSettings({ isOpen, onClose }: TransactionSett
                       type="checkbox"
                       id="showMerchant"
                       checked={userPrefs.showMerchantNames}
-                      onChange={(e) => setUserPrefs({ ...userPrefs, showMerchantNames: e.target.checked })}
+                      onChange={(e) =>
+                        setUserPrefs({ ...userPrefs, showMerchantNames: e.target.checked })
+                      }
                       className="h-4 w-4 text-blue-600 rounded border-gray-300"
                     />
                     <label htmlFor="showMerchant" className="ml-2 text-sm text-gray-700">

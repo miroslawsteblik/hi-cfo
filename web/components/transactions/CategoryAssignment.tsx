@@ -2,8 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { type CategorizationSettings, CategorySuggestion} from "@/lib/types/transactions";
-import { testTransactionCategorization, getCategorizationSettings, updateCategorizationSettings } from "@/app/actions/transactions";
+import { type CategorizationSettings, CategorySuggestion } from "@/lib/types/transactions";
+import {
+  testTransactionCategorization,
+  getCategorizationSettings,
+  updateCategorizationSettings,
+} from "@/lib/actions/transactions";
 import { CategoryAssignmentProps } from "@/lib/types/categories";
 
 export default function CategoryAssignment({
@@ -18,7 +22,7 @@ export default function CategoryAssignment({
 }: CategoryAssignmentProps) {
   // Ensure categories is always an array
   const safeCategories = Array.isArray(categories) ? categories : [];
-  
+
   const [suggestion, setSuggestion] = useState<CategorySuggestion | null>(null);
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
   const [showSuggestionDetails, setShowSuggestionDetails] = useState(false);
@@ -90,12 +94,18 @@ export default function CategoryAssignment({
           className={`
             w-full border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500
             ${sizeClasses[size]}
-            ${disabled ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed" : "bg-white dark:bg-gray-800"}
+            ${
+              disabled
+                ? "bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                : "bg-white dark:bg-gray-800"
+            }
             ${loadingSuggestion ? "opacity-50" : ""}
             text-gray-900 dark:text-white
           `}
         >
-          <option value="">{loadingSuggestion ? "Getting suggestion..." : "Select category..."}</option>
+          <option value="">
+            {loadingSuggestion ? "Getting suggestion..." : "Select category..."}
+          </option>
 
           {/* Group categories by type */}
           <optgroup label="Income">
@@ -132,8 +142,20 @@ export default function CategoryAssignment({
         {/* Loading indicator */}
         {loadingSuggestion && (
           <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-            <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <svg
+              className="animate-spin h-4 w-4 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
               <path
                 className="opacity-75"
                 fill="currentColor"
@@ -150,7 +172,12 @@ export default function CategoryAssignment({
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-4 h-4 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -158,9 +185,14 @@ export default function CategoryAssignment({
                     d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                   />
                 </svg>
-                <span className="text-sm font-medium text-blue-900">Suggested: {suggestion.category_name}</span>
-                <span className={`text-xs font-medium ${getConfidenceColor(suggestion.confidence)}`}>
-                  {getConfidenceLabel(suggestion.confidence)} ({Math.round(suggestion.confidence * 100)}%)
+                <span className="text-sm font-medium text-blue-900">
+                  Suggested: {suggestion.category_name}
+                </span>
+                <span
+                  className={`text-xs font-medium ${getConfidenceColor(suggestion.confidence)}`}
+                >
+                  {getConfidenceLabel(suggestion.confidence)} (
+                  {Math.round(suggestion.confidence * 100)}%)
                 </span>
               </div>
 
@@ -179,12 +211,23 @@ export default function CategoryAssignment({
               >
                 {showSuggestionDetails ? "Less" : "More"}
               </button>
-              <button onClick={applySuggestion} className="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700">
+              <button
+                onClick={applySuggestion}
+                className="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700"
+              >
                 Apply
               </button>
-              <button onClick={() => setSuggestion(null)} className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setSuggestion(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -195,7 +238,8 @@ export default function CategoryAssignment({
       {/* Selected Category Display */}
       {selectedCategoryId && (
         <div className="text-xs text-gray-600">
-          Selected: {safeCategories.find((c) => c.id === selectedCategoryId)?.name || "Unknown category"}
+          Selected:{" "}
+          {safeCategories.find((c) => c.id === selectedCategoryId)?.name || "Unknown category"}
         </div>
       )}
     </div>
@@ -285,7 +329,12 @@ export function CategorizationSettings({ onClose }: CategorizationSettingsProps)
           <h3 className="text-lg font-medium text-gray-900">Categorization Settings</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -326,14 +375,18 @@ export function CategorizationSettings({ onClose }: CategorizationSettingsProps)
               <span>Conservative (10%)</span>
               <span>Aggressive (100%)</span>
             </div>
-            <p className="text-xs text-gray-600 mt-1">Higher values require more confidence before auto-categorizing</p>
+            <p className="text-xs text-gray-600 mt-1">
+              Higher values require more confidence before auto-categorizing
+            </p>
           </div>
 
           {/* Auto Categorize on Upload */}
           <div className="flex items-center justify-between">
             <div>
               <label className="text-sm font-medium text-gray-700">Auto-categorize on upload</label>
-              <p className="text-xs text-gray-600">Automatically categorize transactions during bulk imports</p>
+              <p className="text-xs text-gray-600">
+                Automatically categorize transactions during bulk imports
+              </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -353,7 +406,9 @@ export function CategorizationSettings({ onClose }: CategorizationSettingsProps)
 
           {/* Enabled Methods */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Categorization Methods</label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Categorization Methods
+            </label>
             <div className="space-y-2">
               {[
                 { id: "keyword", name: "Keyword Matching", description: "Direct keyword matches" },
@@ -373,7 +428,10 @@ export function CategorizationSettings({ onClose }: CategorizationSettingsProps)
                   description: "Weighted term similarity",
                 },
               ].map((method) => (
-                <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div
+                  key={method.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
                   <div>
                     <div className="text-sm font-medium text-gray-900">{method.name}</div>
                     <div className="text-xs text-gray-600">{method.description}</div>
@@ -391,7 +449,10 @@ export function CategorizationSettings({ onClose }: CategorizationSettingsProps)
         </div>
 
         <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+          >
             Cancel
           </button>
           <button

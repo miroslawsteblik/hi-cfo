@@ -3,7 +3,7 @@
 
 import { ParsedOFX, EnhancedPreviewTransaction } from "@/lib/types/transactions";
 import { OFXParser } from "@/lib/ofx-parser";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils/utils";
 
 interface OFXPreviewStepProps {
   parsedData: ParsedOFX;
@@ -73,11 +73,21 @@ export default function OFXPreviewStep({
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Import</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Import
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -91,22 +101,33 @@ export default function OFXPreviewStep({
                       className="h-4 w-4 text-blue-600 rounded border-gray-300"
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(transaction.original.dtPosted)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {formatDate(transaction.original.dtPosted)}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     <div className="font-medium">{transaction.original.name}</div>
                     {transaction.original.memo && (
-                      <div className="text-gray-500 text-xs truncate max-w-xs">{transaction.original.memo}</div>
+                      <div className="text-gray-500 text-xs truncate max-w-xs">
+                        {transaction.original.memo}
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <span className={transaction.original.amount >= 0 ? "text-green-600" : "text-red-600"}>
+                    <span
+                      className={
+                        transaction.original.amount >= 0 ? "text-green-600" : "text-red-600"
+                      }
+                    >
                       {transaction.original.amount >= 0 ? "+" : "-"}
                       {formatCurrency(transaction.original.amount, transaction.original.currency)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                      {OFXParser.mapTransactionType(transaction.original.trnType, transaction.original.amount)}
+                      {OFXParser.mapTransactionType(
+                        transaction.original.trnType,
+                        transaction.original.amount
+                      )}
                     </span>
                   </td>
                 </tr>
@@ -123,11 +144,17 @@ export default function OFXPreviewStep({
       )}
 
       <div className="flex justify-between">
-        <button onClick={onBack} className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+        <button
+          onClick={onBack}
+          className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+        >
           Back
         </button>
         <div className="flex space-x-4">
-          <button onClick={onCancel} className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+          <button
+            onClick={onCancel}
+            className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+          >
             Cancel
           </button>
           <button

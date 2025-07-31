@@ -1,14 +1,24 @@
 "use client";
 
-import EnhancedOFXManager from "@/components/transactions/OFX-manager";
-import { updateTransaction, deleteTransaction, analyzeTransactionCategorization, getTransactions } from "@/app/actions/transactions";
+import {EnhancedOFXManager} from "@/components";
+import {
+  updateTransaction,
+  deleteTransaction,
+  analyzeTransactionCategorization,
+  getTransactions,
+} from "@/lib/actions/transactions";
 import { useState, useEffect, useCallback } from "react";
-import { TransactionFilters, CategorizationAnalysis, TransactionListItem, CategorizationSettings } from "@/lib/types/transactions";
+import {
+  TransactionFilters,
+  CategorizationAnalysis,
+  TransactionListItem,
+  CategorizationSettings,
+} from "@/lib/types/transactions";
 
 import TransactionHeader from "./TransactionHeader";
 import TransactionTable from "./TransactionTable";
 import TransactionSettings from "./TransactionSettings";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib";
 import { useErrorHandler } from "@/lib/errors";
 
 import { Account } from "@/lib/types/accounts";
@@ -22,7 +32,12 @@ interface TransactionManagerProps {
   user: User;
 }
 
-export default function EnhancedTransactionManager({ initialData, accounts, categories, user }: TransactionManagerProps) {
+export default function EnhancedTransactionManager({
+  initialData,
+  accounts,
+  categories,
+  user,
+}: TransactionManagerProps) {
   // Transaction State
   const [transactions, setTransactions] = useState<TransactionListItem[]>(
     initialData?.data?.data?.map((transaction: any) => ({
@@ -118,7 +133,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
         throw new Error(result.error || "API returned error");
       } else {
         console.error("❌ Unexpected response format:", result);
-        console.error("❌ Expected: { success: boolean, data: { data: [], total: number, page: number, pages: number } }");
+        console.error(
+          "❌ Expected: { success: boolean, data: { data: [], total: number, page: number, pages: number } }"
+        );
         // Use empty fallback data
         transactionData = [];
         totalCount = 0;
@@ -182,7 +199,13 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
     const csvContent = [
       ["Date", "Description", "Category", "Amount", "Currency"].join(","),
       ...transactions.map((t) =>
-        [t.transaction_date, `"${t.description}"`, `"${getCategoryName(t.category_id)}"`, t.amount, t.currency || "USD"].join(",")
+        [
+          t.transaction_date,
+          `"${t.description}"`,
+          `"${getCategoryName(t.category_id)}"`,
+          t.amount,
+          t.currency || "USD",
+        ].join(",")
       ),
     ].join("\n");
 
@@ -205,7 +228,11 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
 
       if (result.success) {
         // Update local state
-        setTransactions((prev) => prev.map((tx) => (tx.id === transactionId ? { ...tx, category_id: categoryId || undefined } : tx)));
+        setTransactions((prev) =>
+          prev.map((tx) =>
+            tx.id === transactionId ? { ...tx, category_id: categoryId || undefined } : tx
+          )
+        );
         setEditingTransaction(null);
       } else {
         setError(result.error || "Failed to update transaction");
@@ -282,7 +309,6 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
             console.log(`🔍 Deleting transaction: ${transactionId}`);
             const result = await deleteTransaction(transactionId);
 
-
             if (result.success) {
               successCount++;
               console.log(`✅ Backend claims successful deletion: ${transactionId}`);
@@ -295,7 +321,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
             }
           } catch (err) {
             failedCount++;
-            errors.push(`Error deleting transaction: ${err instanceof Error ? err.message : "Unknown error"}`);
+            errors.push(
+              `Error deleting transaction: ${err instanceof Error ? err.message : "Unknown error"}`
+            );
             console.error(`❌ Exception deleting ${transactionId}:`, err);
             return { id: transactionId, success: false };
           }
@@ -303,7 +331,6 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
 
         await Promise.all(batchPromises);
       }
-
 
       // Clear selections and exit bulk mode FIRST
       setSelectedTransactions(new Set());
@@ -313,11 +340,19 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
       await loadTransactions();
 
       if (failedCount === 0) {
-        setSuccessMessage(`Successfully deleted ${successCount} transaction${successCount > 1 ? "s" : ""}`);
+        setSuccessMessage(
+          `Successfully deleted ${successCount} transaction${successCount > 1 ? "s" : ""}`
+        );
       } else if (successCount > 0) {
-        setError(`Deleted ${successCount} of ${transactionIds.length} transactions. ${failedCount} failed.`);
+        setError(
+          `Deleted ${successCount} of ${transactionIds.length} transactions. ${failedCount} failed.`
+        );
       } else {
-        setError(`Failed to delete all selected transactions. ${errors.slice(0, 3).join(", ")}${errors.length > 3 ? "..." : ""}`);
+        setError(
+          `Failed to delete all selected transactions. ${errors.slice(0, 3).join(", ")}${
+            errors.length > 3 ? "..." : ""
+          }`
+        );
       }
     } catch (err) {
       setError("An unexpected error occurred during bulk deletion");
@@ -346,7 +381,11 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
       }
 
       // Update local state for successful updates
-      setTransactions((prev) => prev.map((tx) => (selectedTransactions.has(tx.id) ? { ...tx, category_id: categoryId || undefined } : tx)));
+      setTransactions((prev) =>
+        prev.map((tx) =>
+          selectedTransactions.has(tx.id) ? { ...tx, category_id: categoryId || undefined } : tx
+        )
+      );
 
       setSelectedTransactions(new Set());
       setBulkSelectMode(false);
@@ -367,7 +406,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
     setError(null);
 
     try {
-      const descriptions = transactions.filter((tx) => tx.merchant_name || tx.description).map((tx) => tx.merchant_name || tx.description);
+      const descriptions = transactions
+        .filter((tx) => tx.merchant_name || tx.description)
+        .map((tx) => tx.merchant_name || tx.description);
 
       const result = await analyzeTransactionCategorization(descriptions);
 
@@ -432,8 +473,12 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
   // ==================== 5. COMPUTED VALUES ====================
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
   const uncategorizedCount = safeTransactions.filter((tx) => !tx.category_id).length;
-  const totalIncome = safeTransactions.filter((t) => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
-  const totalExpenses = safeTransactions.filter((t) => t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  const totalIncome = safeTransactions
+    .filter((t) => t.amount > 0)
+    .reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = safeTransactions
+    .filter((t) => t.amount < 0)
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
   const netAmount = totalIncome - totalExpenses;
 
   // ==================== SUB-COMPONENTS  ====================
@@ -443,18 +488,30 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
       <div className="p-5">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Income</dt>
-            <dd className="mt-1 text-3xl font-semibold text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</dd>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+              Total Income
+            </dt>
+            <dd className="mt-1 text-3xl font-semibold text-green-600 dark:text-green-400">
+              {formatCurrency(totalIncome)}
+            </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Expenses</dt>
-            <dd className="mt-1 text-3xl font-semibold text-red-600 dark:text-red-400">{formatCurrency(totalExpenses)}</dd>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+              Total Expenses
+            </dt>
+            <dd className="mt-1 text-3xl font-semibold text-red-600 dark:text-red-400">
+              {formatCurrency(totalExpenses)}
+            </dd>
           </div>
           <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Net Amount</dt>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+              Net Amount
+            </dt>
             <dd
               className={`mt-1 text-3xl font-semibold ${
-                netAmount >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                netAmount >= 0
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
               }`}
             >
               {formatCurrency(Math.abs(netAmount))}
@@ -474,7 +531,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Search */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Search
+          </label>
           <input
             type="text"
             value={searchTerm}
@@ -489,7 +548,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
           <label className="block text-sm font-medium text-gray-700 mb-1">Account</label>
           <select
             value={filters.account_id || ""}
-            onChange={(e) => setFilters((prev) => ({ ...prev, account_id: e.target.value || undefined, page: 1 }))}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, account_id: e.target.value || undefined, page: 1 }))
+            }
             className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="">All Accounts</option>
@@ -506,7 +567,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
           <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
           <select
             value={filters.category_id || ""}
-            onChange={(e) => setFilters((prev) => ({ ...prev, category_id: e.target.value || undefined, page: 1 }))}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, category_id: e.target.value || undefined, page: 1 }))
+            }
             className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           >
             <option value="">All Categories</option>
@@ -532,16 +595,22 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
 
               switch (value) {
                 case "this_month":
-                  start_date = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split("T")[0];
+                  start_date = new Date(today.getFullYear(), today.getMonth(), 1)
+                    .toISOString()
+                    .split("T")[0];
                   end_date = today.toISOString().split("T")[0];
                   break;
                 case "last_month":
                   const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
                   start_date = lastMonth.toISOString().split("T")[0];
-                  end_date = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split("T")[0];
+                  end_date = new Date(today.getFullYear(), today.getMonth(), 0)
+                    .toISOString()
+                    .split("T")[0];
                   break;
                 case "last_3_months":
-                  start_date = new Date(today.getFullYear(), today.getMonth() - 3, 1).toISOString().split("T")[0];
+                  start_date = new Date(today.getFullYear(), today.getMonth() - 3, 1)
+                    .toISOString()
+                    .split("T")[0];
                   end_date = today.toISOString().split("T")[0];
                   break;
               }
@@ -584,7 +653,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
           Previous
         </button>
         <button
-          onClick={() => setFilters((prev) => ({ ...prev, page: Math.min(totalPages, currentPage + 1) }))}
+          onClick={() =>
+            setFilters((prev) => ({ ...prev, page: Math.min(totalPages, currentPage + 1) }))
+          }
           disabled={currentPage >= totalPages}
           className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
         >
@@ -595,16 +666,21 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
       <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            Showing <span className="font-medium">{(currentPage - 1) * (filters.limit || 20) + 1}</span> to{" "}
-            <span className="font-medium">{Math.min(currentPage * (filters.limit || 20), total)}</span> of{" "}
-            <span className="font-medium">{total}</span> results
+            Showing{" "}
+            <span className="font-medium">{(currentPage - 1) * (filters.limit || 20) + 1}</span> to{" "}
+            <span className="font-medium">
+              {Math.min(currentPage * (filters.limit || 20), total)}
+            </span>{" "}
+            of <span className="font-medium">{total}</span> results
           </p>
         </div>
 
         <div>
           <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
             <button
-              onClick={() => setFilters((prev) => ({ ...prev, page: Math.max(1, currentPage - 1) }))}
+              onClick={() =>
+                setFilters((prev) => ({ ...prev, page: Math.max(1, currentPage - 1) }))
+              }
               disabled={currentPage <= 1}
               className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
             >
@@ -632,7 +708,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
             })}
 
             <button
-              onClick={() => setFilters((prev) => ({ ...prev, page: Math.min(totalPages, currentPage + 1) }))}
+              onClick={() =>
+                setFilters((prev) => ({ ...prev, page: Math.min(totalPages, currentPage + 1) }))
+              }
               disabled={currentPage >= totalPages}
               className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
             >
@@ -662,7 +740,9 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-green-800 dark:text-green-200">{successMessage}</p>
+              <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                {successMessage}
+              </p>
             </div>
             <div className="ml-auto pl-3">
               <button
@@ -736,7 +816,8 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  {selectedTransactions.size} transaction{selectedTransactions.size > 1 ? "s" : ""} selected
+                  {selectedTransactions.size} transaction{selectedTransactions.size > 1 ? "s" : ""}{" "}
+                  selected
                 </div>
 
                 <div className="flex items-center space-x-3">
@@ -769,8 +850,19 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
                   >
                     {loading ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-3 w-3" fill="none" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-3 w-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            className="opacity-25"
+                          ></circle>
                           <path
                             fill="currentColor"
                             className="opacity-75"
@@ -853,24 +945,35 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto p-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Categorization Analysis</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Categorization Analysis
+              </h3>
               <button
                 onClick={() => setShowAnalysisModal(false)}
                 className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{analysisData.total_transactions}</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {analysisData.total_transactions}
+                </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">Total Analyzed</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{analysisData.successful_categorizations}</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {analysisData.successful_categorizations}
+                </div>
                 <div className="text-sm text-gray-600">Successfully Categorized</div>
               </div>
               <div className="text-center">
@@ -885,9 +988,14 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
               <h4 className="font-medium text-gray-900 dark:text-white">Method Performance</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {Object.entries(analysisData.method_stats).map(([method, count]) => (
-                  <div key={method} className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                  <div
+                    key={method}
+                    className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center"
+                  >
                     <div className="text-lg font-medium text-gray-900 dark:text-white">{count}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">{method}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                      {method}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -911,7 +1019,12 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
             <div className="flex items-center mb-4">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="h-6 w-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -923,9 +1036,12 @@ export default function EnhancedTransactionManager({ initialData, accounts, cate
             </div>
 
             <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Delete Transactions</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                Delete Transactions
+              </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                Are you sure you want to delete <strong>{pendingDeleteCount}</strong> selected transaction
+                Are you sure you want to delete <strong>{pendingDeleteCount}</strong> selected
+                transaction
                 {pendingDeleteCount > 1 ? "s" : ""}? This action cannot be undone.
               </p>
 

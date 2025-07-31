@@ -1,9 +1,11 @@
-
 "use client";
 
 import { useState, useCallback } from "react";
 import { parseOFXFile, OFXParser } from "@/lib/ofx-parser";
-import { previewBulkCategorization, bulkCreateTransactionsWithCategorization } from "@/app/actions/transactions";
+import {
+  previewBulkCategorization,
+  bulkCreateTransactionsWithCategorization,
+} from "@/lib/actions/transactions";
 import {
   TransactionData,
   ParsedOFX,
@@ -24,7 +26,9 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ParsedOFX | null>(null);
   const [previewTransactions, setPreviewTransactions] = useState<EnhancedPreviewTransaction[]>([]);
-  const [categorizationPreview, setCategorizationPreview] = useState<CategorizationPreview | null>(null);
+  const [categorizationPreview, setCategorizationPreview] = useState<CategorizationPreview | null>(
+    null
+  );
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [categorizationLoading, setCategorizationLoading] = useState(false);
@@ -43,7 +47,7 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
 
   const handleFileUpload = useCallback(async () => {
     if (!file) return;
-    
+
     if (!selectedAccountId) {
       setError("Please select an account before parsing the file");
       return;
@@ -62,11 +66,13 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
 
       setParsedData(parseResult.data);
 
-      const preview: EnhancedPreviewTransaction[] = parseResult.data.statement.transactions.map((txn, index) => ({
-        original: txn,
-        selected: true,
-        index,
-      }));
+      const preview: EnhancedPreviewTransaction[] = parseResult.data.statement.transactions.map(
+        (txn, index) => ({
+          original: txn,
+          selected: true,
+          index,
+        })
+      );
 
       setPreviewTransactions(preview);
       setStep("preview");
@@ -79,7 +85,9 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
 
   // Transaction selection
   const toggleTransactionSelection = useCallback((index: number) => {
-    setPreviewTransactions((prev) => prev.map((t, i) => (i === index ? { ...t, selected: !t.selected } : t)));
+    setPreviewTransactions((prev) =>
+      prev.map((t, i) => (i === index ? { ...t, selected: !t.selected } : t))
+    );
   }, []);
 
   const toggleAllTransactions = useCallback(() => {
@@ -90,7 +98,9 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
   // Category handling
   const handleCategoryChange = useCallback((transactionIndex: number, categoryId: string) => {
     setPreviewTransactions((prev) =>
-      prev.map((tx, index) => (index === transactionIndex ? { ...tx, manualCategoryId: categoryId || undefined } : tx))
+      prev.map((tx, index) =>
+        index === transactionIndex ? { ...tx, manualCategoryId: categoryId || undefined } : tx
+      )
     );
   }, []);
 
@@ -101,7 +111,9 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
       return;
     }
 
-    const selectedTransactions = previewTransactions.filter((t) => t.selected).map((t) => t.original);
+    const selectedTransactions = previewTransactions
+      .filter((t) => t.selected)
+      .map((t) => t.original);
 
     if (selectedTransactions.length === 0) {
       setError("Please select at least one transaction to preview");
@@ -135,7 +147,11 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
       }
 
       let actualData;
-      if (previewResult.data && typeof previewResult.data === "object" && "data" in previewResult.data) {
+      if (
+        previewResult.data &&
+        typeof previewResult.data === "object" &&
+        "data" in previewResult.data
+      ) {
         actualData = (previewResult.data as any).data;
       } else {
         actualData = previewResult.data;
@@ -147,22 +163,27 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
       const categorizationPreview: CategorizationPreview = {
         total_transactions: actualData.total_transactions || 0,
         will_be_categorized: actualData.will_be_categorized || 0,
-        success_rate: actualData.total_transactions > 0 ? actualData.will_be_categorized / actualData.total_transactions : 0,
+        success_rate:
+          actualData.total_transactions > 0
+            ? actualData.will_be_categorized / actualData.total_transactions
+            : 0,
         previews: Array.isArray(actualData.previews) ? actualData.previews : [],
       };
 
       setCategorizationPreview(categorizationPreview);
 
-      const enhancedPreviews: EnhancedPreviewTransaction[] = previewTransactions.map((txPreview) => {
-        const categorizationData = categorizationPreview.previews.find((catPreview: any) => {
-          return catPreview?.index === txPreview.index;
-        });
+      const enhancedPreviews: EnhancedPreviewTransaction[] = previewTransactions.map(
+        (txPreview) => {
+          const categorizationData = categorizationPreview.previews.find((catPreview: any) => {
+            return catPreview?.index === txPreview.index;
+          });
 
-        return {
-          ...txPreview,
-          categorizationPreview: categorizationData || undefined,
-        };
-      });
+          return {
+            ...txPreview,
+            categorizationPreview: categorizationData || undefined,
+          };
+        }
+      );
 
       setPreviewTransactions(enhancedPreviews);
       setStep("categorization");
@@ -181,7 +202,9 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
       return;
     }
 
-    const selectedTransactions = previewTransactions.filter((t) => t.selected).map((t) => t.original);
+    const selectedTransactions = previewTransactions
+      .filter((t) => t.selected)
+      .map((t) => t.original);
 
     if (selectedTransactions.length === 0) {
       setError("Please select at least one transaction to import");
@@ -196,7 +219,9 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
       const { mapTransactionType, cleanMerchantName } = OFXParser;
 
       const transactionsToImport: TransactionData[] = selectedTransactions.map((ofxTxn) => {
-        const originalIndex = previewTransactions.findIndex((p) => p.original.fit_id === ofxTxn.fit_id);
+        const originalIndex = previewTransactions.findIndex(
+          (p) => p.original.fit_id === ofxTxn.fit_id
+        );
         const manualCategoryId = previewTransactions[originalIndex]?.manualCategoryId;
 
         return {
@@ -224,7 +249,7 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
         result.data?.duplicates &&
         result.data.duplicates.length > 0 &&
         result.data.duplicates.length === result.data.skipped;
-      
+
       const hasNewTransactions = (result.data?.created || 0) > 0;
       const isSuccess = result.success || isAllDuplicates;
 
@@ -234,11 +259,14 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
         skipped: result.data?.skipped || 0,
         errors: result.data?.errors || [],
         duplicates: result.data?.duplicates || [],
-        categorization_summary: hasNewTransactions ? {
-          auto_categorized: categorizationPreview?.will_be_categorized || 0,
-          manually_assigned: previewTransactions.filter((t) => t.manualCategoryId).length,
-          uncategorized: (result.data?.created || 0) - (categorizationPreview?.will_be_categorized || 0),
-        } : undefined,
+        categorization_summary: hasNewTransactions
+          ? {
+              auto_categorized: categorizationPreview?.will_be_categorized || 0,
+              manually_assigned: previewTransactions.filter((t) => t.manualCategoryId).length,
+              uncategorized:
+                (result.data?.created || 0) - (categorizationPreview?.will_be_categorized || 0),
+            }
+          : undefined,
       };
 
       console.log("✅ Import completed:", importStats);
@@ -275,7 +303,7 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
     error,
     step,
     importResult,
-    
+
     // Actions
     setSelectedAccountId,
     setStep,

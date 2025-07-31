@@ -1,25 +1,25 @@
 // lib/index.ts - Barrel exports for lib modules
 
 // API Clients
-export * from './api-client-enhanced';
+export * from "./api-client-enhanced";
 
 // Authentication & Security
-export * from './auth';
-export * from './session';
-export * from './csrf';
-export * from './rate-limit';
+export * from "./auth";
+export * from "./session";
+export * from "./csrf";
+export * from "./rate-limit";
 
 // Utilities
-export * from './utils';
-export * from './utils/date';
-export * from './errors';
-export * from './server-action-wrapper';
+export * from "./utils/utils";
+
+export * from "./errors";
+export * from "./server-action-wrapper";
 
 // Data Processing
-export * from './ofx-parser';
+export * from "./ofx-parser";
 
-// Consent & Compliance  
-export * from './cookie-consent';
+// Consent & Compliance
+export * from "./cookie-consent";
 
 // Types (re-exported for convenience)
-export * from './types';
+export * from "./types";

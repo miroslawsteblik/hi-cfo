@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { PivotData, TrendsData, ComparisonData } from '@/lib/types/analytics';
+import { PivotData, TrendsData, ComparisonData } from "@/lib/types/analytics/analytics";
 
 interface FinancialHealthMetricsProps {
   pivotData: { success: boolean; data?: PivotData; error?: string } | null;
@@ -8,13 +8,19 @@ interface FinancialHealthMetricsProps {
   comparisonData: { success: boolean; data?: ComparisonData; error?: string } | null;
 }
 
-export default function FinancialHealthMetrics({ 
-  pivotData, 
-  trendsData, 
-  comparisonData 
+export default function FinancialHealthMetrics({
+  pivotData,
+  trendsData,
+  comparisonData,
 }: FinancialHealthMetricsProps) {
-  if (!pivotData?.success || !trendsData?.success || !comparisonData?.success || 
-      !pivotData.data || !trendsData.data || !comparisonData.data) {
+  if (
+    !pivotData?.success ||
+    !trendsData?.success ||
+    !comparisonData?.success ||
+    !pivotData.data ||
+    !trendsData.data ||
+    !comparisonData.data
+  ) {
     return (
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="animate-pulse">
@@ -31,7 +37,9 @@ export default function FinancialHealthMetrics({
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Financial Health Overview</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+        Financial Health Overview
+      </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="text-sm font-medium text-green-800">Savings Rate</div>

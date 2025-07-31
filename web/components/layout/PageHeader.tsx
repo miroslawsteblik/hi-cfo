@@ -1,6 +1,7 @@
-// components/layout/PageHeader.tsx
+
+
+import ClientThemeToggle from '@/components/dark-mode/ClientThemeToggle';
 import LogoutButton from '@/components/auth/logout-button';
-import ClientThemeToggle from '@/components/ui/ClientThemeToggle';
 
 interface PageHeaderProps {
   title: string;

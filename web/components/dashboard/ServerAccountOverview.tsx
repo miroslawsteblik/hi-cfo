@@ -1,4 +1,4 @@
-import { getUserAccounts } from "@/app/actions/transactions";
+import { getUserAccounts } from "@/lib/actions/transactions";
 import AccountOverview from "./AccountOverview";
 import { Account } from "@/lib/types/accounts/base";
 

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { TransactionListItem } from "@/lib/types/transactions";
 import { Category } from "@/lib/types/categories";
 import CategoryAssignment from "./CategoryAssignment";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils/utils";
 
 interface TransactionTableProps {
   transactions: TransactionListItem[];
@@ -67,7 +67,12 @@ export default function TransactionTable({
     return (
       <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <div className="p-12 text-center">
-          <svg className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -75,8 +80,12 @@ export default function TransactionTable({
               d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-3.5m-9 0h-3.5"
             />
           </svg>
-          <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No transactions found</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">Get started by importing your bank transactions</p>
+          <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
+            No transactions found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Get started by importing your bank transactions
+          </p>
           <button
             onClick={onImport}
             className="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
@@ -128,30 +137,45 @@ export default function TransactionTable({
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
               {bulkSelectMode && (
-                <th className={`${compactPadding} text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+                <th
+                  className={`${compactPadding} text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider`}
+                >
                   <span className="sr-only">Select</span>
                 </th>
               )}
-              <th className={`${compactPadding} text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+              <th
+                className={`${compactPadding} text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider`}
+              >
                 Date
               </th>
-              <th className={`${compactPadding} text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0 w-full`}>
+              <th
+                className={`${compactPadding} text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-0 w-full`}
+              >
                 Description
               </th>
-              <th className={`${compactPadding} text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider`}>
+              <th
+                className={`${compactPadding} text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider`}
+              >
                 Category
               </th>
-              <th className={`${compactPadding} text-right text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+              <th
+                className={`${compactPadding} text-right text-xs font-medium text-gray-500 uppercase tracking-wider`}
+              >
                 Amount
               </th>
-              <th className={`${compactPadding} text-center text-xs font-medium text-gray-500 uppercase tracking-wider`}>
+              <th
+                className={`${compactPadding} text-center text-xs font-medium text-gray-500 uppercase tracking-wider`}
+              >
                 Actions
               </th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {(Array.isArray(transactions) ? transactions : []).map((transaction) => (
-              <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <tr
+                key={transaction.id}
+                className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
                 {bulkSelectMode && (
                   <td className={`${compactPadding} whitespace-nowrap`}>
                     <input
@@ -164,7 +188,9 @@ export default function TransactionTable({
                 )}
 
                 {/* Date */}
-                <td className={`${compactPadding} whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium`}>
+                <td
+                  className={`${compactPadding} whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium`}
+                >
                   {formatDate(transaction.transaction_date)}
                 </td>
 
@@ -208,7 +234,9 @@ export default function TransactionTable({
                         selectedCategoryId={transaction.category_id}
                         merchantName={transaction.merchant_name}
                         description={transaction.description}
-                        onCategoryChange={(categoryId) => onCategoryChange(transaction.id, categoryId)}
+                        onCategoryChange={(categoryId) =>
+                          onCategoryChange(transaction.id, categoryId)
+                        }
                         size="sm"
                       />
                       <div className="flex space-x-2 mt-2">
@@ -224,7 +252,9 @@ export default function TransactionTable({
                     <div className="flex items-center justify-between min-w-32">
                       <span
                         className={`text-sm truncate ${
-                          transaction.category_id ? "text-gray-900 dark:text-white" : "text-gray-400 dark:text-gray-500 italic"
+                          transaction.category_id
+                            ? "text-gray-900 dark:text-white"
+                            : "text-gray-400 dark:text-gray-500 italic"
                         }`}
                         title={getCategoryName(transaction.category_id)}
                       >
@@ -235,7 +265,12 @@ export default function TransactionTable({
                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm ml-2 transition-colors"
                         title="Edit category"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -249,8 +284,16 @@ export default function TransactionTable({
                 </td>
 
                 {/* Amount */}
-                <td className={`${compactPadding} whitespace-nowrap text-sm font-semibold text-right`}>
-                  <span className={transaction.amount >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                <td
+                  className={`${compactPadding} whitespace-nowrap text-sm font-semibold text-right`}
+                >
+                  <span
+                    className={
+                      transaction.amount >= 0
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                    }
+                  >
                     {transaction.amount >= 0 ? "+" : ""}
                     {formatCurrency(transaction.amount, transaction.currency)}
                   </span>

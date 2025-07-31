@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, TrendingUp, PieChart, BarChart3, Download } from "lucide-react";
-import { getPivotData, getTrendsData, getComparisonData } from "@/app/actions/analytics";
-import { getCurrentMonth, getDateRange } from "@/lib/utils/date";
-import { PivotData, TrendsData, ComparisonData, AnalyticsFilters } from "@/lib/types/analytics";
+import { getPivotData, getTrendsData, getComparisonData } from "@/lib/actions/analytics";
+import { getCurrentMonth, getDateRange } from "@/lib/utils/utils";
+import {
+  PivotData,
+  TrendsData,
+  ComparisonData,
+  AnalyticsFilters,
+} from "@/lib/types/analytics/analytics";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { ErrorMessage } from "../ui/ErrorMessage";
 
@@ -188,14 +193,18 @@ export default function AnalyticsDashboard() {
             {/* Quick Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Monthly Trends</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                  Monthly Trends
+                </h3>
                 {state.trendsData?.success && state.trendsData.data && (
                   <TrendsChartComponent data={state.trendsData} height={300} showControls={false} />
                 )}
               </div>
 
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Category Breakdown</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                  Category Breakdown
+                </h3>
                 {state.pivotData?.success && state.pivotData.data && (
                   <CategoryBreakdownChart data={state.pivotData} height={300} showLegend={true} />
                 )}
@@ -205,7 +214,9 @@ export default function AnalyticsDashboard() {
             {/* Month-over-Month Comparison */}
             {state.comparisonData?.success && state.comparisonData.data && (
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Period Comparison</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                  Period Comparison
+                </h3>
                 <ComparisonComponent data={state.comparisonData} showDetails={false} />
               </div>
             )}
@@ -215,7 +226,9 @@ export default function AnalyticsDashboard() {
         {activeTab === "pivot" && state.pivotData?.success && state.pivotData.data && (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Transaction Pivot Analysis</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Transaction Pivot Analysis
+              </h3>
               <p className="text-sm text-gray-600">
                 {state.pivotData?.data?.summary.transaction_count} transactions •
                 {state.pivotData?.data?.summary.total_categories} categories •
@@ -229,7 +242,9 @@ export default function AnalyticsDashboard() {
         {activeTab === "trends" && state.trendsData?.success && state.trendsData.data && (
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Financial Trends Analysis</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Financial Trends Analysis
+              </h3>
               <div className="flex items-center gap-2">
                 <select
                   value={state.filters.group_by || "month"}
@@ -247,27 +262,31 @@ export default function AnalyticsDashboard() {
           </div>
         )}
 
-        {activeTab === "comparison" && state.comparisonData?.success && state.comparisonData.data && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Period-over-Period Comparison</h3>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={state.filters.period || "month"}
-                    onChange={(e) => handleFiltersChange({ period: e.target.value as any })}
-                    className="px-3 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                  >
-                    <option value="month">Month-over-Month</option>
-                    <option value="quarter">Quarter-over-Quarter</option>
-                    <option value="year">Year-over-Year</option>
-                  </select>
+        {activeTab === "comparison" &&
+          state.comparisonData?.success &&
+          state.comparisonData.data && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Period-over-Period Comparison
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={state.filters.period || "month"}
+                      onChange={(e) => handleFiltersChange({ period: e.target.value as any })}
+                      className="px-3 py-1 border rounded text-sm bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                    >
+                      <option value="month">Month-over-Month</option>
+                      <option value="quarter">Quarter-over-Quarter</option>
+                      <option value="year">Year-over-Year</option>
+                    </select>
+                  </div>
                 </div>
+                <ComparisonComponent data={state.comparisonData} showDetails={true} />
               </div>
-              <ComparisonComponent data={state.comparisonData} showDetails={true} />
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );

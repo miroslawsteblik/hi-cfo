@@ -54,7 +54,7 @@ export interface CategoryTrend {
   color?: string;
   values: number[];
   total: number;
-  trend: 'increasing' | 'decreasing' | 'stable';
+  trend: "increasing" | "decreasing" | "stable";
 }
 
 export interface TrendSummary {
@@ -112,7 +112,7 @@ export interface CategoryComparison {
 }
 
 // Use the DateRange from common.ts instead
-import type { DateRange } from './common';
+import type { DateRange } from "../common";
 
 // Chart data interfaces for Recharts
 export interface PivotChartData {
@@ -145,13 +145,13 @@ export interface AnalyticsApiResponse<T> {
 export interface AnalyticsFilters {
   start_date?: string;
   end_date?: string;
-  group_by?: 'day' | 'week' | 'month' | 'year';
-  period?: 'month' | 'quarter' | 'year';
+  group_by?: "day" | "week" | "month" | "year";
+  period?: "month" | "quarter" | "year";
   current?: string;
 }
 
 export interface ChartConfig {
-  type: 'bar' | 'line' | 'pie' | 'area';
+  type: "bar" | "line" | "pie" | "area";
   colors: string[];
   showLegend: boolean;
   showGrid: boolean;

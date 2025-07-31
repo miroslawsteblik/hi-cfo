@@ -4,7 +4,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import ClientThemeToggle from "@/components/ui/ClientThemeToggle";
 
 interface NavItem {
   name: string;
@@ -207,7 +206,6 @@ export default function MainNavigation({ user }: MainNavigationProps) {
         {/* Footer */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <ClientThemeToggle />
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 text-center">Hi-CFO Financial Dashboard</div>
         </div>

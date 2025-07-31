@@ -42,30 +42,34 @@ A modern financial dashboard built with Next.js 15, TypeScript, and Tailwind CSS
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - PostgreSQL database
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd hi-cfo/web
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Setup environment variables**
+
    ```bash
    cp .env.example .env.local
    # Edit .env.local with your configuration
    ```
 
 4. **Run the development server**
+
    ```bash
    npm run dev
    ```
@@ -145,29 +149,27 @@ Use barrel exports from `index.ts` files:
 
 ```tsx
 // ✅ Good
-import { TransactionTable, CategoryForm } from '@/components';
+import { TransactionTable, CategoryForm } from "@/components";
 
 // ❌ Avoid
-import TransactionTable from '@/components/transactions/TransactionTable';
-import CategoryForm from '@/components/categories/CategoryForm';
+import TransactionTable from "@/components/transactions/TransactionTable";
+import CategoryForm from "@/components/categories/CategoryForm";
 ```
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server with Turbopack |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint issues automatically |
-| `npm run type-check` | Run TypeScript compiler check |
-| `npm run format` | Format code with Prettier |
-| `npm run clean` | Clean build artifacts |
-| `npm run test` | Run unit tests |
-| `npm run test:e2e` | Run end-to-end tests |
-
-
+| Script               | Description                             |
+| -------------------- | --------------------------------------- |
+| `npm run dev`        | Start development server with Turbopack |
+| `npm run build`      | Build for production                    |
+| `npm run start`      | Start production server                 |
+| `npm run lint`       | Run ESLint                              |
+| `npm run lint:fix`   | Fix ESLint issues automatically         |
+| `npm run type-check` | Run TypeScript compiler check           |
+| `npm run format`     | Format code with Prettier               |
+| `npm run clean`      | Clean build artifacts                   |
+| `npm run test`       | Run unit tests                          |
+| `npm run test:e2e`   | Run end-to-end tests                    |
 
 ## Architecture Decisions
 

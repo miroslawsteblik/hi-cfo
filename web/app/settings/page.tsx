@@ -3,6 +3,7 @@ import { getServerUser } from "@/lib/auth";
 
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
+import SettingsContent from "@/components/settings/SettingsContent";
 
 export default async function SettingsPage() {
   // Get user from server-side cookies
@@ -24,14 +25,12 @@ export default async function SettingsPage() {
       {/* Page Header */}
       <PageHeader
         title="Settings"
-        subtitle="Manage your account settings"
+        subtitle="Manage your account and application preferences"
       />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <p className="text-gray-600 mb-4">
-          Coming soon! This section will allow you to manage your account settings.
-        </p>
+        <SettingsContent user={user} />
       </div>
     </AppLayout>
   );

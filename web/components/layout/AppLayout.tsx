@@ -2,7 +2,7 @@
 import { getServerUser } from "@/lib/auth";
 import MainNavigation from "@/components/navigation/MainNavigation";
 import LogoutButton from "@/components/auth/logout-button";
-import ClientThemeToggle from "@/components/ui/ClientThemeToggle";
+import ClientThemeToggle from "@/components/dark-mode/ClientThemeToggle";
 
 interface AppLayoutProps {
   children: React.ReactNode;

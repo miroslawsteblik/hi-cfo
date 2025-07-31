@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { PivotData } from '@/lib/types/analytics';
+import { PivotData } from "@/lib/types/analytics/analytics";
 
 interface PivotTableComponentProps {
   data: { success: boolean; data?: PivotData; error?: string } | null;
@@ -18,9 +18,9 @@ export default function PivotTableComponent({ data }: PivotTableComponentProps) 
   const pivotData = data.data;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(Math.abs(amount));
@@ -35,7 +35,10 @@ export default function PivotTableComponent({ data }: PivotTableComponentProps) 
               Category
             </th>
             {pivotData.periods.map((period) => (
-              <th key={period} className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th
+                key={period}
+                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
                 {period}
               </th>
             ))}
@@ -53,7 +56,10 @@ export default function PivotTableComponent({ data }: PivotTableComponentProps) 
               {pivotData.periods.map((period) => {
                 const amount = category.periods[period] || 0;
                 return (
-                  <td key={period} className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
+                  <td
+                    key={period}
+                    className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500"
+                  >
                     {formatCurrency(amount)}
                   </td>
                 );
