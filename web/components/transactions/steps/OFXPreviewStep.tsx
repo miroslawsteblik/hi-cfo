@@ -3,6 +3,7 @@
 
 import { ParsedOFX, EnhancedPreviewTransaction } from "@/lib/features/transactions";
 import { formatCurrency, formatDate } from "@/lib/shared/utils";
+import type { Currency } from "@/lib/shared/types";
 
 interface OFXPreviewStepProps {
   parsedData: ParsedOFX;
@@ -118,7 +119,7 @@ export default function OFXPreviewStep({
                       }
                     >
                       {transaction.original.amount >= 0 ? "+" : "-"}
-                      {formatCurrency(transaction.original.amount, transaction.original.currency)}
+                      {formatCurrency(transaction.original.amount, transaction.original.currency as Currency)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

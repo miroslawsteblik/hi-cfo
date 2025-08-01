@@ -5,6 +5,7 @@ import { useState } from "react";
 import { EnhancedPreviewTransaction, CategorizationPreview } from "@/lib/features/transactions";
 import { Category } from "@/lib/features/categories";
 import { formatCurrency, formatDate } from "@/lib/shared/utils";
+import type { Currency } from "@/lib/shared/types";
 
 interface OFXCategorizationStepProps {
   previewTransactions: EnhancedPreviewTransaction[];
@@ -160,7 +161,7 @@ export default function OFXCategorizationStep({
                         }
                       >
                         {transaction.original.amount >= 0 ? "+" : "-"}
-                        {formatCurrency(transaction.original.amount, transaction.original.currency)}
+                        {formatCurrency(transaction.original.amount, transaction.original.currency as Currency | undefined)}
                       </span>
                     </td>
                     <td className="px-6 py-4">

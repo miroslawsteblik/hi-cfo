@@ -224,15 +224,15 @@ export default function AccountForm({
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border max-w-2xl mx-auto">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
         {isEdit ? "Edit Account" : "Add New Account"}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Account Name */}
         <div>
-          <label htmlFor="account_name" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="account_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Account Name *
           </label>
           <input
@@ -240,21 +240,21 @@ export default function AccountForm({
             id="account_name"
             value={formData.account_name}
             onChange={(e) => handleFieldChange("account_name", e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
               errors.account_name
-                ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300 focus:ring-blue-500"
+                ? "border-red-300 dark:border-red-600 focus:ring-red-500"
+                : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
             }`}
             placeholder="e.g., Chase Checking, Wells Fargo Savings"
             maxLength={100}
             required
             aria-describedby="account_name_help account_name_error"
           />
-          <p id="account_name_help" className="text-xs text-gray-500 mt-1">
+          <p id="account_name_help" className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Give your account a memorable name
           </p>
           {errors.account_name && (
-            <p id="account_name_error" className="text-xs text-red-600 mt-1" role="alert">
+            <p id="account_name_error" className="text-xs text-red-600 dark:text-red-400 mt-1" role="alert">
               {errors.account_name}
             </p>
           )}
@@ -262,7 +262,7 @@ export default function AccountForm({
 
         {/* Account Type */}
         <div>
-          <label htmlFor="account_type" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="account_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Account Type *
           </label>
           <select
@@ -282,7 +282,7 @@ export default function AccountForm({
 
         {/* Bank Name */}
         <div>
-          <label htmlFor="bank_name" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="bank_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Financial Institution *
           </label>
           <input
@@ -290,10 +290,10 @@ export default function AccountForm({
             id="bank_name"
             value={formData.bank_name}
             onChange={(e) => handleFieldChange("bank_name", e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
               errors.bank_name
-                ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300 focus:ring-blue-500"
+                ? "border-red-300 dark:border-red-600 focus:ring-red-500"
+                : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
             }`}
             placeholder="e.g., Chase, Wells Fargo, Bank of America"
             maxLength={100}
@@ -301,7 +301,7 @@ export default function AccountForm({
             aria-describedby="bank_name_error"
           />
           {errors.bank_name && (
-            <p id="bank_name_error" className="text-xs text-red-600 mt-1" role="alert">
+            <p id="bank_name_error" className="text-xs text-red-600 dark:text-red-400 mt-1" role="alert">
               {errors.bank_name}
             </p>
           )}
@@ -311,7 +311,7 @@ export default function AccountForm({
         <div>
           <label
             htmlFor="account_number_masked"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Account Number (Last 4 digits)
           </label>
@@ -323,20 +323,20 @@ export default function AccountForm({
               const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 4);
               handleFieldChange("account_number_masked", value);
             }}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
               errors.account_number_masked
-                ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300 focus:ring-blue-500"
+                ? "border-red-300 dark:border-red-600 focus:ring-red-500"
+                : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
             }`}
             placeholder="1234"
             maxLength={4}
             aria-describedby="account_number_help account_number_error"
           />
-          <p id="account_number_help" className="text-xs text-gray-500 mt-1">
+          <p id="account_number_help" className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             For security, only enter the last 4 digits
           </p>
           {errors.account_number_masked && (
-            <p id="account_number_error" className="text-xs text-red-600 mt-1" role="alert">
+            <p id="account_number_error" className="text-xs text-red-600 dark:text-red-400 mt-1" role="alert">
               {errors.account_number_masked}
             </p>
           )}
@@ -344,7 +344,7 @@ export default function AccountForm({
 
         {/* Routing Number */}
         <div>
-          <label htmlFor="routing_number" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="routing_number" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Routing Number
           </label>
           <input
@@ -355,10 +355,10 @@ export default function AccountForm({
               const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 9);
               handleFieldChange("routing_number", value);
             }}
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
               errors.routing_number
-                ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300 focus:ring-blue-500"
+                ? "border-red-300 dark:border-red-600 focus:ring-red-500"
+                : "border-gray-300 dark:border-gray-600 focus:ring-blue-500"
             }`}
             placeholder="123456789"
             maxLength={9}

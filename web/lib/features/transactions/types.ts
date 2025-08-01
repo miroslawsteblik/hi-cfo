@@ -1,5 +1,5 @@
 // Re-export shared types for consistency
-import type { PaginatedResponse } from '@/lib/shared/types';
+import type { PaginatedResponse, Currency } from '@/lib/shared/types';
 import type { Account } from '@/lib/features/accounts/types';
 import type { Category } from '@/lib/features/categories/types';
 import type { User } from '@/lib/shared/types';
@@ -15,6 +15,7 @@ export interface Transaction {
   transaction_date: string;
   description: string;
   amount: number;
+  currency: Currency;
   transaction_type: string;
   merchant_name?: string;
   memo?: string;

@@ -6,6 +6,7 @@ import CategoryForm from "@/components/categories/CategoryForm";
 import { createCategory, updateCategory, deleteCategory } from "@/lib/features/categories";
 import { Category, CategoriesData } from "@/lib/features/categories";
 import { User } from "@/lib/shared/types";
+import { formatDate } from "@/lib/shared/utils";
 
 export interface CategoriesClientProps {
   initialData: CategoriesData;
@@ -80,11 +81,11 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
 
   const getCategoryTypeColor = (categoryType: string) => {
     const colorMap: { [key: string]: string } = {
-      income: "bg-green-100 text-green-800",
-      expense: "bg-red-100 text-red-800",
-      transfer: "bg-blue-100 text-blue-800",
+      income: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300",
+      expense: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300",
+      transfer: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300",
     };
-    return colorMap[categoryType] || "bg-gray-100 text-gray-800";
+    return colorMap[categoryType] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300";
   };
 
   const safeCategories = Array.isArray(initialData.categories) ? initialData.categories : [];
@@ -133,13 +134,13 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
       {/* Header Actions */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-medium text-gray-900">Transaction Categories</h2>
-          <p className="text-sm text-gray-500">{initialData.total} total categories</p>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white">Transaction Categories</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{initialData.total} total categories</p>
         </div>
         <div className="flex space-x-3">
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           >
             + Add Category
           </button>
@@ -148,30 +149,30 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
 
       {/* Category Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-sm font-medium text-gray-500">Total</div>
-          <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+        <div className="bg-white   dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="text-sm font-medium text-gray-500  dark:text-gray-400">Total</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-blue-600">{stats.total}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-sm font-medium text-gray-500">System</div>
-          <div className="text-2xl font-bold text-blue-600">{stats.system}</div>
+        <div className="bg-white   dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="text-sm font-medium text-gray-500  dark:text-gray-400">System</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-blue-600">{stats.system}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-sm font-medium text-gray-500">Custom</div>
-          <div className="text-2xl font-bold text-purple-600">{stats.user}</div>
+        <div className="bg-white   dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="text-sm font-medium text-gray-500  dark:text-gray-400">Custom</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-blue-600">{stats.user}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-sm font-medium text-gray-500">Income</div>
-          <div className="text-2xl font-bold text-green-600">{stats.income}</div>
+        <div className="bg-white   dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="text-sm font-medium text-gray-500  dark:text-gray-00">Income</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-blue-600">{stats.income}</div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-sm font-medium text-gray-500">Expense</div>
-          <div className="text-2xl font-bold text-red-600">{stats.expense}</div>
+        <div className="bg-white   dark:bg-gray-800 p-4 rounded-lg shadow-sm border">
+          <div className="text-sm font-medium text-gray-500  dark:text-gray-400">Expense</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-blue-600">{stats.expense}</div>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8">
           {[
             { key: "all", label: "All Categories", count: stats.total },
@@ -185,8 +186,8 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
               onClick={() => setFilter(tab.key)}
               className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
                 filter === tab.key
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
               }`}
             >
               {tab.label} ({tab.count})
@@ -200,7 +201,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
         {filteredCategories.map((category) => (
           <div
             key={category.id}
-            className="bg-white rounded-xl border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-200 group"
+            className="bg-white  dark:bg-gray-800 rounded-xl border border-gray-200 hover:border-gray-300  dark:border-gray-700 hover:shadow-lg transition-all duration-200 group"
           >
             <div className="p-6">
               <div className="flex items-center justify-between">
@@ -231,7 +232,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
                   {/* Category Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                      <h3 className="text-lg font-semibold text-gray-900  dark:text-white truncate">
                         {category.name}
                       </h3>
                       <span
@@ -242,7 +243,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
                         {category.category_type}
                       </span>
                       {category.is_system_category && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800  dark:text-blue-400 ">
                           <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                             <path
                               fillRule="evenodd"
@@ -257,7 +258,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
 
                     {/* Description */}
                     {category.description && (
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
                         {category.description}
                       </p>
                     )}
@@ -267,7 +268,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
                       {/* Keywords */}
                       {category.keywords && category.keywords.length > 0 && (
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs font-medium text-gray-500">Keywords:</span>
+                          <span className="text-xs font-medium text-gray-500  dark:text-orange-300 ">Keywords:</span>
                           <div className="flex flex-wrap gap-1">
                             {category.keywords.slice(0, 2).map((keyword) => (
                               <span
@@ -278,7 +279,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
                               </span>
                             ))}
                             {category.keywords.length > 2 && (
-                              <span className="text-xs text-gray-500 px-2 py-1">
+                              <span className="text-xs text-gray-500  dark:text-gray-400 px-2 py-1">
                                 +{category.keywords.length - 2}
                               </span>
                             )}
@@ -289,7 +290,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
                       {/* Merchant Patterns */}
                       {category.merchant_patterns && category.merchant_patterns.length > 0 && (
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs font-medium text-gray-500">Merchants:</span>
+                          <span className="text-xs font-medium text-gray-500  dark:text-gray-400">Merchants:</span>
                           <div className="flex flex-wrap gap-1">
                             {category.merchant_patterns.slice(0, 2).map((pattern) => (
                               <span
@@ -300,7 +301,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
                               </span>
                             ))}
                             {category.merchant_patterns.length > 2 && (
-                              <span className="text-xs text-gray-500 px-2 py-1">
+                              <span className="text-xs text-gray-500  dark:text-gray-400 px-2 py-1">
                                 +{category.merchant_patterns.length - 2}
                               </span>
                             )}
@@ -315,13 +316,9 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
                 <div className="flex items-center space-x-4 ml-6">
                   {/* Created Date */}
                   <div className="text-right hidden sm:block">
-                    <div className="text-xs text-gray-500">Created</div>
-                    <div className="text-sm font-medium text-gray-700">
-                      {new Date(category.created_at).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                    <div className="text-xs text-gray-500 dark:text-gray-300">Created</div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-400">
+                      {formatDate(category.created_at)}
                     </div>
                   </div>
 
@@ -379,7 +376,7 @@ export default function CategoriesClient({ initialData, user }: CategoriesClient
                             clipRule="evenodd"
                           />
                         </svg>
-                        Protected
+                        
                       </div>
                     )}
                   </div>

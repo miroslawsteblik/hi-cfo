@@ -1,6 +1,6 @@
 "use client";
 
-import { EnhancedOFXManager } from "@/components";
+import EnhancedOFXManager from "./OFX-manager";
 import {
   updateTransaction,
   deleteTransaction,
@@ -18,7 +18,8 @@ import {
 import TransactionHeader from "./TransactionHeader";
 import TransactionTable from "./TransactionTable";
 import TransactionSettings from "./TransactionSettings";
-import { formatCurrency, formatDate } from "@/lib/shared/utils";
+import { formatCurrency, formatDate, getUserPreferredCurrency, convertCurrency } from "@/lib/shared/utils";
+import type { Currency } from "@/lib/shared/types";
 import { useErrorHandler } from "@/lib/errors";
 
 import { Account } from "@/lib/features/accounts";
@@ -30,6 +31,7 @@ interface TransactionManagerProps {
   accounts: Account[];
   categories: Category[];
   user: User;
+  allTransactionsData?: any;
 }
 
 export default function EnhancedTransactionManager({
@@ -37,6 +39,7 @@ export default function EnhancedTransactionManager({
   accounts,
   categories,
   user,
+  allTransactionsData,
 }: TransactionManagerProps) {
   // Transaction State
   const [transactions, setTransactions] = useState<TransactionListItem[]>(
@@ -76,6 +79,9 @@ export default function EnhancedTransactionManager({
     defaultPageSize: 20,
   });
 
+  // Currency detection
+  const [userCurrency, setUserCurrency] = useState<string>("USD");
+
   // Analysis State
   const [analysisData, setAnalysisData] = useState<CategorizationAnalysis | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
@@ -85,6 +91,7 @@ export default function EnhancedTransactionManager({
     page: initialData?.page || 1,
     limit: userPrefs.defaultPageSize,
   });
+
 
   // Load user preferences on mount
   useEffect(() => {
@@ -121,9 +128,18 @@ export default function EnhancedTransactionManager({
       let totalPagesNum = 1;
 
       if (result && result.success && result.data && Array.isArray(result.data.data)) {
+        // Use user's preferred currency with transaction data as fallback
+        const transactionCurrencies = result.data.data.map(t => t.currency).filter(Boolean) as Currency[];
+        const detectedCurrency = getUserPreferredCurrency(
+          user?.preferred_currency, // User preference takes priority
+          [], 
+          transactionCurrencies
+        );
+        setUserCurrency(detectedCurrency);
+        
         transactionData = result.data.data.map((transaction: any) => ({
           ...transaction,
-          currency: "USD", // Default currency if not provided
+          currency: transaction.currency || detectedCurrency, // Use actual currency or detected default
         }));
         totalCount = result.data.total || 0;
         currentPageNum = result.data.page || 1;
@@ -473,17 +489,101 @@ export default function EnhancedTransactionManager({
   // ==================== 5. COMPUTED VALUES ====================
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
   const uncategorizedCount = safeTransactions.filter((tx) => !tx.category_id).length;
+  const categorizedCount = safeTransactions.filter((tx) => tx.category_id).length;
+  const totalTransactionsCount = safeTransactions.length;
+  const categorizationRate = totalTransactionsCount > 0 ? Math.round((categorizedCount / totalTransactionsCount) * 100) : 0;
+  
+  // Get user's preferred currency with proper hierarchy
+  const transactionCurrencies = safeTransactions.map(t => t.currency).filter(Boolean) as Currency[];
+  const userPreferredCurrency = getUserPreferredCurrency(
+    user?.preferred_currency,
+    [],
+    transactionCurrencies
+  );
+  
+  // Calculate totals with currency conversion to user's preferred currency
   const totalIncome = safeTransactions
     .filter((t) => t.amount > 0)
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => {
+      const convertedAmount = convertCurrency(t.amount, t.currency as Currency, userPreferredCurrency);
+      return sum + convertedAmount;
+    }, 0);
   const totalExpenses = safeTransactions
     .filter((t) => t.amount < 0)
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    .reduce((sum, t) => {
+      const convertedAmount = convertCurrency(Math.abs(t.amount), t.currency as Currency, userPreferredCurrency);
+      return sum + convertedAmount;
+    }, 0);
   const netAmount = totalIncome - totalExpenses;
 
   // ==================== SUB-COMPONENTS  ====================
 
-  const SummaryStats = () => (
+  const TransactionStatsPanel = useCallback(() => (
+    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
+      <div className="p-6">
+        <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+          Transaction Overview
+        </h3>
+        <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-blue-100 dark:bg-blue-900/30 rounded-full mb-3">
+              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H9z" />
+              </svg>
+            </div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalTransactionsCount}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Total Transactions</div>
+          </div>
+          
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full mb-3">
+              <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{categorizedCount}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Auto-Categorized</div>
+          </div>
+
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-100 dark:bg-yellow-900/30 rounded-full mb-3">
+              <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.502 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{uncategorizedCount}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Needs Review</div>
+          </div>
+
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-purple-100 dark:bg-purple-900/30 rounded-full mb-3">
+              <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{categorizationRate}%</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Categorization Rate</div>
+          </div>
+        </div>
+        
+        {/* Progress bar for categorization */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <span>Categorization Progress</span>
+            <span>{categorizationRate}% Complete</span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div 
+              className="bg-green-600 dark:bg-green-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${categorizationRate}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  ), [totalTransactionsCount, categorizedCount, uncategorizedCount, categorizationRate]);
+
+  const SummaryStats = useCallback(() => (
     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
       <div className="p-5">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -492,7 +592,7 @@ export default function EnhancedTransactionManager({
               Total Income
             </dt>
             <dd className="mt-1 text-3xl font-semibold text-green-600 dark:text-green-400">
-              {formatCurrency(totalIncome)}
+              {formatCurrency(totalIncome, userPreferredCurrency)}
             </dd>
           </div>
           <div>
@@ -500,7 +600,7 @@ export default function EnhancedTransactionManager({
               Total Expenses
             </dt>
             <dd className="mt-1 text-3xl font-semibold text-red-600 dark:text-red-400">
-              {formatCurrency(totalExpenses)}
+              {formatCurrency(totalExpenses, userPreferredCurrency)}
             </dd>
           </div>
           <div>
@@ -514,15 +614,15 @@ export default function EnhancedTransactionManager({
                   : "text-red-600 dark:text-red-400"
               }`}
             >
-              {formatCurrency(Math.abs(netAmount))}
+              {formatCurrency(Math.abs(netAmount), userPreferredCurrency)}
             </dd>
           </div>
         </div>
       </div>
     </div>
-  );
+  ), [totalIncome, totalExpenses, netAmount, userPreferredCurrency]);
 
-  const FilterPanel = () => (
+  const FilterPanel = useCallback(() => (
     <div
       className={`bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 px-4 py-3 transition-all duration-200 ${
         showFilters ? "block" : "hidden"
@@ -639,9 +739,9 @@ export default function EnhancedTransactionManager({
         </button>
       </div>
     </div>
-  );
+  ), [showFilters, searchTerm, setSearchTerm, filters, setFilters, accounts, categories]);
 
-  const PaginationControls = () => (
+  const PaginationControls = useCallback(() => (
     <div className="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
       <div className="flex-1 flex justify-between sm:hidden">
         {/* Mobile pagination */}
@@ -720,7 +820,7 @@ export default function EnhancedTransactionManager({
         </div>
       </div>
     </div>
-  );
+  ), [currentPage, totalPages, setFilters, total]);
 
   // ==================== MAIN RETURN STATEMENT ====================
 
@@ -783,6 +883,9 @@ export default function EnhancedTransactionManager({
 
       {/* CONTENT CONTAINER */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* TRANSACTION STATS PANEL */}
+        <TransactionStatsPanel />
+
         {/* SUMMARY STATS */}
         <div className="mb-6">
           <SummaryStats />

@@ -288,11 +288,36 @@ export const useOFXImport = ({ onSuccess, onCancel }: UseOFXImportProps) => {
           onSuccess();
         }, delay);
       } else if (!isSuccess) {
-        throw new Error(result.error || "Failed to import transactions");
+        // Format error message to be user-friendly
+        let errorMessage = result.error || "Failed to import transactions";
+        
+        // If it's a JSON error message, try to make it more friendly
+        if (errorMessage.includes('{"data":') && result.data) {
+          const { created = 0, skipped = 0, duplicates = [] } = result.data;
+          if (created === 0 && skipped > 0 && duplicates.length > 0) {
+            // This should have been handled as success, but something went wrong
+            errorMessage = `All ${skipped} transactions have already been imported previously. No new transactions were added.`;
+          } else {
+            errorMessage = "Unable to import transactions. Please check your file and try again.";
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (err) {
       console.error("❌ Import exception:", err);
-      setError(err instanceof Error ? err.message : "Failed to import transactions");
+      
+      // Provide user-friendly error messages
+      let userMessage = "Failed to import transactions";
+      if (err instanceof Error) {
+        if (err.message.includes('{"data":')) {
+          userMessage = "All transactions in this file have already been imported. No new transactions were added.";
+        } else {
+          userMessage = err.message;
+        }
+      }
+      
+      setError(userMessage);
       setStep("categorization");
     } finally {
       setLoading(false);

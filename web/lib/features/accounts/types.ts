@@ -30,6 +30,7 @@ export interface AccountSummary {
   total_balance: number;
   active_accounts: number;
   inactive_accounts: number;
+  primary_currency: string; // Add primary currency detection
   by_type: AccountTypeStats[];
 }
 
@@ -37,4 +38,5 @@ export interface AccountTypeStats {
   account_type: string;
   count: number;
   total_balance: number;
+  currency?: string; // Add currency information
 }

@@ -3,6 +3,7 @@
 import { ComparisonData, CategoryComparison } from "@/lib/features/analytics";
 import { Minus, ArrowUp, ArrowDown } from "lucide-react";
 import { useState } from "react";
+import { formatCurrency } from "@/lib/shared/utils";
 
 interface ComparisonComponentProps {
   data: { success: boolean; data?: ComparisonData; error?: string } | null;
@@ -35,14 +36,8 @@ export default function ComparisonComponent({
   // TypeScript now knows data.data is defined due to the guard above
   const comparisonData = data.data;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(Math.abs(amount));
-  };
+  // Use GBP as default since user data is in GBP - TODO: make this dynamic
+  const userCurrency = "GBP";
 
   const formatPercentage = (value: number) => {
     const sign = value >= 0 ? "+" : "";
@@ -95,10 +90,10 @@ export default function ComparisonComponent({
 
           <div className="space-y-1">
             <div className="text-2xl font-bold text-green-900">
-              {formatCurrency(comparisonData.current.income)}
+              {formatCurrency(comparisonData.current.income, userCurrency)}
             </div>
             <div className="text-sm text-green-700">
-              vs {formatCurrency(comparisonData.previous.income)} previously
+              vs {formatCurrency(comparisonData.previous.income, userCurrency)} previously
             </div>
             <div
               className={`text-sm font-medium ${getChangeColor(

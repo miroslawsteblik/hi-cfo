@@ -35,7 +35,7 @@ export { default as WelcomeSection } from "./dashboard/WelcomeSection";
 
 // Transaction Components
 export { default as CategoryAssignment } from "./transactions/CategoryAssignment";
-export { default as OFXManager } from "./transactions/OFX-manager";
+export { default as EnhancedOFXManager } from "./transactions/OFX-manager";
 export { default as TransactionHeader } from "./transactions/TransactionHeader";
 export { default as TransactionManager } from "./transactions/TransactionManager";
 export { default as TransactionSettings } from "./transactions/TransactionSettings";
@@ -48,7 +48,6 @@ export { default as OFXImportingStep } from "./transactions/steps/OFXImportingSt
 export { default as OFXPreviewStep } from "./transactions/steps/OFXPreviewStep";
 export { default as OFXResultStep } from "./transactions/steps/OFXResultStep";
 export { default as OFXUploadStep } from "./transactions/steps/OFXUploadStep";
-export { default as EnhancedOFXManager } from "./transactions/OFX-manager";
 
 // Analytics Components
 export { default as AnalyticsDashboard } from "./analytics/AnalyticsDashboard";

@@ -97,7 +97,7 @@ export default async function DashboardPage() {
           />
 
           <FinancialDataErrorBoundary>
-            <RealDashboardStats  />
+            <RealDashboardStats user={user} />
           </FinancialDataErrorBoundary>
 
           {/* Quick Actions & Recent Activity Grid */}

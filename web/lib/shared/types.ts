@@ -10,7 +10,38 @@ export interface User {
   email: string;
   first_name?: string;
   last_name?: string;
+  preferred_currency?: Currency;
 }
+
+// Safe DTOs for auth responses - only expose necessary fields
+export interface UserAuthDTO {
+  id: string;
+  user_id?: string; // Legacy compatibility
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  preferred_currency?: Currency;
+  role?: string;
+}
+
+export interface AuthSuccessResponse {
+  success: true;
+  error?: never;
+}
+
+export interface AuthErrorResponse {
+  success: false;
+  error: string;
+}
+
+export interface RegisterSuccessResponse {
+  success: true;
+  user: UserAuthDTO;
+  error?: never;
+}
+
+export type LoginResponseDTO = AuthSuccessResponse | AuthErrorResponse;
+export type RegisterResponseDTO = RegisterSuccessResponse | AuthErrorResponse;
 
 // ==========================================
 // API RESPONSE TYPES
@@ -117,7 +148,7 @@ export type Theme = 'light' | 'dark' | 'system';
 // DOMAIN TYPES
 // ==========================================
 
-export type Currency = 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+export type Currency = 'GBP' | 'USD' | 'EUR' | 'PLN';
 export type TransactionType = 'income' | 'expense' | 'transfer';
 export type AccountType = 'checking' | 'savings' | 'credit' | 'investment' | 'other';
 export type AnalyticsPeriod = 'week' | 'month' | 'quarter' | 'year';

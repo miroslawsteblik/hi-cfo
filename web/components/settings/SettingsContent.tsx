@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@/lib/shared/types";
+import { User, Currency } from "@/lib/shared/types";
 import ThemeToggle from "@/components/dark-mode/ThemeToggle";
+import { updateUserCurrencyPreference } from "@/lib/features/users";
+import { getSupportedCurrencies, CURRENCY_SYMBOLS, CURRENCY_NAMES } from "@/lib/shared/currency";
+import { setClientCurrencyPreference } from "@/lib/shared/client-currency";
 
 interface SettingsContentProps {
   user: User;
@@ -95,6 +98,39 @@ const settingSections: SettingsSection[] = [
 
 export default function SettingsContent({ user }: SettingsContentProps) {
   const [activeSection, setActiveSection] = useState("profile");
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(
+    user.preferred_currency || 'GBP'
+  );
+  const [savingCurrency, setSavingCurrency] = useState(false);
+  const [currencyMessage, setCurrencyMessage] = useState<string | null>(null);
+
+  const handleCurrencyChange = async (newCurrency: Currency) => {
+    if (newCurrency === selectedCurrency) return;
+    
+    setSavingCurrency(true);
+    setCurrencyMessage(null);
+    
+    try {
+      const result = await updateUserCurrencyPreference(newCurrency);
+      
+      if (result.success) {
+        setSelectedCurrency(newCurrency);
+        // Also store client-side as backup
+        setClientCurrencyPreference(newCurrency);
+        setCurrencyMessage(`Currency preference updated to ${CURRENCY_NAMES[newCurrency]}`);
+        // Clear message after 3 seconds
+        setTimeout(() => setCurrencyMessage(null), 3000);
+      } else {
+        setCurrencyMessage(`Failed to update currency: ${result.error}`);
+        setTimeout(() => setCurrencyMessage(null), 5000);
+      }
+    } catch (error) {
+      setCurrencyMessage("Failed to update currency preference");
+      setTimeout(() => setCurrencyMessage(null), 5000);
+    } finally {
+      setSavingCurrency(false);
+    }
+  };
 
   const renderProfileSection = () => (
     <div className="space-y-6">
@@ -171,12 +207,34 @@ export default function SettingsContent({ user }: SettingsContentProps) {
                 Default currency format for financial data
               </p>
             </div>
-            <select className="block w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-              <option value="JPY">JPY (¥)</option>
-            </select>
+            <div className="flex flex-col items-end">
+              <select 
+                value={selectedCurrency}
+                onChange={(e) => handleCurrencyChange(e.target.value as Currency)}
+                disabled={savingCurrency}
+                className="block w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm disabled:opacity-50"
+              >
+                {getSupportedCurrencies().map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency} ({CURRENCY_SYMBOLS[currency]})
+                  </option>
+                ))}
+              </select>
+              {currencyMessage && (
+                <p className={`text-xs mt-1 ${
+                  currencyMessage.includes('Failed') 
+                    ? 'text-red-600 dark:text-red-400' 
+                    : 'text-green-600 dark:text-green-400'
+                }`}>
+                  {currencyMessage}
+                </p>
+              )}
+              {savingCurrency && (
+                <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                  Saving...
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

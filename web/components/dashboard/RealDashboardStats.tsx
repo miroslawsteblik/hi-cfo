@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { getTransactions } from "@/lib/features/transactions";
+import { formatCurrency, getUserPreferredCurrency } from "@/lib/shared/utils";
+import type { Currency, User } from "@/lib/shared/types";
 
 
 interface DashboardStatsData {
@@ -16,20 +18,15 @@ interface DashboardStatsData {
 
 interface RealDashboardStatsProps {
   className?: string;
+  user?: User; // User for currency preferences
   stats?: any; // Accept optional stats prop for compatibility but ignore it - we fetch real data
 }
 
-export default function RealDashboardStats({ className = "" }: RealDashboardStatsProps) {
+export default function RealDashboardStats({ className = "", user }: RealDashboardStatsProps) {
   const [stats, setStats] = useState<DashboardStatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
+  const [userCurrency, setUserCurrency] = useState<string>("USD");
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -50,6 +47,15 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
         let categorizedTransactions = 0;
 
         const transactions = transactionsData.data?.data || [];
+        
+        // Use user's preferred currency with transaction data as fallback
+        const transactionCurrencies = transactions.map(t => t.currency).filter(Boolean) as Currency[];
+        const detectedCurrency = getUserPreferredCurrency(
+          user?.preferred_currency, // User preference takes priority
+          [], 
+          transactionCurrencies
+        );
+        setUserCurrency(detectedCurrency);
 
         transactions.forEach((transaction: any) => {
           const amount = Math.abs(transaction.amount || 0);
@@ -144,7 +150,7 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Income</p>
               <p className="text-2xl font-bold text-green-600 mt-1">
-                {formatCurrency(stats.totalIncome)}
+                {formatCurrency(stats.totalIncome, userCurrency as Currency)}
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -164,7 +170,7 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Expenses</p>
               <p className="text-2xl font-bold text-red-600 mt-1">
-                {formatCurrency(stats.totalExpenses)}
+                {formatCurrency(stats.totalExpenses, userCurrency as Currency)}
               </p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -188,7 +194,7 @@ export default function RealDashboardStats({ className = "" }: RealDashboardStat
                   stats.netIncome >= 0 ? "text-blue-600" : "text-red-600"
                 }`}
               >
-                {formatCurrency(stats.netIncome)}
+                {formatCurrency(stats.netIncome, userCurrency as Currency)}
               </p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">

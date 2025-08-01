@@ -11,7 +11,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all sessions for the user
-    const sessions = await getUserSessions(user.id || user.user_id);
+    const userId = user.id || user.user_id;
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID not found' }, { status: 400 });
+    }
+    const sessions = await getUserSessions(userId);
     
     // Remove sensitive information before sending
     const safeSessions = sessions.map(session => ({
@@ -46,10 +50,18 @@ export async function DELETE(request: NextRequest) {
       const currentSession = await getSession();
       const currentSessionId = currentSession?.id;
       
-      const invalidatedCount = await invalidateUserSessions(user.id || user.user_id, currentSessionId);
+      const userId = user.id || user.user_id;
+      if (!userId) {
+        return NextResponse.json({ error: 'User ID not found' }, { status: 400 });
+      }
+      const invalidatedCount = await invalidateUserSessions(userId, currentSessionId);
       return NextResponse.json({ message: `Revoked ${invalidatedCount} sessions` });
     } else if (action === 'revoke-session' && sessionId) {
-      await invalidateUserSessions(user.id || user.user_id, sessionId);
+      const userId = user.id || user.user_id;
+      if (!userId) {
+        return NextResponse.json({ error: 'User ID not found' }, { status: 400 });
+      }
+      await invalidateUserSessions(userId, sessionId);
       return NextResponse.json({ message: 'Session revoked' });
     }
 

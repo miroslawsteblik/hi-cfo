@@ -1,6 +1,7 @@
 
 import Link from "next/link";
 import { TransactionListItem } from "@/lib/features/transactions";
+import { formatDate } from "@/lib/shared/utils";
 
 interface RecentActivityProps {
   transactions: TransactionListItem[];
@@ -42,7 +43,7 @@ const formatRelativeTime = (dateString: string): string => {
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
   
-  return date.toLocaleDateString();
+  return formatDate(date.toISOString());
 };
 
 // Helper function to format amount

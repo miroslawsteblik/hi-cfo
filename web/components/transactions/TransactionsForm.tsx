@@ -139,13 +139,13 @@ export default function TransactionForm({
     : [];
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border max-w-2xl mx-auto">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Add New Transaction</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Add New Transaction</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Transaction Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Transaction Type *</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Transaction Type *</label>
           <div className="flex space-x-4">
             {(["expense", "income", "transfer"] as const).map((type) => (
               <label key={type} className="flex items-center">
@@ -163,7 +163,7 @@ export default function TransactionForm({
                   }
                   className="mr-2"
                 />
-                <span className="capitalize text-sm">{type}</span>
+                <span className="capitalize text-sm text-gray-900 dark:text-white">{type}</span>
               </label>
             ))}
           </div>
@@ -171,7 +171,7 @@ export default function TransactionForm({
 
         {/* Account Selection */}
         <div>
-          <label htmlFor="account_id" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="account_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Account *
           </label>
           <select
@@ -192,7 +192,7 @@ export default function TransactionForm({
 
         {/* Merchant Name with Auto-Categorization */}
         <div>
-          <label htmlFor="merchant_name" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="merchant_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Merchant/Payee
           </label>
           <input
@@ -209,16 +209,16 @@ export default function TransactionForm({
             placeholder="Store, company, or person"
           />
           {autoCategorizingMerchant && (
-            <div className="mt-1 text-sm text-blue-600">🤖 Auto-categorizing...</div>
+            <div className="mt-1 text-sm text-blue-600 dark:text-blue-400">🤖 Auto-categorizing...</div>
           )}
           {suggestedCategory && (
-            <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+            <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-200 dark:border-blue-700">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-medium text-blue-900">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
                     Suggested: {suggestedCategory.category_name}
                   </span>
-                  <div className="text-xs text-blue-700">
+                  <div className="text-xs text-blue-700 dark:text-blue-400">
                     Matched "{suggestedCategory.matched_text}" (
                     {Math.round(suggestedCategory.confidence * 100)}% confidence)
                   </div>

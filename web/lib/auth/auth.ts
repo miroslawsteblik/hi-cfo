@@ -7,23 +7,38 @@ import { FinancialAppError, ErrorCode, ErrorLogger } from '../errors';
 import { validateCSRFToken } from './csrf';
 import { checkRateLimit, recordFailedAttempt, clearFailedAttempts } from '../shared/rate-limit';
 import { createSession, invalidateSession, getSession } from './session';
+import { LoginResponseDTO, RegisterResponseDTO, UserAuthDTO, AuthSuccessResponse, RegisterSuccessResponse, Currency } from '../shared/types';
 
 // Server actions run on the Next.js server (inside Docker)
 // They need to reach nginx through Docker internal networking
 const SERVER_API_URL = process.env.SERVER_API_URL || 'http://nginx_proxy:80';
 
-export async function loginAction(formData: FormData) {
+// Helper function to create safe user DTO
+const createUserAuthDTO = (userData: any): UserAuthDTO | null => {
+  if (!userData) return null;
+  
+  // Only extract safe, necessary fields
+  return {
+    id: userData.id || userData.user_id,
+    email: userData.email,
+    first_name: userData.first_name,
+    last_name: userData.last_name,
+    preferred_currency: userData.preferred_currency,
+  };
+};
+
+export async function loginAction(formData: FormData): Promise<LoginResponseDTO> {
   // CSRF Protection
   const csrfToken = formData.get('csrf_token') as string;
   if (!csrfToken || !(await validateCSRFToken(csrfToken))) {
-    return { error: 'Invalid security token. Please refresh the page.' };
+    return { success: false, error: 'Invalid security token. Please refresh the page.' };
   }
 
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
   if (!email || !password) {
-    return { error: 'Email and password are required' };
+    return { success: false, error: 'Email and password are required' };
   }
 
   // Check rate limiting
@@ -32,6 +47,7 @@ export async function loginAction(formData: FormData) {
     if (rateCheck.lockedUntil) {
       const lockMinutes = Math.ceil((rateCheck.lockedUntil.getTime() - Date.now()) / (1000 * 60));
       return { 
+        success: false,
         error: `Account temporarily locked due to multiple failed attempts. Try again in ${lockMinutes} minutes.` 
       };
     }
@@ -87,7 +103,7 @@ export async function loginAction(formData: FormData) {
         details: { context: 'login_action' }
       });
       await ErrorLogger.getInstance().logError(error);
-      return { error: error.message };
+      return { success: false, error: error.message };
     }
     
     // Store access token (short-lived)
@@ -120,23 +136,30 @@ export async function loginAction(formData: FormData) {
     }
     
     ErrorLogger.getInstance().logInfo('Login successful, token stored', { context: 'login_action' });
-    return { success: true };
+    return { success: true } as AuthSuccessResponse;
   } catch (error) {
+    // If it's already a FinancialAppError (like authentication failed), return it directly
+    if (error instanceof FinancialAppError) {
+      await ErrorLogger.getInstance().logError(error);
+      return { success: false, error: error.message };
+    }
+    
+    // Only wrap unexpected errors as network errors
     const appError = new FinancialAppError({
       code: ErrorCode.NETWORK_ERROR,
       message: 'Login failed due to network or server error',
       details: { originalError: error, context: 'login_action' }
     });
     await ErrorLogger.getInstance().logError(appError);
-    return { error: 'Network error. Please try again.' };
+    return { success: false, error: 'Network error. Please try again.' };
   }
 }
 
-export async function registerAction(formData: FormData) {
+export async function registerAction(formData: FormData): Promise<RegisterResponseDTO> {
   // CSRF Protection
   const csrfToken = formData.get('csrf_token') as string;
   if (!csrfToken || !(await validateCSRFToken(csrfToken))) {
-    return { error: 'Invalid security token. Please refresh the page.' };
+    return { success: false, error: 'Invalid security token. Please refresh the page.' };
   }
 
   try {
@@ -155,15 +178,15 @@ export async function registerAction(formData: FormData) {
     
     // Client-side validation
     if (!firstName || !lastName || !email || !password) {
-      return { error: "All fields are required" };
+      return { success: false, error: "All fields are required" };
     }
     
     if (password !== confirmPassword) {
-      return { error: "Passwords do not match" };
+      return { success: false, error: "Passwords do not match" };
     }
     
     if (password.length < 6) {
-      return { error: "Password must be at least 6 characters long" };
+      return { success: false, error: "Password must be at least 6 characters long" };
     }
     
     // Prepare request body matching backend UserRequest struct
@@ -223,31 +246,61 @@ export async function registerAction(formData: FormData) {
       });
     }
 
-    return { success: true, user: data.user };
+    // Create safe user DTO - never expose raw backend response
+    const safeUserData = createUserAuthDTO(data.user);
+    if (!safeUserData) {
+      throw new FinancialAppError({
+        code: ErrorCode.VALIDATION_ERROR,
+        message: 'Invalid user data received',
+        details: { context: 'register_action' }
+      });
+    }
+    
+    return { 
+      success: true, 
+      user: safeUserData 
+    } as RegisterSuccessResponse;
   } catch (error) {
+    // If it's already a FinancialAppError (like validation failed), return it directly
+    if (error instanceof FinancialAppError) {
+      await ErrorLogger.getInstance().logError(error);
+      return { success: false, error: error.message };
+    }
+    
+    // Only wrap unexpected errors as network errors
     const appError = new FinancialAppError({
       code: ErrorCode.NETWORK_ERROR,
       message: 'Registration failed due to network or server error',
       details: { originalError: error, context: 'register_action' }
     });
     await ErrorLogger.getInstance().logError(appError);
-    return { error: "Network error. Please try again." };
+    return { success: false, error: "Network error. Please try again." };
   }
 }
 
-export async function getServerUser() {
+export async function getServerUser(): Promise<UserAuthDTO | null> {
   try {
     const cookieStore = await cookies();
     const userCookie = cookieStore.get('auth_user')?.value;
     const token = cookieStore.get('auth_token')?.value;
+    const currencyPreference = cookieStore.get('user_currency_preference')?.value;
+    
     if (!token) {
       return null;
     }
     
-    // If we have user data in cookie, return it
+    // If we have user data in cookie, sanitize and return it
     if (userCookie) {
       try {
-        return JSON.parse(userCookie);
+        const userData = JSON.parse(userCookie);
+        const safeUserData = createUserAuthDTO(userData);
+        
+        // Override with currency preference from dedicated cookie if available
+        if (safeUserData && currencyPreference) {
+          safeUserData.preferred_currency = currencyPreference as Currency;
+        }
+        
+        return safeUserData;
       } catch (e) {
         await ErrorLogger.getInstance().logError(new FinancialAppError({
           code: ErrorCode.VALIDATION_ERROR,
@@ -269,7 +322,15 @@ export async function getServerUser() {
       
       if (response.ok) {
         const userData = await response.json();
-        return userData.data;
+        // Sanitize response data before returning
+        const safeUserData = createUserAuthDTO(userData.data);
+        
+        // Override with currency preference from dedicated cookie if available
+        if (safeUserData && currencyPreference) {
+          safeUserData.preferred_currency = currencyPreference as Currency;
+        }
+        
+        return safeUserData;
       } else {
         return null;
       }
@@ -394,6 +455,8 @@ export async function logoutAction() {
     cookieStore.set("auth_token", "", { ...cookieOptions, httpOnly: true });
     cookieStore.set("auth_user", "", { ...cookieOptions, httpOnly: true });
     cookieStore.set("csrf_token", "", { ...cookieOptions, httpOnly: true });
+    // Note: We intentionally don't clear user_currency_preference on logout
+    // so the user's preference persists across sessions
     
     ErrorLogger.getInstance().logInfo("Logout successful", { context: 'logout_action' });
   } catch (error) {

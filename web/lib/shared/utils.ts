@@ -33,17 +33,36 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const formatCurrency = (amount: number, currency = "USD") => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency,
-  }).format(Math.abs(amount));
-};
+// Re-export currency utilities for backward compatibility
+export { 
+  getUserPrimaryCurrency,
+  formatCurrency,
+  getUserPreferredCurrency,
+  convertCurrency,
+  formatCurrencyWithConversion
+} from './currency';
 
 export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  try {
+    // Handle ISO date strings consistently
+    const date = new Date(dateString);
+    
+    // Ensure we have a valid date
+    if (isNaN(date.getTime())) {
+      return dateString; // Return original if invalid
+    }
+    
+    // Use consistent formatting that works the same on server and client
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // For consistent hydration, use UTC methods to avoid timezone differences
+    const month = months[date.getUTCMonth()];
+    const day = date.getUTCDate();
+    const year = date.getUTCFullYear();
+    
+    return `${month} ${day}, ${year}`;
+  } catch (error) {
+    return dateString; // Return original string if formatting fails
+  }
 };

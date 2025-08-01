@@ -6,6 +6,7 @@ import { TransactionListItem } from "@/lib/features/transactions";
 import { Category } from "@/lib/features/categories";
 import CategoryAssignment from "./CategoryAssignment";
 import { formatCurrency, formatDate } from "@/lib/shared/utils";
+import type { Currency } from "@/lib/shared/types";
 
 interface TransactionTableProps {
   transactions: TransactionListItem[];
@@ -295,7 +296,7 @@ export default function TransactionTable({
                     }
                   >
                     {transaction.amount >= 0 ? "+" : ""}
-                    {formatCurrency(transaction.amount, transaction.currency)}
+                    {formatCurrency(transaction.amount, transaction.currency as Currency)}
                   </span>
                 </td>
 

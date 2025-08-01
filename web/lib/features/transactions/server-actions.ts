@@ -380,63 +380,34 @@ export async function bulkCreateTransactionsWithCategorization(
       return { success: false, error: validationErrors.join(", ") };
     }
 
-    try {
-      const result = await apiClient.post<any>("/api/v1/transactions/bulk", {
-        transactions,
-      });
+    const result = await apiClient.post<any>("/api/v1/transactions/bulk", {
+      transactions,
+    });
 
-      // Handle different success scenarios
-      // 206 status typically indicates partial success (some created, some duplicates)
-      if (result.data) {
-        // If we have structured data with created/duplicates info
-        const created = result.data.created || 0;
-        const skipped = result.data.skipped || 0;
+    // Handle the response (now includes both success and duplicate scenarios)
+    if (result.data) {
+      // If we have structured data with created/duplicates info
+      const created = result.data.created || 0;
+      const skipped = result.data.skipped || 0;
+      const total = result.data.total || 0;
 
-        return {
-          success: created > 0 || (created === 0 && skipped > 0), // Success if any created OR all duplicates
-          data: result.data,
-        };
-      }
-
-      return { success: true, data: result };
-    } catch (apiError) {
-      // Handle 400 responses with duplicate data as valid business responses
-      if (apiError instanceof Error && apiError.message.includes("API Error: 400")) {
-        try {
-          const errorText = apiError.message.split(" - ")[1];
-          const errorData = JSON.parse(errorText);
-
-
-          // Check if this is a valid duplicate scenario
-          if (
-            errorData.data &&
-            errorData.data.duplicates &&
-            Array.isArray(errorData.data.duplicates)
-          ) {
-            // This is a valid business response (all/some duplicates), not an error
-            return {
-              success: errorData.data.created > 0, // Success if some were created
-              data: errorData.data,
-            };
-          }
-        } catch (parseError) {
-          console.error("❌ Failed to parse 400 response:", parseError);
-        }
-      }
-
-      // Re-throw other API errors
-      throw apiError;
+      return {
+        success: created > 0 || (created === 0 && skipped > 0 && total > 0), // Success if any created OR all duplicates
+        data: result.data,
+      };
     }
+
+    return { success: true, data: result };
   } catch (error) {
     const appError = new FinancialAppError({
       code: ErrorCode.API_ERROR,
-      message: "Failed to update categorization settings",
-      details: { originalError: error, context: "update_categorization_settings" },
+      message: "Failed to bulk create transactions",
+      details: { originalError: error, context: "bulk_create_transactions" },
     });
     await ErrorLogger.getInstance().logError(appError);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update categorization settings",
+      error: error instanceof Error ? error.message : "Failed to bulk create transactions",
     };
   }
 }

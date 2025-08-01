@@ -182,6 +182,12 @@ class ApiClient {
         // If not JSON, use the text as is
       }
 
+      // Special handling for bulk transactions endpoint - 400 responses with duplicate data are not errors
+      if (endpoint.includes('/transactions/bulk') && errorDetails.data && errorDetails.data.duplicates) {
+        // This is a valid business response for duplicates, return the parsed data without throwing
+        return errorDetails;
+      }
+
       throw new FinancialAppError({
         code: ErrorCode.VALIDATION_ERROR,
         message: errorDetails.message || errorText || 'Validation failed',

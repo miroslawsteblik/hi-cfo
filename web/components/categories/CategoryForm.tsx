@@ -101,15 +101,15 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border max-w-2xl mx-auto">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto">
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
         {isEdit ? 'Edit Category' : 'Create New Category'}
       </h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Category Name */}
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Category Name *
           </label>
           <input
@@ -125,7 +125,7 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
 
         {/* Category Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Category Type *
           </label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -262,7 +262,7 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
             <button
               type="button"
               onClick={addKeyword}
-              className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
             >
               Add
             </button>
@@ -306,7 +306,7 @@ export default function CategoryForm({ onSubmit, onCancel, initialData, isEdit =
             <button
               type="button"
               onClick={addMerchantPattern}
-              className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
             >
               Add
             </button>

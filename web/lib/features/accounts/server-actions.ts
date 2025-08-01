@@ -3,6 +3,8 @@
 import { apiClient } from "@/lib/api/client";
 import { Account, AccountSummary, AccountFilter, AccountsResponse } from "./types";
 import { FinancialAppError, ErrorCode, ErrorLogger } from "@/lib/errors";
+import { Currency } from "@/lib/shared/types";
+import { getUserPreferredCurrency } from "@/lib/shared/currency";
 
 export async function createAccount(
   data: Partial<Account>
@@ -82,15 +84,22 @@ export async function getAccountSummary(): Promise<AccountSummary> {
   try {
     const result = await apiClient.get<AccountSummary>("/api/v1/accounts/summary");
 
-    return (
-      result ?? {
-        total_accounts: 0,
-        total_balance: 0,
-        active_accounts: 0,
-        inactive_accounts: 0,
-        by_type: [],
-      }
-    );
+    // Add primary currency detection if not provided by backend
+    const summaryWithCurrency = result ?? {
+      total_accounts: 0,
+      total_balance: 0,
+      active_accounts: 0,
+      inactive_accounts: 0,
+      primary_currency: 'GBP' as Currency,
+      by_type: [],
+    };
+
+    // If backend doesn't provide primary_currency, detect it
+    if (!summaryWithCurrency.primary_currency) {
+      summaryWithCurrency.primary_currency = 'GBP' as Currency; // Default fallback
+    }
+
+    return summaryWithCurrency;
   } catch (error) {
     const appError = new FinancialAppError({
       code: ErrorCode.API_ERROR,
@@ -103,6 +112,7 @@ export async function getAccountSummary(): Promise<AccountSummary> {
       total_balance: 0,
       active_accounts: 0,
       inactive_accounts: 0,
+      primary_currency: 'GBP' as Currency,
       by_type: [],
     };
   }

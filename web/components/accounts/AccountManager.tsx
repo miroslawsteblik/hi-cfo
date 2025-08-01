@@ -12,7 +12,8 @@ import {
   AccountSummary,
 } from "@/lib/features/accounts";
 
-import { User } from "@/lib/shared/types";
+import { User, Currency } from "@/lib/shared/types";
+import { formatCurrency, getUserPreferredCurrency, formatCurrencyWithConversion, formatDate, convertCurrency } from "@/lib/shared/utils";
 
 interface AccountManagerProps {
   accountsData: AccountsResponse;
@@ -20,7 +21,7 @@ interface AccountManagerProps {
   user?: User;
 }
 
-export default function AccountManager({ accountsData, summary }: AccountManagerProps) {
+export default function AccountManager({ accountsData, summary, user }: AccountManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState(false);
@@ -145,20 +146,47 @@ export default function AccountManager({ accountsData, summary }: AccountManager
     }
   };
 
-  const formatCurrency = (amount: number, currency: string = "USD") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
+  // Get user's preferred currency with proper hierarchy:
+  // 1. User preference overrides everything
+  // 2. Account-based currency detection  
+  // 3. Summary primary currency
+  // 4. Default to GBP
+  const accountCurrencies = accountsData?.data?.map(account => account.currency).filter(Boolean) as Currency[];
+  const userPreferredCurrency = getUserPreferredCurrency(
+    user?.preferred_currency, // This should now be properly set from settings
+    accountCurrencies,
+    []
+  );
+
+  // Calculate totals with proper currency conversion
+  const calculateConvertedTotals = () => {
+    if (!accountsData?.data) return { totalBalance: 0, accountsByType: {} };
+
+    let totalBalance = 0;
+    const accountsByType: Record<string, { count: number; total: number }> = {};
+
+    accountsData.data.forEach(account => {
+      const balance = account.current_balance || 0;
+      const accountCurrency = account.currency as Currency;
+      
+      // Convert to user's preferred currency
+      const convertedBalance = convertCurrency(balance, accountCurrency, userPreferredCurrency);
+      totalBalance += convertedBalance;
+
+      // Group by type
+      if (!accountsByType[account.account_type]) {
+        accountsByType[account.account_type] = { count: 0, total: 0 };
+      }
+      accountsByType[account.account_type].count += 1;
+      accountsByType[account.account_type].total += convertedBalance;
+    });
+
+    return { totalBalance, accountsByType };
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  const { totalBalance: convertedTotalBalance, accountsByType: convertedAccountsByType } = calculateConvertedTotals();
+
+  // formatDate is now imported from shared utils
 
   const getAccountTypeLabel = (accountType: string) => {
     const typeMap: { [key: string]: string } = {
@@ -264,7 +292,7 @@ export default function AccountManager({ accountsData, summary }: AccountManager
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Balance</div>
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {formatCurrency(summary?.total_balance || 0)}
+            {formatCurrency(convertedTotalBalance, userPreferredCurrency)}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
@@ -284,24 +312,24 @@ export default function AccountManager({ accountsData, summary }: AccountManager
       </div>
 
       {/* Account Types Breakdown */}
-      {Array.isArray(summary?.by_type) && summary.by_type.length > 0 && (
+      {Object.keys(convertedAccountsByType).length > 0 && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Accounts by Type</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {summary.by_type.map((typeStats) => (
-              <div key={typeStats.account_type} className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
+            {Object.entries(convertedAccountsByType).map(([accountType, stats]) => (
+              <div key={accountType} className="p-4 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-700/50">
                 <div className="flex justify-between items-center">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${getAccountTypeColor(
-                      typeStats.account_type
+                      accountType
                     )}`}
                   >
-                    {getAccountTypeLabel(typeStats.account_type)}
+                    {getAccountTypeLabel(accountType)}
                   </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">{typeStats.count} accounts</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{stats.count} accounts</span>
                 </div>
                 <div className="text-lg font-semibold text-gray-900 dark:text-white mt-2">
-                  {formatCurrency(typeStats.total_balance)}
+                  {formatCurrency(stats.total, userPreferredCurrency)}
                 </div>
               </div>
             ))}
@@ -367,7 +395,12 @@ export default function AccountManager({ accountsData, summary }: AccountManager
                     <td className="px-6 py-4 text-sm font-medium">
                       {account.current_balance !== undefined ? (
                         <span className="text-green-600 dark:text-green-400">
-                          {formatCurrency(account.current_balance, account.currency)}
+                          {formatCurrencyWithConversion(
+                            account.current_balance, 
+                            account.currency as Currency, 
+                            userPreferredCurrency,
+                            account.currency !== userPreferredCurrency
+                          )}
                         </span>
                       ) : (
                         <span className="text-gray-400 dark:text-gray-500">Not set</span>
